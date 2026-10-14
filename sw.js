@@ -1,0 +1,1 @@
+const CACHE='heatloop-v2-fix';const ASSETS=['./','./index.html','./manifest.json','./assets/hero-banner.jpg','./assets/onboarding.jpg','./assets/icon-infinity.jpg'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))})
