@@ -1,0 +1,24 @@
+HEATLOOP BETA 0.1 — DZIENNIK TESTÓW I ZGŁOSZEŃ
+================================================
+Okres: 14–21 października 2026 (7 dni)
+Repozytorium: https://github.com/dv8zz6p8s9-a11y/heatloop.github.io
+Aplikacja: https://dv8zz6p8s9-a11y.github.io/heatloop.github.io/heatloop-b/
+Formularz: https://dv8zz6p8s9-a11y.github.io/heatloop.github.io/heatloop-b/zglos-blad.html
+Zgłoszenia: https://github.com/dv8zz6p8s9-a11y/heatloop.github.io/issues
+
+STATUS 2026-10-14 — START BETA 0.1
+- Poprawiono układ Windows Chrome/Firefox na podstawie zrzutów użytkownika.
+- Dodano izolację, kształtki i robociznę do kosztorysu.
+- Dodano walidację wczytywania projektów JSON (skala i przypisanie grzejników).
+- Dodano formularz zgłoszeń z przekierowaniem do GitHub Issues i eksportem TXT.
+- Testy obliczeniowe: 10/10 wykonane w izolowanym uruchomieniu; testy CI w repozytorium.
+- Pełne testy na fizycznych urządzeniach i test PDF po ostatnich zmianach: NIEPOTWIERDZONE.
+- Brak automatycznej wysyłki zgłoszeń z formularza: tester musi kliknąć Submit new issue na GitHubie.
+- Ten plik jest zbiorczym dziennikiem; raporty źródłowe pozostają w GitHub Issues.
+
+ZGŁOSZENIA
+-----------
+Na moment rozpoczęcia testów: nie przeprowadzono jeszcze zbiorczej weryfikacji GitHub Issues.
+
+FORMAT WPISÓW:
+[Data] #numer — tytuł — ważność — status — analiza / decyzja — odnośnik
