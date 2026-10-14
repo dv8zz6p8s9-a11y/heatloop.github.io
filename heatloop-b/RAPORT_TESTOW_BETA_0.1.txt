@@ -22,3 +22,12 @@ Na moment rozpoczęcia testów: nie przeprowadzono jeszcze zbiorczej weryfikacji
 
 FORMAT WPISÓW:
 [Data] #numer — tytuł — ważność — status — analiza / decyzja — odnośnik
+
+[2026-10-14 20:14 UTC] TEST-001 — test zgłoszenia e-mail — POTWIERDZONY SUKCES
+Źródło: zrzut ekranu Gmail na iPhonie przesłany przez właściciela.
+Urządzenie: iOS; przeglądarka zadeklarowana w zgłoszeniu: Safari.
+Temat: [HeatLoop BETA 0.1][Średni] Test.
+Wiadomość widoczna jako odebrana o 22:14 czasu lokalnego; formularz mailto i dostarczenie wiadomości potwierdzone wizualnie.
+Uwagi: pole „Rzeczywisty wynik” zawiera „Testtest”; nie ustalono, czy to zamierzone dane testowe.
+Status: ZAMKNIĘTE — test kanału e-mail, nie błąd funkcjonalny.
+---
