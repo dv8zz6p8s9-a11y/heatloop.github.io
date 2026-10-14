@@ -1,6 +1,6 @@
 {
-  "name": "heatloop",
-  "short_name": "heatloop",
+  "name": "HeatLoop – Ogrzewanie podłogowe",
+  "short_name": "HeatLoop",
   "description": "Zaprojektuj ciepło w 5 minut - Projekt ogrzewania podłogowego i grzejników - Rafał Sroczyński",
   "start_url": "./",
   "display": "standalone",
