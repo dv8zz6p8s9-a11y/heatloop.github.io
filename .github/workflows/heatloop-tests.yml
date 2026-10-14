@@ -1,0 +1,24 @@
+name: HeatLoop calculation checks
+on:
+  push:
+    paths:
+      - 'heatloop-b/app.js'
+      - 'heatloop-b/tests/**'
+      - '.github/workflows/heatloop-tests.yml'
+  pull_request:
+    paths:
+      - 'heatloop-b/app.js'
+      - 'heatloop-b/tests/**'
+  workflow_dispatch:
+jobs:
+  calculation-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: node --check heatloop-b/app.js
+      - name: Run calculation tests
+        run: node heatloop-b/tests/calculations.test.cjs
