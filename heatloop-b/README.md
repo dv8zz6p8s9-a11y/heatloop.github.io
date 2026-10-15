@@ -17,3 +17,6 @@ Strona startowa: po uruchomieniu widoczny jest uproszczony ekran z trzema kafelk
 Poprawiono wprowadzanie wartości z przecinkiem, puste pola, walidację wyceny i ceny edytowane bez utraty fokusu. Generator PDF korzysta z biblioteki zewnętrznej i wymaga dostępu do internetu. Udostępnianie przez pocztę odbywa się przez systemowy panel udostępniania; nie jest automatyczną wysyłką z serwera. Dobór rur ma charakter orientacyjny.
 
 Logo HeatLoop: heatloop-logo.webp; strona startowa wyświetla logo lokalnie, również offline po pobraniu zasobów.
+
+## Opcjonalne sterowanie strefowe TECH
+W wycenie dostępny jest dobór L-5s / L-8e, regulatorów i siłowników, z zapisem w projekcie oraz eksportem. Zakres pierwszej wersji, źródła cen i ograniczenia: [TECH_STEROWANIE.md](TECH_STEROWANIE.md).
