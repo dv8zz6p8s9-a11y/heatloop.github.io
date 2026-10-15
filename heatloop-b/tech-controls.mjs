@@ -9,7 +9,7 @@ export const catalog = {
   techM28: {name:'TECH STT-230/2 — siłownik 230 V NC, M28 × 1,5', sku:'WG.01.0051', net:143},
   techWifi: {name:'TECH Wi-Fi RS — moduł internetowy', sku:'WG.05.0049', net:1088}
 };
-export const defaults = () => ({enabled:false,mode:'wired',thread:'M30',internet:false,entries:[],projectSignature:null});
+export const defaults = () => ({enabled:false,mode:'wireless',thread:'M30',internet:false,entries:[],projectSignature:null});
 export function normalizeControls(value) {
   const c=defaults();
   if(!value || typeof value!=='object')return c;
