@@ -8,12 +8,13 @@ wielkości liter, po usunięciu spacji na końcach.
 
 ## Obsługiwane zestawy
 
-- Przewodowy: L-5s + ST-294 v1.
-- Bezprzewodowy: L-8e + R-8b, opcjonalnie Wi-Fi RS.
+- Sterowniki: L-4X Wi-Fi lub L-X Wi-Fi. Oba mają wbudowane Wi-Fi, bez osobnego Wi-Fi RS.
+- Domyślna komunikacja regulatorów: bezprzewodowa R-8b. Opcjonalnie przewodowe R-X TECH SBUS.
 - W obu przypadkach przewodowe siłowniki STT-230/2, 230 V NC; wybór M30×1,5 lub M28×1,5.
-- Jedna listwa i jeden rozdzielacz; do 8 stref. Limit przyjęty dla tego prostego
-  modułu to 4 siłowniki na strefę. Nie jest to deklaracja maksymalnej możliwości
-  listwy. Większe zestawy wymagają osobnego doboru i weryfikacji obciążeń.
+- Dobór automatyczny: L-4X do 4 stref podłogowych, L-X dla 5–8. To wybór według pojemności bez rozszerzeń, nie optymalizacja ceny.
+- Ręczny wybór L-4X powyżej 4 stref dodaje ML-4X Wi-Fi, rozszerzający do 8 stref podłogowych.
+- Jedna listwa główna i jeden rozdzielacz; do 8 stref. Limit aplikacji to 4 siłowniki na strefę, niezależny od deklarowanych maksymalnych możliwości sprzętu.
+- Starsze konfiguracje migrują do nowego doboru; zapisany wybór dodatkowego Wi-Fi RS jest pomijany. Ceny nowego sprzętu zaczynają się od aktualnego zapisu katalogowego.
 
 Suma pętli musi być zgodna z polem liczby pętli w wycenie. Nie ma automatycznego
 wyznaczania pętli z powierzchni. Zmiana pomieszczeń po imporcie blokuje wycenę do
@@ -33,15 +34,15 @@ https://www.techsterowniki.pl/!uploads/cennik/CennikTECH_PL_09_2026_www.pdf
 
 Plik ma w nazwie 09_2026, ale na okładce podaje „aktualizacja 04.2026”. Dlatego
 interfejs używa daty sprawdzenia, a nie deklaracji daty obowiązywania cennika.
-Wybrane pozycje: strony drukowane 14, 16, 17 i 18. Ceny netto; VAT katalogowy 23%.
+Wybrane pozycje: strony drukowane 10–13 i 22–24. Ceny netto; VAT katalogowy 23%.
 Zapis cen jest statyczny. Aktualizację należy zweryfikować i wprowadzić w
 `tech-controls.mjs`. Nie wdrożono automatycznego pobierania cen ani integracji API.
 
 Dokumentacja do weryfikacji zgodności:
-- https://www.techsterowniki.pl/p/l-5s
-- https://www.techsterowniki.pl/p/l-8e
-- https://www.techsterowniki.pl/manuals/l-5s
-- https://www.techsterowniki.pl/manuals/l-8e
+- https://www.techsterowniki.pl/p/l-4x-wi-fi
+- https://www.techsterowniki.pl/p/l-x-wi-fi
+- https://www.techsterowniki.pl/manuals/l-4x-wifi-1
+- https://www.techsterowniki.pl/manuals
 - https://www.techsterowniki.pl/konfigurator-systemow/pl/typ
 
 Nie kopiowano opisów marketingowych ani grafik. Zestawienie nie stanowi informacji
@@ -59,4 +60,4 @@ przez ten moduł. Nie łączy się on z fizycznymi urządzeniami.
 Przed publikacją sprawdzić na telefonie: oba warianty, wspólną strefę kilku
 pomieszczeń, sumę pętli, limity, zapis i odczyt JSON, zmiany projektu, CSV oraz PDF.
 
-Sprawdzono także interakcje w środowisku JSDOM: start aplikacji, włączenie/wyłączenie opcji, oba warianty, edycję cen, zawartość oferty HTML, CSV, zapis/odczyt JSON, starszy projekt, import pomieszczeń oraz blokadę nieaktualnych przypisań. 13 istniejących i 11 nowych testów obliczeniowych zakończyło się pomyślnie. Pełny test wizualny i rzeczywistego renderowania PDF pozostaje do wykonania: w środowisku nie było przeglądarki, a pobranie Chromium zwracało niekompletne archiwum.
+Sprawdzono także interakcje w środowisku JSDOM: start aplikacji, włączenie/wyłączenie opcji, oba warianty, edycję cen, zawartość oferty HTML, CSV, zapis/odczyt JSON, starszy projekt, import pomieszczeń oraz blokadę nieaktualnych przypisań. 13 istniejących i 16 nowych testów obliczeniowych zakończyło się pomyślnie. Pełny test wizualny i rzeczywistego renderowania PDF pozostaje do wykonania: w środowisku nie było przeglądarki, a pobranie Chromium zwracało niekompletne archiwum.

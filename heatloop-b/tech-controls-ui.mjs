@@ -2,7 +2,7 @@ import {projectSignature} from './tech-controls.mjs';
 
 export function mountControls(state,onChange){
   const $=id=>document.getElementById(id);
-  const fields={tEnabled:'enabled',tMode:'mode',tThread:'thread',tInternet:'internet'};
+  const fields={tEnabled:'enabled',tMode:'mode',tThread:'thread',tController:'controller'};
   function table(){
     $('tRooms').replaceChildren();
     state.controls.entries.forEach((entry,index)=>{
@@ -25,12 +25,10 @@ export function mountControls(state,onChange){
       if($(id).type==='checkbox')$(id).checked=state.controls[key];else $(id).value=state.controls[key];
     }
     $('tSettings').hidden=!state.controls.enabled;
-    $('tInternet').disabled=state.controls.mode!=='wireless';
     table();
   }
   for(const [id,key] of Object.entries(fields))$(id).addEventListener('change',()=>{
     state.controls[key]=$(id).type==='checkbox'?$(id).checked:$(id).value;
-    if(state.controls.mode==='wired')state.controls.internet=false;
     refresh();onChange();
   });
   $('tAdd').onclick=()=>{

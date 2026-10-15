@@ -1,22 +1,22 @@
 // Source: official TECH catalogue linked from techsterowniki.pl on 2026-10-15.
 // Prices are a reviewed snapshot, never a live feed. White regulators, 230 V NC actuators.
 export const catalog = {
-  techL5: {name:'TECH L-5s — listwa przewodowa, 8 stref', sku:'WG.20.0070', net:462},
-  techL8: {name:'TECH L-8e — listwa z komunikacją radiową, 8 stref', sku:'WG.20.0078', net:1399},
-  techWired: {name:'TECH ST-294 v1 — regulator przewodowy, biały', sku:'WG.11.0454', net:191},
+  techL4X: {name:'TECH L-4X Wi-Fi — listwa, wbudowane Wi-Fi', sku:'WG.20.0176', net:1344},
+  techLX: {name:'TECH L-X Wi-Fi — listwa, 8 stref, wbudowane Wi-Fi', sku:'WG.20.0156', net:1911},
+  techML4X: {name:'TECH ML-4X Wi-Fi — rozszerzenie do 8 stref podłogowych', sku:'WG.20.0195', net:388},
+  techRX: {name:'TECH R-X — regulator przewodowy TECH SBUS, biały', sku:'WG.11.0730', net:226},
   techWireless: {name:'TECH R-8b — regulator bezprzewodowy, biały', sku:'WG.11.0293', net:231},
   techM30: {name:'TECH STT-230/2 — siłownik 230 V NC, M30 × 1,5', sku:'WG.01.0050', net:143},
-  techM28: {name:'TECH STT-230/2 — siłownik 230 V NC, M28 × 1,5', sku:'WG.01.0051', net:143},
-  techWifi: {name:'TECH Wi-Fi RS — moduł internetowy', sku:'WG.05.0049', net:1088}
+  techM28: {name:'TECH STT-230/2 — siłownik 230 V NC, M28 × 1,5', sku:'WG.01.0051', net:143}
 };
-export const defaults = () => ({enabled:false,mode:'wireless',thread:'M30',internet:false,entries:[],projectSignature:null});
+export const defaults = () => ({enabled:false,mode:'wireless',controller:'auto',thread:'M30',entries:[],projectSignature:null});
 export function normalizeControls(value) {
   const c=defaults();
   if(!value || typeof value!=='object')return c;
   c.enabled=value.enabled===true;
   c.mode=value.mode==='wireless'?'wireless':'wired';
   c.thread=value.thread==='M28'?'M28':'M30';
-  c.internet=c.mode==='wireless'&&value.internet===true;
+  c.controller=['auto','l4x','lx'].includes(value.controller)?value.controller:'auto';
   c.entries=Array.isArray(value.entries)?value.entries.slice(0,200).map(e=>({
     room:String(e?.room??'').slice(0,80),zone:String(e?.zone??'').slice(0,80),loops:String(e?.loops??'').slice(0,8)
   })):[];
@@ -30,7 +30,7 @@ export function calculateControls(c,quoteLoops,currentSignature) {
   const errors=[],rows=[];
   if(!c.enabled)return {errors,rows,zones:0,loops:0};
   if(!['wired','wireless'].includes(c.mode)||!['M30','M28'].includes(c.thread))errors.push('Nieprawidłowy wariant sterowania.');
-  if(c.internet&&c.mode!=='wireless')errors.push('Wi-Fi RS jest dostępne w tym module tylko z L-8e.');
+  if(!['auto','l4x','lx'].includes(c.controller))errors.push('Wybierz sterownik L-4X Wi-Fi lub L-X Wi-Fi.');
   if(c.projectSignature!==null&&c.projectSignature!==currentSignature)errors.push('Pomieszczenia projektu zmieniły się. Pobierz je ponownie i sprawdź przypisania oraz pętle.');
   if(!c.entries.length)errors.push('Dodaj pomieszczenia i wpisz liczbę pętli.');
   const groups=new Map();let loops=0;
@@ -45,10 +45,12 @@ export function calculateControls(c,quoteLoops,currentSignature) {
   if(loops!==quoteLoops)errors.push('Suma pętli sterowania ('+loops+') musi odpowiadać liczbie pętli w wycenie ('+quoteLoops+').');
   if(!errors.length){
     const add=(key,qty)=>rows.push([catalog[key].name+' · '+catalog[key].sku,qty,'szt.',key]);
-    add(c.mode==='wired'?'techL5':'techL8',1);
-    add(c.mode==='wired'?'techWired':'techWireless',groups.size);
+    const l4x=c.controller==='l4x'||(c.controller==='auto'&&groups.size<=4);
+    add(l4x?'techL4X':'techLX',1);
+    if(l4x&&groups.size>4)add('techML4X',1);
+    add(c.mode==='wired'?'techRX':'techWireless',groups.size);
     add(c.thread==='M30'?'techM30':'techM28',loops);
-    if(c.internet)add('techWifi',1);
+    // Both controllers have integrated Wi-Fi; never add Wi-Fi RS.
   }
   return {errors:[...new Set(errors)],rows,zones:groups.size,loops};
 }

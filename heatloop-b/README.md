@@ -19,4 +19,4 @@ Poprawiono wprowadzanie wartości z przecinkiem, puste pola, walidację wyceny i
 Logo HeatLoop: heatloop-logo.webp; strona startowa wyświetla logo lokalnie, również offline po pobraniu zasobów.
 
 ## Opcjonalne sterowanie strefowe TECH
-W wycenie dostępny jest dobór L-5s / L-8e, regulatorów i siłowników, z zapisem w projekcie oraz eksportem. Zakres pierwszej wersji, źródła cen i ograniczenia: [TECH_STEROWANIE.md](TECH_STEROWANIE.md).
+W wycenie dostępny jest dobór L-4X Wi-Fi / L-X Wi-Fi, regulatorów i siłowników, z zapisem w projekcie oraz eksportem. Zakres pierwszej wersji, źródła cen i ograniczenia: [TECH_STEROWANIE.md](TECH_STEROWANIE.md).

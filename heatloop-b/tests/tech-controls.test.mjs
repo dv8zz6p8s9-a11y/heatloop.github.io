@@ -6,12 +6,12 @@ function test(name,fn){fn();count++;console.log('OK:',name)}
 test('Opcja wyłączona nie dodaje produktów',()=>assert.equal(calculateControls(defaults(),8,'').rows.length,0));
 test('Jedna strefa może mieć kilka pomieszczeń i pętli',()=>{
  const r=calculateControls(config(),4,'');assert.deepEqual(r.errors,[]);assert.equal(r.zones,2);assert.equal(r.loops,4);assert.equal(r.rows[1][1],2);assert.equal(r.rows[2][1],4);
- assert.equal(r.rows.reduce((sum,row)=>sum+row[1]*catalog[row[3]].net,0),1416);
+ assert.equal(r.rows.reduce((sum,row)=>sum+row[1]*catalog[row[3]].net,0),2368);
 });
-test('Bezprzewodowy zestaw i moduł Wi-Fi RS',()=>{
- const r=calculateControls({...config(),mode:'wireless',thread:'M28',internet:true},4,'');
- assert.deepEqual(r.errors,[]);assert.deepEqual(r.rows.map(r=>r[3]),['techL8','techWireless','techM28','techWifi']);
- assert.equal(r.rows.reduce((s,r)=>s+r[1]*catalog[r[3]].net,0),3521);
+test('Bezprzewodowy L-X ma internet wbudowany',()=>{
+ const r=calculateControls({...config(),mode:'wireless',controller:'lx',thread:'M28'},4,'');
+ assert.deepEqual(r.errors,[]);assert.deepEqual(r.rows.map(r=>r[3]),['techLX','techWireless','techM28']);
+ assert.equal(r.rows.reduce((s,r)=>s+r[1]*catalog[r[3]].net,0),2945);
 });
 test('Brak zgodności liczby pętli blokuje dobór',()=>assert(calculateControls(config(),8,'').errors.length));
 test('Puste, ujemne, ułamkowe i wykładnicze pętle są odrzucane',()=>{
@@ -30,7 +30,26 @@ test('Zmiana projektu wymaga ponownego importu',()=>{
 });
 test('Stare projekty mają sterowanie wyłączone',()=>assert.deepEqual(normalizeControls(undefined),defaults()));
 test('Import usuwa nieobsługiwane warianty i ogranicza wejście',()=>{
- const c=normalizeControls({enabled:true,mode:'other',thread:'24V',internet:true,entries:[null]});assert.equal(c.mode,'wired');assert.equal(c.thread,'M30');assert.equal(c.internet,false);assert(calculateControls(c,1,'').errors.length);
+ const c=normalizeControls({enabled:true,mode:'other',thread:'24V',internet:true,entries:[null]});assert.equal(c.mode,'wired');assert.equal(c.thread,'M30');assert.equal(c.controller,'auto');assert(calculateControls(c,1,'').errors.length);
 });
-test('Przewodowy zestaw nie otrzymuje Wi-Fi RS',()=>assert(calculateControls({...config(),internet:true},4,'').errors.length));
+test('Domyślny dobór bezprzewodowy',()=>assert.equal(defaults().mode,'wireless'));
+test('Do czterech stref automatyczny L-4X bez rozszerzenia',()=>{
+ const r=calculateControls({...config(),mode:'wireless'},4,'');assert.deepEqual(r.rows.map(r=>r[3]),['techL4X','techWireless','techM30']);
+});
+test('Piąta strefa zmienia automatyczny dobór na L-X',()=>{
+ const entries=Array.from({length:5},(_,i)=>({room:'R'+i,zone:'Z'+i,loops:'1'}));
+ const r=calculateControls({...config(),entries},5,'');assert.deepEqual(r.errors,[]);assert.equal(r.rows[0][3],'techLX');assert(!r.rows.some(r=>r[3]==='techML4X'));
+});
+test('L-4X powyżej czterech stref otrzymuje ML-4X',()=>{
+ const entries=Array.from({length:8},(_,i)=>({room:'R'+i,zone:'Z'+i,loops:'1'}));
+ const r=calculateControls({...config(),controller:'l4x',entries},8,'');assert.deepEqual(r.errors,[]);assert.equal(r.rows[0][3],'techL4X');assert.equal(r.rows[1][3],'techML4X');
+});
+test('Żaden wariant nie dolicza osobnego modułu internetowego',()=>{
+ for(const controller of ['auto','l4x','lx'])for(const mode of ['wired','wireless']){
+  const r=calculateControls({...config(),controller,mode,internet:true},4,'');assert.deepEqual(r.errors,[]);assert(!r.rows.some(r=>r[0].includes('Wi-Fi RS')));
+ }
+});
+test('Stary wybór L-8e migruje do nowego doboru bez dopłaty za internet',()=>{
+ const c=normalizeControls({...config(),mode:'wireless',internet:true});assert.equal(c.controller,'auto');assert.equal(c.internet,undefined);assert.equal(calculateControls(c,4,'').rows[0][3],'techL4X');
+});
 console.log(count+' testów zakończonych pomyślnie');
