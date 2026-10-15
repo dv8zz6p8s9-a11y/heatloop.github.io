@@ -9,14 +9,14 @@ export function mountControls(state,onChange){
       const tr=document.createElement('tr');
       for(const [key,label] of [['room','Pomieszczenie'],['zone','Strefa'],['loops','Liczba pętli']]){
         const td=document.createElement('td'),input=document.createElement('input');
-        input.type='text';input.value=entry[key];input.maxLength=key==='loops'?3:80;
+        input.type='text';input.readOnly=!!state.loopPlan?.linked;input.value=entry[key];input.maxLength=key==='loops'?3:80;
         if(key==='loops')input.inputMode='numeric';
         input.setAttribute('aria-label',label+' '+(index+1));
         input.addEventListener('input',()=>{entry[key]=input.value;onChange()});
         td.append(input);tr.append(td);
       }
       const td=document.createElement('td'),button=document.createElement('button');
-      button.type='button';button.textContent='Usuń';button.setAttribute('aria-label','Usuń pomieszczenie '+(index+1));
+      button.type='button';button.disabled=!!state.loopPlan?.linked;button.textContent='Usuń';button.setAttribute('aria-label','Usuń pomieszczenie '+(index+1));
       button.onclick=()=>{state.controls.entries.splice(index,1);table();onChange()};td.append(button);tr.append(td);$('tRooms').append(tr);
     });
   }
@@ -25,6 +25,7 @@ export function mountControls(state,onChange){
       if($(id).type==='checkbox')$(id).checked=state.controls[key];else $(id).value=state.controls[key];
     }
     $('tSettings').hidden=!state.controls.enabled;
+    $('tAdd').disabled=!!state.loopPlan?.linked;$('tFromProject').disabled=!!state.loopPlan?.linked;
     table();
   }
   for(const [id,key] of Object.entries(fields))$(id).addEventListener('change',()=>{

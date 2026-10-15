@@ -16,8 +16,7 @@ wielkości liter, po usunięciu spacji na końcach.
 - Jedna listwa główna i jeden rozdzielacz; do 8 stref. Limit aplikacji to 4 siłowniki na strefę, niezależny od deklarowanych maksymalnych możliwości sprzętu.
 - Starsze konfiguracje migrują do nowego doboru; zapisany wybór dodatkowego Wi-Fi RS jest pomijany. Ceny nowego sprzętu zaczynają się od aktualnego zapisu katalogowego.
 
-Suma pętli musi być zgodna z polem liczby pętli w wycenie. Nie ma automatycznego
-wyznaczania pętli z powierzchni. Zmiana pomieszczeń po imporcie blokuje wycenę do
+Suma pętli musi być zgodna z polem liczby pętli w wycenie. Ręczne przypisania można zastąpić powiązaniem z zakładką „Pętle i rozdzielacz”, która proponuje podział z uwzględnieniem rozstawu i dojść. Po powiązaniu liczby i strefy pochodzą z planu pętli. Zmiana pomieszczeń po imporcie blokuje wycenę do
 ponownego pobrania i sprawdzenia przypisań. Niepoprawna konfiguracja nie może
 zniknąć z oferty po cichu: blokuje wycenę i eksport.
 
