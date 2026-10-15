@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {catalog,defaults,normalizeControls,calculateControls,projectSignature} from '../tech-controls.mjs';
-const config=()=>({...defaults(),enabled:true,entries:[{room:'Salon',zone:'Dzienna',loops:'2'},{room:'Kuchnia',zone:'Dzienna',loops:'1'},{room:'Sypialnia',zone:'Nocna',loops:'1'}]});
+const config=()=>({...defaults(),mode:'wired',enabled:true,entries:[{room:'Salon',zone:'Dzienna',loops:'2'},{room:'Kuchnia',zone:'Dzienna',loops:'1'},{room:'Sypialnia',zone:'Nocna',loops:'1'}]});
 let count=0;
 function test(name,fn){fn();count++;console.log('OK:',name)}
 test('Opcja wyłączona nie dodaje produktów',()=>assert.equal(calculateControls(defaults(),8,'').rows.length,0));
