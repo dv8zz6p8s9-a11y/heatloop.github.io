@@ -23,3 +23,6 @@ W wycenie dostępny jest dobór L-4X Wi-Fi / L-X Wi-Fi, regulatorów i siłownik
 
 ## Pętle i rozdzielacz R1
 Nowa zakładka proponuje podział na pętle z dojściami i przepływami, pozwala oznaczyć R1 i narysować przypisane trasy. Plan można połączyć z wyceną, ofertą i sterowaniem TECH. Instrukcja, wzory i ograniczenia: [PETLE_I_ROZDZIELACZ.md](PETLE_I_ROZDZIELACZ.md). Testy: `npm ci` oraz `npm test` w tym katalogu.
+
+## Kotłownia
+Nowa zakładka obejmuje źródła ciepła, wstępny zakres wyposażenia, CWU, naczynia i grupy bezpieczeństwa oraz mapę funkcjonalną. Zapotrzebowanie domu i wariant z zapasem 15% są rozdzielone. Szczegóły i ograniczenia: [KOTLOWNIA.md](KOTLOWNIA.md).

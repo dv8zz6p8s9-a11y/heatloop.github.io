@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/calculations.test.cjs && node tests/tech-controls.test.mjs && node tests/floor-loops.test.mjs && node tests/project-dom.test.mjs"
+    "test": "node tests/calculations.test.cjs && node tests/tech-controls.test.mjs && node tests/floor-loops.test.mjs && node tests/boiler-room.test.mjs && node tests/project-dom.test.mjs"
   },
   "devDependencies": {
     "jsdom": "30.1.3"
