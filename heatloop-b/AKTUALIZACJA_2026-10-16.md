@@ -72,3 +72,10 @@ Status: przygotowane do wspólnego wdrożenia, bez publikacji produkcyjnej na ty
 - Opcjonalny serwer AI wybiera wyłącznie ID zatwierdzonego tematu. Wymaga osobnego hostingu HTTPS, sekretu API, wyboru modelu i kontroli kosztów. `help/config.mjs` pozostaje z `aiEndpoint=null`.
 - Przed publikacją sprawdź widok mobilny i działanie z klawiaturą. AI nie aktywować do czasu konfiguracji limitów i informacji o przetwarzaniu pytań.
 - Wiedzę aktualizuj wraz ze zmianami funkcji; wersja klienta i serwera musi się zgadzać. Rozmowy nie zmieniają wiedzy automatycznie.
+
+
+### Dopracowanie asystenta po audycie zakresu (16.10, przed publikacją)
+
+Baza `2026-10-16.2`: 33 tematy, ostrożne dopasowanie pytań zamiast fragmentów słów, dopytywanie, krótki kontekst oparty na ID tematów, czyszczenie przy zmianie modułu. Rozdzielono dodawanie rozdzielacza w planie i w wycenie. Dodano obsługę instrukcji VAT, usuwania/ograniczeń edycji pokoju, telefonu, offline, błędów JSON i własnych cen.
+
+Weryfikacja: 100/100 scenariuszy pytań oraz 27 dodatkowych testów — 127/127; cały zestaw BETA także przeszedł. Raport: `help/TEST_REPORT_2026-10-16.md`. AI nadal wyłączone. Kontrola na rzeczywistym telefonie pozostaje do wykonania przed publikacją; wynik testów nie stanowi gwarancji dla dowolnego pytania.

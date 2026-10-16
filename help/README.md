@@ -12,7 +12,7 @@ Status: gotowy tryb pomocy z zatwierdzonej instrukcji; opcjonalne dopasowanie py
 
 ## Aktualizacja wiedzy
 
-Przy zmianie funkcji aktualizuj odpowiednie artykuły w `knowledge.mjs`, instrukcję oraz testy. Zwiększ `knowledgeVersion`. Publikuj pliki `help/` jednocześnie z aplikacją i tym samym serwerem. Serwer odrzuca inną wersję wiedzy; klient wraca do swojej lokalnej instrukcji. Nie ma samoczynnego uczenia na rozmowach ani automatycznego zgadywania zmian z kodu. Pierwsze wydanie zawiera 26 tematów; nie pokrywa wszystkich możliwych błędów.
+Przy zmianie funkcji aktualizuj odpowiednie artykuły w `knowledge.mjs`, instrukcję oraz testy. Zwiększ `knowledgeVersion`. Publikuj pliki `help/` jednocześnie z aplikacją i tym samym serwerem. Serwer odrzuca inną wersję wiedzy; klient wraca do swojej lokalnej instrukcji. Nie ma samoczynnego uczenia na rozmowach ani automatycznego zgadywania zmian z kodu. Baza zawiera 33 tematy; nie pokrywa wszystkich możliwych błędów.
 
 Rodziny producentów, gazowe pakiety CWU oraz katalog hydrauliki są oznaczone jako przygotowywane. Po faktycznej publikacji usuń te oznaczenia i uzupełnij zrzuty; sprawdź wersję użytkownika.
 
@@ -46,4 +46,16 @@ Sprawdź także na Androidzie i Safari/iPhone: otwieranie/zamykanie, klawiaturę
 
 ## Wynik przygotowania 16.10.2026
 
-20 testów asystenta przeszło: zakres, dopasowanie tematów, bezpieczne renderowanie, brak sieci domyślnie, kontekst modułu, czyszczenie rozmowy, opcjonalna zgoda AI, brak danych projektu w żądaniu, limity, wersje i powrót do instrukcji po błędzie. Pełne testy obliczeń i DOM aplikacji również przeszły. Nowe pliki pomocy zajmują około 45 KB (bez istniejącej instrukcji i zrzutów). Kontrola wizualna na telefonie oraz rzeczywiste połączenie z dostawcą AI pozostają do wykonania.
+Pierwotne 20 testów asystenta obejmowało: zakres, dopasowanie tematów, bezpieczne renderowanie, brak sieci domyślnie, kontekst modułu, czyszczenie rozmowy, opcjonalna zgoda AI, brak danych projektu w żądaniu, limity, wersje i powrót do instrukcji po błędzie. Pełne testy obliczeń i DOM aplikacji również przeszły. Nowe pliki pomocy zajmują około 45 KB (bez istniejącej instrukcji i zrzutów). Kontrola wizualna na telefonie oraz rzeczywiste połączenie z dostawcą AI pozostają do wykonania.
+
+## Dopracowanie 16.10.2026 — baza 2026-10-16.2
+
+Zastąpiono dopasowanie dowolnych fragmentów słów konserwatywnym rozpoznawaniem pojęć i działania. Krótkie, niejasne pytania wywołują doprecyzowanie. Dla rozdzielaczy rozróżniamy plan i wycenę. Literówki są tolerowane tylko w dłuższych nazwach funkcji, aby nie rozszerzać przypadkowo zakresu.
+
+Kontekst rozmowy przechowuje w pamięci karty wyłącznie ID ostatniego artykułu i ID proponowanych odpowiedzi. Pozwala powtórzyć wskazówki („gdzie to znajdę?”) oraz wybrać opcję numerem lub nazwą obszaru. Nie jest to dowolne rozumienie wieloetapowej rozmowy. Wyczyść, zmiana obszaru i odświeżenie usuwają kontekst. Wybór tematu przerywa oczekującą odpowiedź sieciową.
+
+Dodano instrukcje usuwania i ograniczeń edycji pomieszczeń, VAT, telefonu, ograniczeń offline, błędów JSON i własnych cen. Treści sprawdzono z kodem, bez obiecywania funkcji edycji lub synchronizacji, których nie ma.
+
+Niejasne pytania wymagają odpowiedzi użytkownika i nie są rozstrzygane automatycznie przez opcjonalne AI. Pytania spoza rozpoznanego zakresu i instrukcje manipulowania botem są obsługiwane lokalnie. Serwer i przeglądarka sprawdzają, czy zwrócony temat zgadza się z bieżącą decyzją silnika. Klucz i produkcyjne AI pozostają wyłączone.
+
+Weryfikacja: 100 opisanych scenariuszy pytań oraz 27 dodatkowych testów silnika, okna pomocy i serwera — 127/127 zaliczonych. Pełny zestaw testów BETA zaliczony. Szczegóły i wszystkie scenariusze: `TEST_REPORT_2026-10-16.md`. Wynik nie oznacza gwarancji poprawności dla dowolnego pytania. Kontrola wizualna iPhone/Android oraz rzeczywiste wywołania modelu AI pozostają poza tą weryfikacją.
