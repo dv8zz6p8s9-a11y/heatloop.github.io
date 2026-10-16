@@ -1,4 +1,4 @@
-import {projectSignature} from './tech-controls.mjs?v=20261016-2';
+import {projectSignature} from './tech-controls.mjs?v=20261016-3';
 
 export function mountControls(state,onChange){
   const $=id=>document.getElementById(id);

@@ -1,4 +1,4 @@
-import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel} from './floor-loops.mjs?v=20261016-2';
+import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel} from './floor-loops.mjs?v=20261016-3';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
