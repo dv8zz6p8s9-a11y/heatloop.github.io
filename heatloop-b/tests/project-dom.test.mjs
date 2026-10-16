@@ -93,4 +93,19 @@ $('save').click();const manual=JSON.parse(await w.lastBlob.text());await load(ma
 change('tEnabled',true);assert($('qExport').disabled);assert($('tStatus').textContent.includes('Przy kilku rozdzielaczach'));change('tEnabled',false);assert(!$('qExport').disabled);
 $('qManifoldList').querySelector('button[aria-label="Usuń rozdzielacz i szafkę R2"]').click();assert.equal($('qLoops').value,'7');assert(!$('qLoops').readOnly);assert(!quoteRow('Szafka R2'));assert.equal(quoteRow('Zawory odcinające').cells[1].textContent,'2,00');
 await load({version:1,rooms:[{name:'Mokra',area:30,load:60,spacing:15,heatingType:'wet'},{name:'Frezowana',area:15,load:50,spacing:15,heatingType:'milled'}],polygons:[],pipes:[],scale:null});$('qFromProject').click();assert.equal($('qFloorArea').value,'45');assert.equal($('qMilledArea').value,'15');$('pGenerate').click();change('pLinked',true);assert($('qAddManifold').disabled);assert.equal($('qMilledArea').value,'15');change('pLinked',false);assert.equal($('qLoops').value,'6');assert.equal($('qManifoldList').querySelector('input').value,'6');assert(!$('qAddManifold').disabled);
-assert.deepEqual(runtimeErrors,[]);console.log('PASS DOM: direct 7+7 manifolds and cabinets, separate milling labor, installer price edit, area validation, JSON/CSV/offer and linked-plan transition');w.close();
+assert.deepEqual(runtimeErrors,[]);console.log('PASS DOM: direct 7+7 manifolds and cabinets, separate milling labor, installer price edit, area validation, JSON/CSV/offer and linked-plan transition');
+// Catalogue selection, gas CWU variants, own brands and persistence in the real form.
+await load({version:1,rooms:[{name:'Dom',area:100,load:80,spacing:15,heatingType:'wet'}],polygons:[],pipes:[],scale:null});
+w.document.querySelector('[data-source="pellet"]').click();change('bBrand','sas');assert.equal($('bCatalogModel').options.length,9);
+change('bCatalogModel','BIO EFEKT PLUS');assert($('bModel').closest('label').hidden);assert($('bItems').textContent.includes('SAS BIO EFEKT PLUS'));
+change('bCwu','none');change('bSolidClosed',true);change('bRated','17');change('bLinked',true);assert(w.testOffer().includes('SAS BIO EFEKT PLUS'));
+$('save').click();const sasSaved=JSON.parse(await w.lastBlob.text());await load(sasSaved);assert.equal($('bBrand').value,'sas');assert.equal($('bCatalogModel').value,'BIO EFEKT PLUS');assert.equal($('bRated').value,'17');
+$('bExport').click();assert((await w.lastBlob.text()).includes('SAS BIO EFEKT PLUS'));
+w.document.querySelector('[data-source="combo"]').click();assert.equal($('bModel').value,'');change('bBrand','sas');assert.equal($('bCatalogModel').options.length,2);change('bCatalogModel','BIO GREEN PLUS');assert($('bItems').textContent.includes('SAS BIO GREEN PLUS'));
+w.document.querySelector('[data-source="gas"]').click();assert.equal($('bBrand').options.length,6);assert($('bCwu').disabled);
+change('bBrand','de-dietrich');change('bModel','MCR');change('bGasKind','storage');change('bTank','150');assert($('bItems').textContent.includes('Zasobnik ciepłej wody'));assert(w.testOffer().includes('De Dietrich MCR'));
+change('bGasKind','heating');assert.equal($('bCwu').value,'none');assert(!$('bItems').textContent.includes('Zasobnik ciepłej wody'));
+change('bGasKind','combi');assert.equal($('bCwu').value,'instant');assert(!$('bItems').textContent.includes('Zasobnik ciepłej wody'));assert(w.testOffer().includes('Dwufunkcyjny'));
+change('bBrand','other');change('bModel','Własny producent i model');assert(w.testOffer().includes('Własny producent i model'));
+$('save').click();const gasSaved=JSON.parse(await w.lastBlob.text());await load(gasSaved);assert.equal($('bGasKind').value,'combi');assert.equal($('bBrand').value,'other');assert.equal($('bModel').value,'Własny producent i model');assert.equal($('bCwu').value,'instant');
+assert.deepEqual(runtimeErrors,[]);console.log('PASS DOM: SAS models, gas brands and variants, CWU equipment, custom names, offer/CSV and JSON round trip');w.close();

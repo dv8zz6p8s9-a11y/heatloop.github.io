@@ -1,3 +1,4 @@
+import {modelsFor,deviceName,setGasKind} from '../boiler-catalog.mjs';
 import assert from 'node:assert/strict';
 import {boilerDefaults,normalizeBoiler,analyzeBoiler,boilerQuoteRows,projectDemand} from '../boiler-room.mjs';
 const fixture=()=>({rooms:[{name:'Podłoga',area:100,load:50,spacing:15,heatingType:'wet'},{name:'Grzejniki',area:50,load:60,spacing:15,heatingType:'radiators'}],polygons:[],boiler:{...boilerDefaults(),source:'gas',cwu:'none'}});
@@ -32,4 +33,25 @@ test('Starsze projekty mają kotłownię niepowiązaną',()=>assert.deepEqual(no
 test('Konfiguracja kotłowni przechodzi zapis i odczyt',()=>{const s=fixture();s.boiler.included.bPrimaryPump=1;assert.deepEqual(normalizeBoiler(JSON.parse(JSON.stringify(s.boiler))),s.boiler)});
 test('Metry wyposażenia już w zestawie mogą być ułamkowe',()=>{const s=fixture();s.boiler.pipeMeters='12,5';s.boiler.included.bPipes=2.5;const r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert.equal(r.items.find(i=>i.key==='bPipes').buy,10)});
 test('Podana pojemność naczynia nie może być zerowa',()=>{const s=fixture();s.boiler.coVessel='0';assert(analyzeBoiler(s).errors.length)});
+
+test('Warianty gazowe doliczają zasobnik tylko dla kotła z zasobnikiem',()=>{
+ const s=fixture();s.boiler.tank='150';
+ for(const [kind,cwu,tank] of [['storage','storage',true],['heating','none',false],['combi','instant',false]]){
+  setGasKind(s.boiler,kind);const r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert.equal(s.boiler.cwu,cwu);assert.equal(r.items.some(i=>i.key==='bCwuTank'),tank);assert(r.items.find(i=>i.key==='bGasSource').name.includes(kind==='combi'?'Dwufunkcyjny':'Jednofunkcyjny'));
+ }
+ s.boiler.cwu='storage';assert(analyzeBoiler(s).errors.some(e=>e.includes('Wariant kotła')));
+});
+test('Starszy projekt zachowuje nazwę kotła i konfigurację CWU',()=>{
+ for(const cwu of ['none','storage','instant']){const b=normalizeBoiler({source:'gas',model:'Mój stary kocioł',cwu,tank:'120'});const s=fixture();s.boiler=b;assert.deepEqual(analyzeBoiler(s).errors,[]);assert(analyzeBoiler(s).items[0].name.includes('Mój stary kocioł'));}
+});
+test('Katalog SAS oddziela paliwa i zachowuje model w eksporcie',()=>{
+ assert.equal(modelsFor('coal','sas').length,5);assert.equal(modelsFor('pellet','sas').length,8);assert.equal(modelsFor('combo','sas')[0].name,'SAS BIO GREEN PLUS');
+ const s=fixture();Object.assign(s.boiler,{source:'combo',brand:'sas',catalogModel:'BIO GREEN PLUS',model:'SAS BIO GREEN PLUS',solidClosed:true});
+ assert(boilerQuoteRows(analyzeBoiler(s)).some(r=>r[0].includes('SAS BIO GREEN PLUS')));assert.deepEqual(normalizeBoiler(JSON.parse(JSON.stringify(s.boiler))),s.boiler);
+ s.boiler.catalogModel='EFEKT';assert(analyzeBoiler(s).errors.some(e=>e.includes('model')));
+});
+test('Marka gazowa i własna nazwa trafiają do zestawienia bez powielania',()=>{
+ const b={source:'gas',brand:'immergas',model:'VICTRIX'};assert.equal(deviceName(b),'Immergas VICTRIX');b.model='Immergas VICTRIX';assert.equal(deviceName(b),b.model);b.brand='other';b.model='Moja marka / model';assert.equal(deviceName(b),b.model);
+});
+test('Nieprawidłowy import katalogu zwraca błędy bez awarii',()=>{const s=fixture();Object.assign(s.boiler,{source:'constructor',brand:'sas',catalogModel:'EFEKT'});assert(analyzeBoiler(s).errors.length);s.boiler={...fixture().boiler,brand:'constructor'};assert(analyzeBoiler(s).errors.length)});
 console.log(count+' testów zakończonych pomyślnie');

@@ -1,18 +1,20 @@
+import {brandsFor,modelsFor,gasKinds,gasKindFor,deviceName} from './boiler-catalog.mjs';
 // Preliminary equipment scope. No certified device catalogue or safety sizing.
 export const sources={gas:'Kocioł gazowy kondensacyjny',coal:'Kocioł na ekogroszek',pellet:'Kocioł na pellet',combo:'Pellet + zgazowanie drewna',wood:'Kocioł zgazowujący drewno',heatpump:'Pompa ciepła',hybrid:'Pompa ciepła + kocioł gazowy'};
 export const topologies={direct:'Układ bezpośredni',separator:'Sprzęgło hydrauliczne',distribution:'Sprzęgłorozdzielacz',buffer:'Bufor ciepła',exchanger:'Wymiennik rozdzielający obiegi'};
 export const boilerKeys=['bGasSource','bCoalSource','bPelletSource','bComboSource','bWoodSource','bHpSource','bGasFlue','bSolidFlue','bGasConnection','bCondensate','bHpBase','bHpDrain','bHpProtection','bHpElectric','bSeparator','bDistribution','bBuffer','bExchanger','bPrimaryPump','bMixGroup','bDirectGroup','bReturnProtection','bThermalProtection','bCoVessel','bCoSafety','bOpenVessel','bOpenSafety','bCwuTank','bCwuVessel','bCwuSafety','bDhwLoad','bDhwMix','bCirculation','bMagnet','bAir','bValves','bFilling','bPipes','bInsulation','bFittings','bMount','bElectrical'];
-export const boilerDefaults=()=>({source:'',hpKind:'air',basis:'project',ozc:'',margin:'15',locality:'',outdoor:'-20',model:'',rated:'',minimum:'',sourceT:'55',floorT:'35',radT:'55',dt:'10',floorGroups:'',radGroups:'',topology:'direct',system:'closed',solidClosed:false,cwu:'storage',tank:'',cold:'10',storage:'55',reheat:'60',circulation:false,antiScald:true,dhwLoad:'valve',flue:'existing',flueLength:'0',buffer:'',coVessel:'',cwuVessel:'',requiredFlow:'',availableFlow:'',requiredVolume:'',activeVolume:'',pipeMeters:'0',included:{},linked:false});
+export const boilerDefaults=()=>({source:'',hpKind:'air',basis:'project',ozc:'',margin:'15',locality:'',outdoor:'-20',brand:'',catalogModel:'',gasKind:'',model:'',rated:'',minimum:'',sourceT:'55',floorT:'35',radT:'55',dt:'10',floorGroups:'',radGroups:'',topology:'direct',system:'closed',solidClosed:false,cwu:'storage',tank:'',cold:'10',storage:'55',reheat:'60',circulation:false,antiScald:true,dhwLoad:'valve',flue:'existing',flueLength:'0',buffer:'',coVessel:'',cwuVessel:'',requiredFlow:'',availableFlow:'',requiredVolume:'',activeVolume:'',pipeMeters:'0',included:{},linked:false});
 export function bNumber(v){const s=String(v??'').trim().replace(',','.');return /^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)?Number(s):NaN;}
 export const isSolid=s=>['coal','pellet','combo','wood'].includes(s);
 export const isHp=s=>['heatpump','hybrid'].includes(s);
 export function normalizeBoiler(raw){
  const b=boilerDefaults();if(!raw||typeof raw!=='object')return b;
  for(const k of Object.keys(b)){
-  if(typeof b[k]==='string'&&typeof raw[k]==='string')b[k]=raw[k].slice(0,k==='model'||k==='locality'?120:30);
+  if(typeof b[k]==='string'&&typeof raw[k]==='string')b[k]=raw[k].slice(0,['model','locality','catalogModel'].includes(k)?120:30);
   if(typeof b[k]==='boolean')b[k]=raw[k]===true;
  }
  for(const k of boilerKeys){const value=raw.included?.[k];if(Number.isFinite(value)&&value>=0&&value<=1000)b.included[k]=value;}
+ if(b.catalogModel&&!modelsFor(b.source,b.brand).some(m=>m.id===b.catalogModel)){b.catalogModel='';b.brand='other';}
  return b;
 }
 export function projectDemand(state){
@@ -25,6 +27,13 @@ export function analyzeBoiler(state){
  const number=k=>bNumber(b[k]),optional=k=>String(b[k]).trim()===''?null:number(k);
  const check=(k,min,max,label)=>{const n=number(k);if(!(Number.isFinite(n)&&n>=min&&n<=max))errors.push(label);return n;};
  if(!Object.hasOwn(sources,b.source))errors.push('Wybierz źródło ciepła.');
+ if(b.brand&&!['other',...Object.keys(brandsFor(b.source))].includes(b.brand))errors.push('Wybierz producenta dla wybranego paliwa.');
+ if(b.catalogModel&&!modelsFor(b.source,b.brand).some(m=>m.id===b.catalogModel))errors.push('Wybierz model dla wybranego producenta i paliwa.');
+ if(b.source==='gas'){
+  const kind=gasKindFor(b);
+  if(!Object.hasOwn(gasKinds,kind))errors.push('Wybierz wariant kotła gazowego.');
+  if(({storage:'storage',heating:'none',combi:'instant'})[kind]!==b.cwu)errors.push('Wariant kotła gazowego nie odpowiada przygotowaniu CWU.');
+ }
  if(!['air','ground'].includes(b.hpKind))errors.push('Wybierz rodzaj pompy ciepła.');
  if(!['project','ozc'].includes(b.basis))errors.push('Wybierz podstawę zapotrzebowania na moc.');
  const base=b.basis==='ozc'?check('ozc',.1,1000,'Podaj moc z OZC od 0,1 do 1000 kW.'):demand.totalKW;
@@ -86,8 +95,8 @@ export function analyzeBoiler(state){
   const included=b.included[key]||0;if(!Number.isFinite(included)||included<0||included>qty||(unit!=='m'&&!Number.isInteger(included)))errors.push('Liczba elementów już w zestawie przekracza ilość: '+name+'.');
   items.push({key,name,qty,unit,included,buy:Math.max(0,qty-included)});
  };
- const model=b.model.trim()?' — '+b.model.trim():' — model do doboru';
- if(b.source==='gas'||b.source==='hybrid'){add('bGasSource','Kocioł gazowy'+model);add('bGasFlue','System powietrzno-spalinowy — wg DTR',flueLength||1,flueLength?'m':'kpl.');add('bGasConnection','Armatura przyłącza gazu — wg projektu');add('bCondensate','Odprowadzenie kondensatu; neutralizacja jeśli wymagana');}
+ const name=deviceName(b),model=name?' — '+name:' — model do doboru';
+ if(b.source==='gas'||b.source==='hybrid'){add('bGasSource','Kocioł gazowy'+(b.source==='gas'?' '+gasKinds[gasKindFor(b)]:'')+model);add('bGasFlue','System powietrzno-spalinowy — wg DTR',flueLength||1,flueLength?'m':'kpl.');add('bGasConnection','Armatura przyłącza gazu — wg projektu');add('bCondensate','Odprowadzenie kondensatu; neutralizacja jeśli wymagana');}
  if(isSolid(b.source)){
   add({coal:'bCoalSource',pellet:'bPelletSource',combo:'bComboSource',wood:'bWoodSource'}[b.source],sources[b.source]+model);
   add('bSolidFlue',({existing:'Ocena i przyłączenie istniejącego komina',liner:'Wkład kominowy stalowy',insulated:'Komin stalowy dwuścienny izolowany',ceramic:'Komin systemowy ceramiczny'}[b.flue]||'System spalinowy')+' — wg DTR',b.flue==='existing'?1:flueLength||1,b.flue==='existing'||!flueLength?'kpl.':'m');

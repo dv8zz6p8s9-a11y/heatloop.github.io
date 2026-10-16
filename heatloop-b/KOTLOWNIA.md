@@ -97,3 +97,14 @@ grafikę SVG, źródła, zapotrzebowanie, ceny, wyposażenie wbudowane, zapis/od
 CSV, ofertę HTML, hydraulikę stref i OZC. Uruchom `npm ci` oraz `npm test` w heatloop-b.
 
 Sprawdzono też działanie w Chromium przy szerokościach 1440 i 390 px: wybór pompy, OZC, CWU, bufor, przeliczenia, schemat SVG i połączenie z wyceną. Bez błędów JavaScript i bez wyjścia strony poza szerokość ekranu; tabela wyposażenia przewija się we własnym obszarze. Obejrzano zrzuty obu układów. Test nie zastępuje sprawdzenia Safari na rzeczywistym iPhonie; renderowanie końcowego PDF pozostaje do sprawdzenia.
+
+
+## Wybór producenta i modelu — 16.10.2026
+
+Dodano listy rodzin SAS: EFEKT, SPARK, COMPACT, SOLID i SOLID (DM) dla groszku; MINI ECO PLUS, BIO COMPACT, BIO COMPACT PLUS, BIO EFEKT, BIO EFEKT PLUS, BIO SPARK, BIO SOLID i BIO SOLID (DM) dla pelletu; BIO GREEN PLUS dla pelletu i zgazowania drewna. Dla drewna dostępne są GREEN PLUS i VARMO PLUS.
+
+Źródło nazw: https://www.sas.busko.pl/pl/produkty — sprawdzono 16.10.2026. Są to rodziny modeli, bez automatycznego doboru wersji mocy, cen ani wyposażenia wbudowanego.
+
+Gaz: De Dietrich, Immergas, Bosch, Viessmann i „Inny — wpisz własną nazwę”. Model gazowy wpisuje instalator. Warianty: jednofunkcyjny z osobnym zasobnikiem (CWU zasobnikowe), jednofunkcyjny tylko CO (bez CWU), dwufunkcyjny (CWU przepływowe). Tylko pierwszy wariant dodaje zasobnik i jego osprzęt do zestawienia.
+
+Wybór producenta i modelu oraz wariantu gazowego zapisuje się w projekcie JSON. Nazwa trafia do wyceny, oferty i CSV. Stare projekty zachowują ręczną nazwę i ustawienie CWU. Zmiana producenta lub rodziny kotła czyści model, moce i odliczenia wyposażenia wbudowanego, które wymagają ponownego sprawdzenia. Ceny netto pozostają wpisywane przez instalatora.
