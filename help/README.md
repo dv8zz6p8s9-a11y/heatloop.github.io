@@ -59,3 +59,16 @@ Dodano instrukcje usuwania i ograniczeń edycji pomieszczeń, VAT, telefonu, ogr
 Niejasne pytania wymagają odpowiedzi użytkownika i nie są rozstrzygane automatycznie przez opcjonalne AI. Pytania spoza rozpoznanego zakresu i instrukcje manipulowania botem są obsługiwane lokalnie. Serwer i przeglądarka sprawdzają, czy zwrócony temat zgadza się z bieżącą decyzją silnika. Klucz i produkcyjne AI pozostają wyłączone.
 
 Weryfikacja: 100 opisanych scenariuszy pytań oraz 27 dodatkowych testów silnika, okna pomocy i serwera — 127/127 zaliczonych. Pełny zestaw testów BETA zaliczony. Szczegóły i wszystkie scenariusze: `TEST_REPORT_2026-10-16.md`. Wynik nie oznacza gwarancji poprawności dla dowolnego pytania. Kontrola wizualna iPhone/Android oraz rzeczywiste wywołania modelu AI pozostają poza tą weryfikacją.
+
+
+## Testy skrajne i uwagi — baza 2026-10-16.3
+
+Dodano osobne rozpoznawanie uwag/propozycji, podziękowań, pytań o możliwości bota, czyszczenia kontekstu oraz obelg bez pytania. Wulgaryzm towarzyszący prawidłowemu pytaniu nie blokuje instrukcji. Sugestia nie jest udawanym zgłoszeniem: użytkownik dostaje wyraźną informację i drogę do formularza.
+
+Zaprzeczenia z „tylko” kierują do potwierdzonej czynności. Pytania o kilka niezależnych działań wymagają wyboru pierwszego tematu. Wybór opcji rozumie numer, nazwę obszaru i zwroty typu „druga opcja”. To nadal ograniczony mechanizm instrukcji, nie ogólne rozumienie języka.
+
+Rozpoznawane adresy e-mail i długie numery są zatrzymywane w przeglądarce przed wywołaniem serwera AI; ten sam filtr jest na serwerze, także dla części zapisów Unicode. Nie jest to kompletne wykrywanie danych osobowych. Pytań nie wolno traktować jako miejsca na dane klientów.
+
+Okno zachowuje do 60 ostatnich elementów rozmowy w pamięci karty. Zbyt długie wejście nie jest w całości kopiowane do logu. Nieprawidłowe żądania JSON i konteksty serwera nie powodują przerwania obsługi.
+
+Wynik rozszerzenia: 279/279 testów runnera. Obejmują co najmniej 10 064 próby wejść i kontekstów, w tym 5000 testów losowych dotyczących odporności, a nie jakości rozumienia. Dokładny podział, ograniczenia i polecenia: `EXTREME_TEST_REPORT_2026-10-16.md`. Cały zestaw BETA także przeszedł. Wszystko pozostaje robocze; płatne AI wyłączone.

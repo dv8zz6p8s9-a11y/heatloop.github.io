@@ -1,4 +1,5 @@
 import {answer,getArticle,modules,knowledgeVersion} from '../engine.mjs';
+import {hasSensitiveData} from '../policy.mjs';
 const json=(data,status=200,origin='')=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Vary':'Origin',...(origin?{'Access-Control-Allow-Origin':origin}:{})}});
 // AI only selects an approved article ID. No generated answer is displayed.
 export function createHandler({env={},fetcher=fetch,budget={take:()=>false},now=Date.now}={}){
@@ -11,10 +12,11 @@ export function createHandler({env={},fetcher=fetch,budget={take:()=>false},now=
   const v=clients.get(ip)||{start:t,count:0};if(v.count>=20||(!clients.has(ip)&&clients.size>=5000))return json({kind:'rate'},429,origin);v.count++;clients.set(ip,v);
   if(!request.headers.get('Content-Type')?.startsWith('application/json'))return json({kind:'invalid'},415,origin);
   let data;try{const text=await request.text();if(text.length>4096)return json({kind:'invalid'},413,origin);data=JSON.parse(text);}catch{return json({kind:'invalid'},400,origin);}
+  if(!data||typeof data!=='object'||Array.isArray(data))return json({kind:'invalid'},400,origin);
   if(typeof data.question!=='string'||!data.question.trim()||data.question.length>600||!modules.has(data.module))return json({kind:'invalid'},400,origin);
   if(data.knowledgeVersion!==knowledgeVersion)return json({kind:'version'},409,origin);
-  const q=data.question.trim();if(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(q)||/(?:\+?\d[\s-]*){9,}/.test(q))return json({kind:'privacy'},400,origin);
-  const context=data.context||{};if(typeof context!=='object'||Array.isArray(context)||(context.lastArticleId!=null&&!getArticle(context.lastArticleId))||(context.pendingIds!==undefined&&(!Array.isArray(context.pendingIds)||context.pendingIds.length>4||context.pendingIds.some(id=>!getArticle(id)))))return json({kind:'invalid'},400,origin);
+  const q=data.question.trim();if(hasSensitiveData(q))return json({kind:'privacy'},400,origin);
+  const context=data.context==null?{}:data.context;if(typeof context!=='object'||Array.isArray(context)||(context.lastArticleId!=null&&!getArticle(context.lastArticleId))||(context.pendingIds!==undefined&&(!Array.isArray(context.pendingIds)||context.pendingIds.length>4||context.pendingIds.some(id=>!getArticle(id)))))return json({kind:'invalid'},400,origin);
   const local=answer(q,data.module,context);const fallback={kind:'local',articleId:local.article?.id||null,knowledgeVersion};
   // Unknown or ambiguous questions never reach AI; clarification is left to the user.
   if(local.kind!=='answer')return json({kind:'unknown',articleId:null,knowledgeVersion},200,origin);

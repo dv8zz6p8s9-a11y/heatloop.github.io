@@ -79,3 +79,10 @@ Status: przygotowane do wspólnego wdrożenia, bez publikacji produkcyjnej na ty
 Baza `2026-10-16.2`: 33 tematy, ostrożne dopasowanie pytań zamiast fragmentów słów, dopytywanie, krótki kontekst oparty na ID tematów, czyszczenie przy zmianie modułu. Rozdzielono dodawanie rozdzielacza w planie i w wycenie. Dodano obsługę instrukcji VAT, usuwania/ograniczeń edycji pokoju, telefonu, offline, błędów JSON i własnych cen.
 
 Weryfikacja: 100/100 scenariuszy pytań oraz 27 dodatkowych testów — 127/127; cały zestaw BETA także przeszedł. Raport: `help/TEST_REPORT_2026-10-16.md`. AI nadal wyłączone. Kontrola na rzeczywistym telefonie pozostaje do wykonania przed publikacją; wynik testów nie stanowi gwarancji dla dowolnego pytania.
+
+
+### Rozszerzone testy skrajne asystenta — baza 2026-10-16.3
+
+Dodano obsługę sugestii i uwag bez deklarowania wysyłki, spokojne reakcje na same obelgi, zachowanie pomocy przy wulgarnym pytaniu, zaprzeczenia, kilka intencji, wybór opcji i słowne czyszczenie kontekstu. Doprecyzowano zakres, R1–R10, brak działań za użytkownika i brak obliczeń w bocie. Dane rozpoznawane jako e-mail/długi numer nie wychodzą do AI. Ograniczono rozmiar historii okna, poprawiono obsługę wadliwych żądań serwera.
+
+279/279 testów asystenta; co najmniej 10 064 próby wejść/kontekstów, w tym 5000 deterministycznych prób losowych. Pełny zestaw BETA także zaliczony. Raport: `help/EXTREME_TEST_REPORT_2026-10-16.md`. Testy nie obejmują wszystkich możliwych zdań, prawdziwych wywołań modelu ani rzeczywistego telefonu. Brak publikacji i aktywacji AI.

@@ -1,7 +1,9 @@
 import {articles,knowledgeVersion,applicationVersion} from './knowledge.mjs';
 export {knowledgeVersion,applicationVersion};
 export const modules=new Set(['home','manual','drawing','loops','boiler','quote','radiators']);
-export const normalise=s=>String(s).toLowerCase().replace(/δ/g,'delta ').normalize('NFKD').replace(/[\u0300-\u036f\u200b-\u200f\ufeff]/g,'').replace(/ł/g,'l').replace(/[^a-z0-9%/]+/g,' ').replace(/\s+/g,' ').trim();
+import {normalise} from './language.mjs';
+import {inputPolicy,hasAbuse} from './policy.mjs';
+export {normalise};
 export const getArticle=id=>articles.find(a=>a.id===id);
 export const topics=module=>articles.filter(a=>a.module===module).slice(0,6);
 const unknown=()=>({kind:'unknown',message:'Pomagam wyłącznie w obsłudze HeatLoop. Nie mam potwierdzonej odpowiedzi na to pytanie. Napisz, na którym ekranie jesteś i co chcesz zrobić, albo wybierz temat.'});
@@ -36,13 +38,8 @@ const vocab={
 };
 const fuzzy=new Set(['room','manifold','loop','drawing','radiator','boiler','mill','floor','control','hydraulic','safety','cwu']);
 function distance(a,b){const row=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){let prev=row[0];row[0]=i;for(let j=1;j<=b.length;j++){const old=row[j];row[j]=Math.min(row[j]+1,row[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=old;}}return row[b.length];}
-function concepts(q){const words=q.split(' ');return Object.fromEntries(Object.entries(vocab).map(([key,terms])=>[key,words.some(w=>terms.some(t=>w===t||(fuzzy.has(key)&&w.length>=6&&t.length>=6&&distance(w,t)<=1)))]));}
-function boundary(q){
- if(/\b(ignore|ignoruj|zignoruj|pomin|omin|zapomnij|ujawnij|system prompt|developer message|jailbreak)\b/.test(q))return {kind:'refused',message:'Nie zmieniam zasad pomocy ani nie ujawniam sekretów. Mogę wyjaśnić obsługę HeatLoop.'};
- if(/\b(pogod\w*|obiad\w*|gotowa\w*|przepis\w*|wakac\w*|telefon\w* kup\w*|kup\w* telefon\w*|polityk\w*|wybor\w* prezydent\w*|kryptowalut\w*|bitcoin|rozwod\w*|komornik\w*|lekar\w*|diagnoz\w*|seks\w*|film\w*|piosenk\w*|wiersz\w*|zart\w*|dowcip\w*|kolegi|kolezanki|haslo|hasla|token|klucz api|html|javascript|python)\b/.test(q))return unknown();
- if(/\b(podlacz\w*|podlaczyc|zamontow\w*|montowac|wykonac instalacje|obejsc zabezpieczenia)\b/.test(q))return {kind:'unsupported',message:'Pomagam w obsłudze HeatLoop. Nie podaję instrukcji montażu, podłączeń ani obchodzenia zabezpieczeń. W aplikacji mogę wskazać pola i sposób odczytania komunikatów.'};
- return null;
-}
+function concepts(q){const words=q.split(' ');const c=Object.fromEntries(Object.entries(vocab).map(([key,terms])=>[key,words.some(w=>terms.some(t=>w===t||(fuzzy.has(key)&&w.length>=6&&t.length>=6&&Math.abs(w.length-t.length)<=1&&distance(w,t)<=1)))]));c.manifold||=/\br(?:[1-9]|10)\b/.test(q);return c;}
+
 function retrieve(q,module){
  const c=concepts(q),list=[];const add=(id,score=10)=>list.push({article:getArticle(id),score,hits:1});
  const remove=/\b(usun\w*|skas\w*|wywal\w*)\b/.test(q),edit=/\b(zmien\w*|edyt\w*|popraw\w*|nazwa|nazwe|nazwy)\b/.test(q),error=/\b(blad|bled\w*|problem|nie dziala|nie moge|nie chce|nie otwiera|nie wczytuje|nie laduje|odrzuca|uszkodz\w*)\b/.test(q);
@@ -60,7 +57,7 @@ function retrieve(q,module){
  else if(c.csv)add('prices',20);
  if(c.supplier)add('prices',28);
  if((c.price||/\b(zl|m2)\b/.test(q))&&!c.vat&&!c.supplier){if(c.mill||c.floor||/\bm2\b/.test(q))add('milling',28);else if(!c.supply&&!c.cabinet)add('prices',14);}
- if(c.mill&&!c.price)add('mixed',18);
+ if(c.mill&&!c.price&&!/\b(zl|m2)\b/.test(q))add(c.quote?'milling':'mixed',24);
  if(/\b(mokre|mokra|mieszany|technologia|technologie|technologii)\b/.test(q)&&!c.hydraulic)add('mixed',22);
  if(c.drawing&&!c.pdf){if(c.radiator)add('radiator-plan',32);else if(c.loop&&/\b(rys\w*|tras\w*)\b/.test(q))add('route',32);else if(!c.manifold)add('drawing',20);}
  if(c.radiator&&!c.drawing&&!c.csv)add('radiators',20);
@@ -89,29 +86,38 @@ function retrieve(q,module){
 }
 export function search(question,module='home'){
  if(typeof question!=='string'||question.length>600)return [];
- const q=normalise(question);if(!q||boundary(q))return [];
+ const q=normalise(question);if(!q||inputPolicy(question))return [];
  return retrieve(q,modules.has(module)?module:'home');
 }
 export function answer(question,module='home',context={}){
  if(typeof question!=='string'||!question.trim())return {kind:'empty',message:'Napisz pytanie o obsługę HeatLoop.'};
  if(question.length>600)return {kind:'invalid',message:'Skróć pytanie do 600 znaków.'};
+ module=modules.has(module)?module:'home';context=context&&typeof context==='object'&&!Array.isArray(context)?context:{};
  const q=normalise(question);if(!q)return {kind:'empty',message:'Napisz pytanie słowami, np. „Jak zapisać projekt?”.'};
- const blocked=boundary(q);if(blocked)return blocked;
+ const blocked=inputPolicy(question);if(blocked)return {...blocked,...(blocked.topicIds?{choices:blocked.topicIds.map(getArticle)}:{})};
  const pending=(Array.isArray(context.pendingIds)?context.pendingIds:[]).filter(id=>getArticle(id)).slice(0,4);
  const last=getArticle(context.lastArticleId);
+ let focus=q;const contrast=q.match(/\btylko\b(.+)$/)||q.match(/^nie interesuje mnie .+?\bchce\b(.+)$/);if(/^nie\b/.test(q)&&contrast){focus=contrast[1].trim();if(/\b(pokoj|pokoju|pomieszczeni\w*)\b/.test(q)&&!concepts(focus).room&&/nazw|powierzch|usun\w* go|go usun/.test(focus))focus='pokoj '+focus;}
  const ordinals={pierwsza:0,pierwsze:0,pierwszy:0,'1':0,druga:1,drugie:1,drugi:1,'2':1,trzecia:2,trzecie:2,trzeci:2,'3':2,czwarta:3,'4':3};
- if(pending.length&&Object.hasOwn(ordinals,q)){const id=pending[ordinals[q]];return id?found(id):choose(pending,'Wybierz jedną z pokazanych opcji.');}
- const referential=/^(a )?(gdzie( to)?( znajde| jest)?|jak to( zrobic)?|co dalej|pokaz( to)?|powtorz|jeszcze raz|to samo|a potem)$/.test(q);
+ focus=focus.replace(/^(?:opcja(?: nr)?|ta) /,'').replace(/ opcja$/,'');
+ if(pending.length&&(Object.hasOwn(ordinals,focus)||focus==='ostatnia')){const id=pending[focus==='ostatnia'?pending.length-1:ordinals[focus]];return id?found(id):choose(pending,'Wybierz jedną z pokazanych opcji.');}
+ if(pending.length&&/^\d+$/.test(q))return choose(pending,'Wybierz jedną z pokazanych opcji.');
+ if(pending.includes('manifolds')&&pending.includes('quote')&&/^w planie nie w wycenie$/.test(q))return found('manifolds');
+ if(/^(nie o to mi chodzilo|to nie pomoglo|a inna opcja|zadna z tych opcji|usun wszystko)$/.test(q))return choose(['bugs',...topics(module).slice(0,2).map(a=>a.id)],'Opisz cel i ekran. Nie zmieniam ani nie usuwam projektu. Wybierz temat lub napisz, czego potrzebujesz.');
+ if(/^nie (chce|chodzi|interesuje)/.test(q)&&focus===q)return choose(topics(module).slice(0,3).map(a=>a.id),'Co chcesz zrobić zamiast tego? Podaj nazwę funkcji.');
+ const parts=focus.split(/\b(?:i|oraz|a takze)\b/).map(x=>x.trim()).filter(Boolean);
+ if(parts.length>1&&parts.every(x=>/\b(zapis\w*|wygener\w*|ustaw\w*|dodac|usun\w*|zmien\w*|narys\w*)\b/.test(x))){const ids=parts.flatMap(x=>{if(concepts(focus).room&&!concepts(x).room&&/nazw/.test(x))x='pokoj '+x;const r=answer(x,module);return r.article?[r.article.id]:(r.choices||[]).map(a=>a.id);});if(new Set(ids).size>1)return choose(ids,'Pytasz o kilka czynności. Którą wyjaśnić najpierw?');}
+ const referential=/^(a )?(gdzie( to)?( znajde| jest)?|jak to( zrobic| znalezc)?|gdzie to kliknac|ktory przycisk|a gdzie jest ten przycisk|co dalej|pokaz( to)?|powtorz|jeszcze raz|to samo|a potem)$/.test(q);
  if(referential)return pending.length?choose(pending):last?found(last.id):choose(topics(module).slice(0,3).map(a=>a.id),'Co chcesz znaleźć? Wybierz temat albo podaj nazwę ekranu.');
  if(/^(nie dziala|dalej nie dziala|nadal nie dziala|nie moge|pomocy|ratunku|nic|nie wiem|czemu|dlaczego|\?+)$/.test(q))return choose(last?[last.id,'bugs']:topics(module).slice(0,3).map(a=>a.id),'Na którym ekranie występuje problem i po jakim działaniu? Podaj komunikat lub wybierz temat.');
- const c=concepts(q);
+ const c=concepts(focus);
  if(/^(cena|ceny|koszt|model|email|e mail|plik|instalacja)$/.test(q))return choose(topics(module).slice(0,3).map(a=>a.id),'Czego dotyczy pytanie w HeatLoop? Podaj nazwę funkcji lub pliku.');
  // Asking for a manifold without saying which workflow is genuinely ambiguous.
  if(c.manifold&&!c.quote&&!c.cabinet&&!c.supply&&!c.loop&&!c.flow&&!/\b(r[2-9]|r10|drugi|kolejny|druga|kolejna)\b/.test(q)&&!['loops','quote'].includes(module))return choose(['manifolds','quote'],'Chcesz dodać rozdzielacz w planie pętli czy bezpośrednio w wycenie?');
  if(c.manifold&&module==='quote'&&!c.supply&&!c.loop&&!c.flow&&!c.drawing)return found('quote');
- const results=search(question,module);
+ const results=search(focus,module);
  if(pending.length){const candidate=results.find(r=>pending.includes(r.article.id));if(candidate)return found(candidate.article.id);if(c.quote&&pending.includes('quote'))return found('quote');if(c.loop&&pending.includes('manifolds'))return found('manifolds');}
- if(!results.length){if(/\b(model|producent|cena|email|e mail|instalacja|plik|zapisac|usunac|zmienic)\b/.test(q))return choose(topics(module).slice(0,3).map(a=>a.id),'Czego dotyczy pytanie w HeatLoop? Podaj nazwę funkcji lub pliku.');return unknown();}
+ if(!results.length){if(hasAbuse(q))return {kind:'civil',message:'Mogę pomóc w obsłudze HeatLoop. Opisz ekran i czynność, z którą masz problem.'};if(/\b(model|producent|cena|email|e mail|instalacja|plik|zapisac|usunac|zmienic)\b/.test(q))return choose(topics(module).slice(0,3).map(a=>a.id),'Czego dotyczy pytanie w HeatLoop? Podaj nazwę funkcji lub pliku.');return unknown();}
  if(results[0].score<12)return choose(['bugs',...topics(module).slice(0,2).map(a=>a.id)],'Opisz ekran, wykonane działanie i dokładny komunikat. Bez tego nie mogę wskazać przyczyny.');
  if(results[1]&&results[0].score-results[1].score<5&&results[0].article.id!==results[1].article.id)return choose(results.slice(0,3).map(r=>r.article.id));
  return found(results[0].article.id);

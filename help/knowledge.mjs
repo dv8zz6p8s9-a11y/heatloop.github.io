@@ -1,5 +1,5 @@
 // Single reviewed knowledge source shared by the browser and optional server.
-export const knowledgeVersion='2026-10-16.2';
+export const knowledgeVersion='2026-10-16.3';
 export const applicationVersion='beta-20261016-catalogs';
 const article=(id,title,module,section,terms,steps,note='')=>({id,title,module,section,terms,steps,note});
 export const articles=[
