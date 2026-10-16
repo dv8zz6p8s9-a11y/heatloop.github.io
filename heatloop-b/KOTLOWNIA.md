@@ -108,3 +108,12 @@ Dodano listy rodzin SAS: EFEKT, SPARK, COMPACT, SOLID i SOLID (DM) dla groszku; 
 Gaz: De Dietrich, Immergas, Bosch, Viessmann i „Inny — wpisz własną nazwę”. Model gazowy wpisuje instalator. Typy kotłów: jednofunkcyjny i dwufunkcyjny. Dla jednofunkcyjnego osobno wybiera się zasobnik CWU lub brak CWU. Zasobnik można dokupić osobno albo oznaczyć jako sprzedawany w zestawie z kotłem. Przy pakiecie cena źródła obejmuje kocioł i zasobnik; zasobnik jest oznaczony jako już w zestawie, więc nie zostaje wyceniony drugi raz. Osprzęt CWU wymaga osobnego sprawdzenia. Dwufunkcyjny przygotowuje CWU przepływowo.
 
 Wybór producenta i modelu oraz wariantu gazowego zapisuje się w projekcie JSON. Nazwa trafia do wyceny, oferty i CSV. Stare projekty zachowują ręczną nazwę i ustawienie CWU. Zmiana producenta lub rodziny kotła czyści model, moce i odliczenia wyposażenia wbudowanego, które wymagają ponownego sprawdzenia. Ceny netto pozostają wpisywane przez instalatora.
+
+
+## Pompy ciepła i hydraulika — uzupełnienie 16.10.2026
+
+Katalog rozszerzono o Panasonic, Mitsubishi Electric i Vaillant z rzeczywistymi klasami mocy, a hydraulikę o sprzęgła 40/55/70 kW, sprzęgłorozdzielacze na 2 i 3 obiegi oraz ręczny wybór 1/2/3 miejsc dla własnego rozwiązania. Dostępne są grupy pompowe WOMIX i AFRISO z pompami, z mieszaniem i bez. Wyposażenie nie jest liczone podwójnie; WOMIX SL 10 jest osobną pozycją, a ARM w wybranej grupie AFRISO jest w komplecie.
+
+Sprawdzane są liczba obiegów, moc katalogowa i przepływ źródła przy zadanym ΔT. Modele CPN MINI i CPN 70 mają moce katalogowe przy ΔT 20°C; przepływ wynika z mocy i zadanego ΔT, a nie z samej nazwy urządzenia. Dopasowanie rozstawu nie zastępuje sprawdzenia gwintów, adapterów i charakterystyki pomp.
+
+Pełny zakres, źródła danych i procedura wdrożenia: [AKTUALIZACJA_2026-10-16.md](AKTUALIZACJA_2026-10-16.md).

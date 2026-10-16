@@ -1,6 +1,7 @@
+import {hydraulicOptions,groupOptions} from './hydraulic-catalog.mjs';
 import {brandsFor,modelsFor,gasKindFor,setGasKind} from './boiler-catalog.mjs';
 import {sources,topologies,isHp,isSolid,analyzeBoiler,bNumber} from './boiler-room.mjs';
-export const boilerFields={bBasis:'basis',bOzc:'ozc',bMargin:'margin',bLocality:'locality',bOutdoor:'outdoor',bModel:'model',bRated:'rated',bMinimum:'minimum',bHpKind:'hpKind',bTopology:'topology',bSystem:'system',bSolidClosed:'solidClosed',bSourceT:'sourceT',bFloorT:'floorT',bRadT:'radT',bDt:'dt',bFloorGroups:'floorGroups',bRadGroups:'radGroups',bBuffer:'buffer',bCwu:'cwu',bTank:'tank',bCold:'cold',bStorage:'storage',bReheat:'reheat',bCirculation:'circulation',bAntiScald:'antiScald',bDhwLoad:'dhwLoad',bFlue:'flue',bFlueLength:'flueLength',bCoVessel:'coVessel',bCwuVessel:'cwuVessel',bRequiredFlow:'requiredFlow',bAvailableFlow:'availableFlow',bRequiredVolume:'requiredVolume',bActiveVolume:'activeVolume',bPipeMeters:'pipeMeters'};
+export const boilerFields={bHydraulicModel:'hydraulicModel',bHydraulicName:'hydraulicName',bHydraulicSections:'hydraulicSections',bHydraulicPower:'hydraulicPower',bMixModel:'mixModel',bMixName:'mixName',bDirectModel:'directModel',bDirectName:'directName',bBasis:'basis',bOzc:'ozc',bMargin:'margin',bLocality:'locality',bOutdoor:'outdoor',bModel:'model',bRated:'rated',bMinimum:'minimum',bHpKind:'hpKind',bTopology:'topology',bSystem:'system',bSolidClosed:'solidClosed',bSourceT:'sourceT',bFloorT:'floorT',bRadT:'radT',bDt:'dt',bFloorGroups:'floorGroups',bRadGroups:'radGroups',bBuffer:'buffer',bCwu:'cwu',bTank:'tank',bCold:'cold',bStorage:'storage',bReheat:'reheat',bCirculation:'circulation',bAntiScald:'antiScald',bDhwLoad:'dhwLoad',bFlue:'flue',bFlueLength:'flueLength',bCoVessel:'coVessel',bCwuVessel:'cwuVessel',bRequiredFlow:'requiredFlow',bAvailableFlow:'availableFlow',bRequiredVolume:'requiredVolume',bActiveVolume:'activeVolume',bPipeMeters:'pipeMeters'};
 export function mountBoiler(state,prices,api){
  const $=id=>document.getElementById(id),fmt=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
  const sourceButtons=[];
@@ -13,14 +14,22 @@ export function mountBoiler(state,prices,api){
  function options(id,entries,value){const select=$(id);select.replaceChildren();for(const [key,label] of entries){const option=document.createElement('option');option.value=key;option.textContent=label;select.append(option);}select.value=value;}
  function catalogue(){
   const b=state.boiler;
-  options('bBrand',[['','Wybierz producenta'],...Object.entries(brandsFor(b.source)),['other','Inny — wpisz własną nazwę']],b.brand);
-  options('bCatalogModel',[['','Inny model — wpisz własną nazwę'],...modelsFor(b.source,b.brand).map(m=>[m.id,m.name])],b.catalogModel);
+  options('bBrand',[['','Wybierz producenta'],...Object.entries(brandsFor(b.source,b.hpKind)),['other','Inny — wpisz własną nazwę']],b.brand);
+  options('bCatalogModel',[['','Inny model — wpisz własną nazwę'],...modelsFor(b.source,b.brand,b.hpKind).map(m=>[m.id,m.name])],b.catalogModel);
   $('bGasKind').value=gasKindFor(b);$('bCwu').disabled=b.source==='gas'&&gasKindFor(b)==='combi';$('bCwu').querySelector('option[value="instant"]').disabled=b.source==='gas'&&gasKindFor(b)==='single';$('bTankSupply').value=b.included.bCwuTank===1?'included':'separate';
  }
  $('bTankSupply').onchange=()=>{state.boiler.included.bCwuTank=$('bTankSupply').value==='included'?1:0;refresh();api.changed()};
  $('bGasKind').onchange=()=>{setGasKind(state.boiler,$('bGasKind').value);refresh();api.changed()};
  $('bBrand').onchange=()=>{const brand=$('bBrand').value;resetDevice();state.boiler.brand=brand;refresh();api.changed()};
- $('bCatalogModel').onchange=()=>{const b=state.boiler;b.catalogModel=$('bCatalogModel').value;b.model=modelsFor(b.source,b.brand).find(m=>m.id===b.catalogModel)?.name||'';b.rated='';b.minimum='';b.included={};refresh();api.changed()};
+ $('bCatalogModel').onchange=()=>{const b=state.boiler;b.catalogModel=$('bCatalogModel').value;b.model=modelsFor(b.source,b.brand,b.hpKind).find(m=>m.id===b.catalogModel)?.name||'';b.rated='';b.minimum='';b.included={};refresh();api.changed()};
+ function hydraulicCatalogue(){
+  const b=state.boiler,model=hydraulicOptions(b.topology).find(m=>m.id===b.hydraulicModel);
+  options('bHydraulicModel',[['','Własny model / do doboru'],...hydraulicOptions(b.topology).map(m=>[m.id,m.name+' — '+m.kw+' kW'+(m.circuits?' / '+m.circuits+' obiegi':'')])],b.hydraulicModel);
+  options('bMixModel',[['','Własna grupa z pompą / do doboru'],...groupOptions('mix').map(m=>[m.id,m.name])],b.mixModel);
+  options('bDirectModel',[['','Własna grupa z pompą / do doboru'],...groupOptions('direct').map(m=>[m.id,m.name])],b.directModel);
+  $('bHydraulicPower').disabled=!!model;if(model)$('bHydraulicPower').value=model.kw;
+  $('bHydraulicSections').disabled=!!model?.circuits;if(model?.circuits)$('bHydraulicSections').value=String(model.circuits);
+ }
  function diagram(result){
   const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 560 365');svg.setAttribute('role','img');svg.setAttribute('aria-label','Schemat funkcjonalny: źródło, rozdział na obiegi oraz przygotowanie CWU');
   const node=(tag,attrs,text)=>{const n=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,v);if(text)n.textContent=text;svg.append(n);return n};
@@ -39,9 +48,15 @@ export function mountBoiler(state,prices,api){
  }
  function visibility(){
   const visible=(id,yes)=>{$(id).closest('label').hidden=!yes;};
+  const b=state.boiler,hydraulicActive=['separator','distribution'].includes(b.topology);
+  for(const id of ['bHydraulicModel','bHydraulicSections','bHydraulicPower'])visible(id,hydraulicActive);
+  visible('bHydraulicName',hydraulicActive&&!b.hydraulicModel);visible('bMixName',!b.mixModel);visible('bDirectName',!b.directModel);
+  const device=modelsFor(b.source,b.brand,b.hpKind).find(m=>m.id===b.catalogModel);
+  $('bDeviceInfo').textContent=device?.nominal?'Klasa katalogowa: '+device.nominal+' kW. Moc przy temperaturze projektowej i minimalną modulację wpisz z karty wybranego zestawu.':'';
+
   visible('bTankSupply',state.boiler.source==='gas'&&gasKindFor(state.boiler)==='single'&&state.boiler.cwu==='storage');
   $('bTankSupply').value=state.boiler.included.bCwuTank===1?'included':'separate';
-  visible('bGasKind',state.boiler.source==='gas');visible('bBrand',Object.keys(brandsFor(state.boiler.source)).length>0);visible('bCatalogModel',state.boiler.brand==='sas');visible('bModel',!state.boiler.catalogModel);
+  visible('bGasKind',state.boiler.source==='gas');visible('bBrand',Object.keys(brandsFor(state.boiler.source,state.boiler.hpKind)).length>0);visible('bCatalogModel',modelsFor(state.boiler.source,state.boiler.brand,state.boiler.hpKind).length>0);visible('bModel',!state.boiler.catalogModel);
   visible('bOzc',state.boiler.basis==='ozc');visible('bHpKind',isHp(state.boiler.source));visible('bSolidClosed',isSolid(state.boiler.source)&&state.boiler.system==='closed');visible('bFlue',isSolid(state.boiler.source));visible('bFlueLength',!['heatpump',''].includes(state.boiler.source));visible('bBuffer',state.boiler.topology==='buffer');
   for(const id of ['bTank','bCold','bStorage','bReheat','bCirculation','bAntiScald','bDhwLoad','bCwuVessel'])visible(id,state.boiler.cwu==='storage');
  }
@@ -50,7 +65,7 @@ export function mountBoiler(state,prices,api){
   $('bCost').textContent='Budżet netto: '+fmt(total)+' zł'+(missing?' · '+missing+' pozycji bez ceny':'');
  }
  function results(table=true){
-  visibility();const r=analyzeBoiler(state);$('bKpis').replaceChildren();
+  visibility();const r=analyzeBoiler(state);$('bHydraulicInfo').textContent=r.hydraulic.active?'Wybrano '+r.hydraulic.circuits+' miejsc na obiegi; potrzebne grupy: '+r.mixedGroups+' z mieszaniem i '+r.directGroups+' bez mieszania. Przepływ źródła do wstępnego sprawdzenia: '+fmt(r.hydraulic.requiredFlow)+' m³/h.':'Grupy wynikają z liczby obiegów i temperatur zasilania. Sprzęgło ani sprzęgłorozdzielacz nie są dodawane w układzie bezpośrednim.';$('bKpis').replaceChildren();
   for(const [label,value,unit] of [['Zapotrzebowanie CO',r.baseKW,'kW'],['Porównanie +'+state.boiler.margin+'%',r.comparisonKW,'kW'],['Przepływ CO / ΔT '+state.boiler.dt+'°C',r.flowLH,'l/h']]){const card=document.createElement('div');card.className='boiler-kpi';const title=document.createElement('span');title.textContent=label;const strong=document.createElement('strong');strong.textContent=fmt(value)+' '+unit;card.append(title,strong);$('bKpis').append(card)}
   $('bDhwResult').textContent=r.dhwEnergy===null?'Bez obliczenia ładowania zasobnika.':'Pełne nagrzanie: '+fmt(r.dhwEnergy)+' kWh · średnia moc: '+fmt(r.dhwPower)+' kW';
   $('bFindings').replaceChildren();for(const message of r.errors){const p=document.createElement('p');p.className='warning';p.textContent=message;$('bFindings').append(p)}
@@ -72,9 +87,9 @@ export function mountBoiler(state,prices,api){
   catalogue();
   for(const [id,key] of Object.entries(boilerFields))if($(id).type==='checkbox')$(id).checked=state.boiler[key];else $(id).value=state.boiler[key];
   for(const button of sourceButtons)button.setAttribute('aria-pressed',String(button.dataset.source===state.boiler.source));
-  $('bLinked').checked=state.boiler.linked;results();
+  hydraulicCatalogue();$('bLinked').checked=state.boiler.linked;results();
  }
- for(const [id,key] of Object.entries(boilerFields))$(id).addEventListener($(id).type==='checkbox'||$(id).tagName==='SELECT'?'change':'input',()=>{state.boiler[key]=$(id).type==='checkbox'?$(id).checked:$(id).value;if(id==='bCwu'&&state.boiler.source==='gas'){state.boiler.gasKind='';state.boiler.gasKind=gasKindFor(state.boiler);$('bGasKind').value=state.boiler.gasKind;}results();api.changed()});
+ for(const [id,key] of Object.entries(boilerFields))$(id).addEventListener($(id).type==='checkbox'||$(id).tagName==='SELECT'?'change':'input',()=>{state.boiler[key]=$(id).type==='checkbox'?$(id).checked:$(id).value;if(id==='bHpKind'){resetDevice();refresh();}if(id==='bTopology'){state.boiler.hydraulicModel='';state.boiler.hydraulicName='';state.boiler.hydraulicPower='';state.boiler.hydraulicSections='';state.boiler.included.bSeparator=0;state.boiler.included.bDistribution=0;state.boiler.included.bHeatingManifold=0;refresh();}if(['bHydraulicModel','bMixModel','bDirectModel'].includes(id)){if(id==='bHydraulicModel'){state.boiler.hydraulicName='';state.boiler.hydraulicPower='';state.boiler.hydraulicSections='';state.boiler.included.bSeparator=0;state.boiler.included.bDistribution=0;state.boiler.included.bHeatingManifold=0;}if(id==='bMixModel'){state.boiler.mixName='';state.boiler.included.bMixGroup=0;state.boiler.included.bMixActuator=0;}if(id==='bDirectModel'){state.boiler.directName='';state.boiler.included.bDirectGroup=0;}refresh();}if(id==='bCwu'&&state.boiler.source==='gas'){state.boiler.gasKind='';state.boiler.gasKind=gasKindFor(state.boiler);$('bGasKind').value=state.boiler.gasKind;}results();api.changed()});
  $('bLinked').onchange=()=>{if($('bLinked').checked&&analyzeBoiler(state).errors.length){$('bLinked').checked=false;return alert('Uzupełnij prawidłowe dane kotłowni przed powiązaniem z wyceną.');}state.boiler.linked=$('bLinked').checked;api.changed()};
  $('bExport').onclick=()=>{const r=analyzeBoiler(state);if(r.errors.length)return;api.exportCsv([['HeatLoop — wstępny zakres kotłowni; nie projekt montażowy'],['Element','Potrzebne','Jednostka','Juz w zestawie','Do dokupienia','Cena netto','Wartosc netto'],...r.items.map(i=>[i.name,i.qty,i.unit,i.included,i.buy,prices[i.key]||0,i.buy*(prices[i.key]||0)])])};
  refresh();return {refresh};

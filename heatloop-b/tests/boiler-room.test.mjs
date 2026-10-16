@@ -55,4 +55,35 @@ test('Marka gazowa i własna nazwa trafiają do zestawienia bez powielania',()=>
 });
 test('Nieprawidłowy import katalogu zwraca błędy bez awarii',()=>{const s=fixture();Object.assign(s.boiler,{source:'constructor',brand:'sas',catalogModel:'EFEKT'});assert(analyzeBoiler(s).errors.length);s.boiler={...fixture().boiler,brand:'constructor'};assert(analyzeBoiler(s).errors.length)});
 test('Zasobnik w pakiecie nie jest wyceniany drugi raz',()=>{const s=fixture();Object.assign(s.boiler,{gasKind:'single',cwu:'storage',tank:'150',included:{bCwuTank:1}});const r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert(!boilerQuoteRows(r).some(i=>i[3]==='bCwuTank'));assert(r.items.find(i=>i.key==='bGasSource').name.includes('zestaw z zasobnikiem'));assert.equal(normalizeBoiler({source:'gas',gasKind:'storage',cwu:'storage'}).gasKind,'single');assert.equal(normalizeBoiler({source:'gas',gasKind:'heating',cwu:'none'}).gasKind,'single')});
+
+
+test('Pompy ciepła mają rzeczywiste klasy mocy zamiast fikcyjnego 15 kW',()=>{
+ assert.deepEqual(modelsFor('heatpump','panasonic').map(m=>m.nominal),[5,7,9,9,12,16]);
+ assert.deepEqual(modelsFor('heatpump','mitsubishi').map(m=>m.nominal),[5,6,8,10,12]);
+ assert.deepEqual(modelsFor('heatpump','vaillant').map(m=>m.nominal),[5,7,10,12]);assert.equal(modelsFor('heatpump','panasonic','ground').length,0);
+ const s=fixture();Object.assign(s.boiler,{source:'heatpump',brand:'panasonic',catalogModel:'aquarea-m-16',model:'Panasonic Aquarea T-CAP M R290 — 16 kW'});const r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert(r.items.find(i=>i.key==='bHpSource').name.includes('16 kW'));assert.equal(s.boiler.rated,'');assert.deepEqual(normalizeBoiler(JSON.parse(JSON.stringify(s.boiler))),s.boiler);
+});
+test('Sprzęgło osobne dodaje rozdzielacz dla kilku obiegów, bez powielania sprzęgła',()=>{
+ const s=fixture();Object.assign(s.boiler,{topology:'separator',hydraulicModel:'cpn-70',hydraulicSections:'3'});const r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert.equal(r.items.filter(i=>i.key==='bSeparator').length,1);assert(r.items.find(i=>i.key==='bHeatingManifold').name.includes('WOMIX C 70'));assert(!r.items.some(i=>i.key==='bDistribution'));
+ s.boiler.floorGroups='1';s.boiler.radGroups='0';s.boiler.hydraulicSections='1';assert(!analyzeBoiler(s).items.some(i=>i.key==='bHeatingManifold'));
+});
+test('Sprzęgłorozdzielacz 2 lub 3 obiegi zawiera sprzęgło i rozdzielacz',()=>{
+ const s=fixture();Object.assign(s.boiler,{topology:'distribution',hydraulicModel:'ksv-2-hw'});let r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert(r.items.some(i=>i.key==='bDistribution'));assert(!r.items.some(i=>['bSeparator','bHeatingManifold'].includes(i.key)));
+ s.boiler.floorGroups='2';assert(analyzeBoiler(s).errors.some(e=>e.includes('Za mało miejsc')));s.boiler.hydraulicModel='ksv-3-hw';r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert.equal(r.hydraulic.circuits,3);assert.equal(r.mixedGroups+r.directGroups,3);
+});
+test('Moce 40, 55 i 70 kW oraz przepływ są osobnymi ograniczeniami',()=>{
+ const s=fixture();Object.assign(s.boiler,{basis:'ozc',ozc:'20',topology:'separator',hydraulicModel:'cpn-mini',dt:'20'});assert.deepEqual(analyzeBoiler(s).errors,[]);
+ s.boiler.dt='5';assert(analyzeBoiler(s).errors.some(e=>e.includes('Przepływ źródła')));s.boiler.dt='20';s.boiler.ozc='45';assert(analyzeBoiler(s).errors.some(e=>e.includes('katalogową moc')));
+ s.boiler.hydraulicModel='cpn-70';assert.deepEqual(analyzeBoiler(s).errors,[]);s.boiler.ozc='60';assert(analyzeBoiler(s).errors.length);s.boiler.hydraulicModel='hw-70';assert.deepEqual(analyzeBoiler(s).errors,[]);
+});
+test('Grupy z pompą i siłowniki nie są liczone podwójnie',()=>{
+ const s=fixture();Object.assign(s.boiler,{topology:'distribution',hydraulicModel:'ksv-2-hw',mixModel:'smt-125',directModel:'sa-125'});let r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert.equal(r.items.find(i=>i.key==='bMixGroup').qty,1);assert.equal(r.items.find(i=>i.key==='bDirectGroup').qty,1);assert.equal(r.items.find(i=>i.key==='bMixActuator').qty,1);assert(r.items.find(i=>i.key==='bDirectGroup').name.includes('616056'));
+ s.boiler.mixModel='primotherm-2';r=analyzeBoiler(s);assert(!r.items.some(i=>i.key==='bMixActuator'));assert(r.items.find(i=>i.key==='bMixGroup').name.includes('ARM 343'));
+ s.boiler.included.bMixGroup=1;assert(!boilerQuoteRows(analyzeBoiler(s)).some(i=>i[3]==='bMixGroup'));
+});
+test('Własny rozdział 1/2/3 obiegi i nazwy przechodzą JSON i eksport',()=>{
+ const s=fixture();Object.assign(s.boiler,{topology:'distribution',hydraulicSections:'1',hydraulicPower:'55',hydraulicName:'Moje sprzęgło',mixName:'Moja grupa z mieszaniem'});assert(analyzeBoiler(s).errors.some(e=>e.includes('Za mało miejsc')));
+ s.boiler.hydraulicSections='2';assert.deepEqual(analyzeBoiler(s).errors,[]);assert(boilerQuoteRows(analyzeBoiler(s)).some(i=>i[0].includes('Moje sprzęgło')));assert.deepEqual(normalizeBoiler(JSON.parse(JSON.stringify(s.boiler))),s.boiler);
+ s.boiler.hydraulicPower='-1';assert(analyzeBoiler(s).errors.length);s.boiler.hydraulicPower='55';s.boiler.mixModel='sa-125';assert(analyzeBoiler(s).errors.some(e=>e.includes('właściwego typu')));
+});
 console.log(count+' testów zakończonych pomyślnie');

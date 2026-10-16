@@ -54,3 +54,8 @@ nav > button:focus-visible,nav > a:focus-visible,header button:focus-visible{out
 }
 
 .quote-manifolds{padding:16px;border:1px solid #4586a5;border-radius:12px;margin:20px 0;background:#0b2031}.quote-manifold-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;margin:16px 0}.quote-manifold{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;padding:14px;border:1px solid #35546b;border-radius:10px}.quote-manifold strong{grid-column:1/-1}.quote-manifold input{width:100%;min-width:0}.quote-manifold label{min-width:0}.quote-manifold button:disabled{opacity:.5;cursor:default}
+
+/* Long catalogue names stay inside the boiler form on narrow screens. */
+.boiler-tab .quote-grid>label,.boiler-tab .quote-grid select{min-width:0}
+.boiler-tab #bDeviceInfo{grid-column:1 / -1;margin:0}
+.boiler-tab #bDeviceInfo:empty{display:none}
