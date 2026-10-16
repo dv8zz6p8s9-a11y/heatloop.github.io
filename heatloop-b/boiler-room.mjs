@@ -14,6 +14,7 @@ export function normalizeBoiler(raw){
   if(typeof b[k]==='boolean')b[k]=raw[k]===true;
  }
  for(const k of boilerKeys){const value=raw.included?.[k];if(Number.isFinite(value)&&value>=0&&value<=1000)b.included[k]=value;}
+ if(['storage','heating'].includes(b.gasKind))b.gasKind='single';
  if(b.catalogModel&&!modelsFor(b.source,b.brand).some(m=>m.id===b.catalogModel)){b.catalogModel='';b.brand='other';}
  return b;
 }
@@ -32,7 +33,7 @@ export function analyzeBoiler(state){
  if(b.source==='gas'){
   const kind=gasKindFor(b);
   if(!Object.hasOwn(gasKinds,kind))errors.push('Wybierz wariant kotła gazowego.');
-  if(({storage:'storage',heating:'none',combi:'instant'})[kind]!==b.cwu)errors.push('Wariant kotła gazowego nie odpowiada przygotowaniu CWU.');
+  if(kind==='single'&&!['none','storage'].includes(b.cwu)||kind==='combi'&&b.cwu!=='instant')errors.push('Wariant kotła gazowego nie odpowiada przygotowaniu CWU.');
  }
  if(!['air','ground'].includes(b.hpKind))errors.push('Wybierz rodzaj pompy ciepła.');
  if(!['project','ozc'].includes(b.basis))errors.push('Wybierz podstawę zapotrzebowania na moc.');
@@ -96,7 +97,7 @@ export function analyzeBoiler(state){
   items.push({key,name,qty,unit,included,buy:Math.max(0,qty-included)});
  };
  const name=deviceName(b),model=name?' — '+name:' — model do doboru';
- if(b.source==='gas'||b.source==='hybrid'){add('bGasSource','Kocioł gazowy'+(b.source==='gas'?' '+gasKinds[gasKindFor(b)]:'')+model);add('bGasFlue','System powietrzno-spalinowy — wg DTR',flueLength||1,flueLength?'m':'kpl.');add('bGasConnection','Armatura przyłącza gazu — wg projektu');add('bCondensate','Odprowadzenie kondensatu; neutralizacja jeśli wymagana');}
+ if(b.source==='gas'||b.source==='hybrid'){add('bGasSource','Kocioł gazowy'+(b.source==='gas'?' '+gasKinds[gasKindFor(b)]+(b.cwu==='storage'&&b.included.bCwuTank===1?' — zestaw z zasobnikiem CWU':''):'')+model);add('bGasFlue','System powietrzno-spalinowy — wg DTR',flueLength||1,flueLength?'m':'kpl.');add('bGasConnection','Armatura przyłącza gazu — wg projektu');add('bCondensate','Odprowadzenie kondensatu; neutralizacja jeśli wymagana');}
  if(isSolid(b.source)){
   add({coal:'bCoalSource',pellet:'bPelletSource',combo:'bComboSource',wood:'bWoodSource'}[b.source],sources[b.source]+model);
   add('bSolidFlue',({existing:'Ocena i przyłączenie istniejącego komina',liner:'Wkład kominowy stalowy',insulated:'Komin stalowy dwuścienny izolowany',ceramic:'Komin systemowy ceramiczny'}[b.flue]||'System spalinowy')+' — wg DTR',b.flue==='existing'?1:flueLength||1,b.flue==='existing'||!flueLength?'kpl.':'m');

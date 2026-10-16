@@ -36,8 +36,8 @@ test('Podana pojemność naczynia nie może być zerowa',()=>{const s=fixture();
 
 test('Warianty gazowe doliczają zasobnik tylko dla kotła z zasobnikiem',()=>{
  const s=fixture();s.boiler.tank='150';
- for(const [kind,cwu,tank] of [['storage','storage',true],['heating','none',false],['combi','instant',false]]){
-  setGasKind(s.boiler,kind);const r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert.equal(s.boiler.cwu,cwu);assert.equal(r.items.some(i=>i.key==='bCwuTank'),tank);assert(r.items.find(i=>i.key==='bGasSource').name.includes(kind==='combi'?'Dwufunkcyjny':'Jednofunkcyjny'));
+ for(const [kind,cwu,tank] of [['single','storage',true],['single','none',false],['combi','instant',false]]){
+  s.boiler.cwu=cwu;setGasKind(s.boiler,kind);const r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert.equal(s.boiler.cwu,cwu);assert.equal(r.items.some(i=>i.key==='bCwuTank'),tank);assert(r.items.find(i=>i.key==='bGasSource').name.includes(kind==='combi'?'Dwufunkcyjny':'Jednofunkcyjny'));
  }
  s.boiler.cwu='storage';assert(analyzeBoiler(s).errors.some(e=>e.includes('Wariant kotła')));
 });
@@ -54,4 +54,5 @@ test('Marka gazowa i własna nazwa trafiają do zestawienia bez powielania',()=>
  const b={source:'gas',brand:'immergas',model:'VICTRIX'};assert.equal(deviceName(b),'Immergas VICTRIX');b.model='Immergas VICTRIX';assert.equal(deviceName(b),b.model);b.brand='other';b.model='Moja marka / model';assert.equal(deviceName(b),b.model);
 });
 test('Nieprawidłowy import katalogu zwraca błędy bez awarii',()=>{const s=fixture();Object.assign(s.boiler,{source:'constructor',brand:'sas',catalogModel:'EFEKT'});assert(analyzeBoiler(s).errors.length);s.boiler={...fixture().boiler,brand:'constructor'};assert(analyzeBoiler(s).errors.length)});
+test('Zasobnik w pakiecie nie jest wyceniany drugi raz',()=>{const s=fixture();Object.assign(s.boiler,{gasKind:'single',cwu:'storage',tank:'150',included:{bCwuTank:1}});const r=analyzeBoiler(s);assert.deepEqual(r.errors,[]);assert(!boilerQuoteRows(r).some(i=>i[3]==='bCwuTank'));assert(r.items.find(i=>i.key==='bGasSource').name.includes('zestaw z zasobnikiem'));assert.equal(normalizeBoiler({source:'gas',gasKind:'storage',cwu:'storage'}).gasKind,'single');assert.equal(normalizeBoiler({source:'gas',gasKind:'heating',cwu:'none'}).gasKind,'single')});
 console.log(count+' testów zakończonych pomyślnie');

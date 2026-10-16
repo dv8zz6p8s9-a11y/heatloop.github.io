@@ -15,8 +15,9 @@ export function mountBoiler(state,prices,api){
   const b=state.boiler;
   options('bBrand',[['','Wybierz producenta'],...Object.entries(brandsFor(b.source)),['other','Inny — wpisz własną nazwę']],b.brand);
   options('bCatalogModel',[['','Inny model — wpisz własną nazwę'],...modelsFor(b.source,b.brand).map(m=>[m.id,m.name])],b.catalogModel);
-  $('bGasKind').value=gasKindFor(b);$('bCwu').disabled=b.source==='gas';
+  $('bGasKind').value=gasKindFor(b);$('bCwu').disabled=b.source==='gas'&&gasKindFor(b)==='combi';$('bCwu').querySelector('option[value="instant"]').disabled=b.source==='gas'&&gasKindFor(b)==='single';$('bTankSupply').value=b.included.bCwuTank===1?'included':'separate';
  }
+ $('bTankSupply').onchange=()=>{state.boiler.included.bCwuTank=$('bTankSupply').value==='included'?1:0;refresh();api.changed()};
  $('bGasKind').onchange=()=>{setGasKind(state.boiler,$('bGasKind').value);refresh();api.changed()};
  $('bBrand').onchange=()=>{const brand=$('bBrand').value;resetDevice();state.boiler.brand=brand;refresh();api.changed()};
  $('bCatalogModel').onchange=()=>{const b=state.boiler;b.catalogModel=$('bCatalogModel').value;b.model=modelsFor(b.source,b.brand).find(m=>m.id===b.catalogModel)?.name||'';b.rated='';b.minimum='';b.included={};refresh();api.changed()};
@@ -38,6 +39,8 @@ export function mountBoiler(state,prices,api){
  }
  function visibility(){
   const visible=(id,yes)=>{$(id).closest('label').hidden=!yes;};
+  visible('bTankSupply',state.boiler.source==='gas'&&gasKindFor(state.boiler)==='single'&&state.boiler.cwu==='storage');
+  $('bTankSupply').value=state.boiler.included.bCwuTank===1?'included':'separate';
   visible('bGasKind',state.boiler.source==='gas');visible('bBrand',Object.keys(brandsFor(state.boiler.source)).length>0);visible('bCatalogModel',state.boiler.brand==='sas');visible('bModel',!state.boiler.catalogModel);
   visible('bOzc',state.boiler.basis==='ozc');visible('bHpKind',isHp(state.boiler.source));visible('bSolidClosed',isSolid(state.boiler.source)&&state.boiler.system==='closed');visible('bFlue',isSolid(state.boiler.source));visible('bFlueLength',!['heatpump',''].includes(state.boiler.source));visible('bBuffer',state.boiler.topology==='buffer');
   for(const id of ['bTank','bCold','bStorage','bReheat','bCirculation','bAntiScald','bDhwLoad','bCwuVessel'])visible(id,state.boiler.cwu==='storage');

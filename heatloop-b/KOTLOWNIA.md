@@ -105,6 +105,6 @@ Dodano listy rodzin SAS: EFEKT, SPARK, COMPACT, SOLID i SOLID (DM) dla groszku; 
 
 Źródło nazw: https://www.sas.busko.pl/pl/produkty — sprawdzono 16.10.2026. Są to rodziny modeli, bez automatycznego doboru wersji mocy, cen ani wyposażenia wbudowanego.
 
-Gaz: De Dietrich, Immergas, Bosch, Viessmann i „Inny — wpisz własną nazwę”. Model gazowy wpisuje instalator. Warianty: jednofunkcyjny z osobnym zasobnikiem (CWU zasobnikowe), jednofunkcyjny tylko CO (bez CWU), dwufunkcyjny (CWU przepływowe). Tylko pierwszy wariant dodaje zasobnik i jego osprzęt do zestawienia.
+Gaz: De Dietrich, Immergas, Bosch, Viessmann i „Inny — wpisz własną nazwę”. Model gazowy wpisuje instalator. Typy kotłów: jednofunkcyjny i dwufunkcyjny. Dla jednofunkcyjnego osobno wybiera się zasobnik CWU lub brak CWU. Zasobnik można dokupić osobno albo oznaczyć jako sprzedawany w zestawie z kotłem. Przy pakiecie cena źródła obejmuje kocioł i zasobnik; zasobnik jest oznaczony jako już w zestawie, więc nie zostaje wyceniony drugi raz. Osprzęt CWU wymaga osobnego sprawdzenia. Dwufunkcyjny przygotowuje CWU przepływowo.
 
 Wybór producenta i modelu oraz wariantu gazowego zapisuje się w projekcie JSON. Nazwa trafia do wyceny, oferty i CSV. Stare projekty zachowują ręczną nazwę i ustawienie CWU. Zmiana producenta lub rodziny kotła czyści model, moce i odliczenia wyposażenia wbudowanego, które wymagają ponownego sprawdzenia. Ceny netto pozostają wpisywane przez instalatora.
