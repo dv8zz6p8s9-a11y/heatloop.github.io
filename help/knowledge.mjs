@@ -1,6 +1,7 @@
 // Single reviewed knowledge source shared by the browser and optional server.
-export const knowledgeVersion='2026-10-16.4';
-export const applicationVersion='beta-20261016-catalogs';
+import {release} from '../release.mjs';
+export const knowledgeVersion=release.knowledgeVersion;
+export const applicationVersion=release.version;
 const article=(id,title,module,section,terms,steps,note='')=>({id,title,module,section,terms,steps,note});
 export const articles=[
 article('start','Jak rozpocząć projekt?','home','start',['pierwszy projekt','zacząć','rozpocząć','start'],['Otwórz „Dane ręczne” lub „Praca z rysunku”. Nie dodawaj tego samego pokoju w obu trybach.','Dodaj pomieszczenia i sprawdź technologię ogrzewania.','Przejdź do „Pętle i rozdzielacz”, przypisz pokoje i wygeneruj propozycję.','Sprawdź wycenę, opcjonalne sterowanie oraz kotłownię. Zapisz JSON.']),

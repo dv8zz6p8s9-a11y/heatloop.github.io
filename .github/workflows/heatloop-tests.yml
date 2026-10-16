@@ -4,6 +4,7 @@ on:
     paths:
       - 'heatloop-b/**'
       - 'help/**'
+      - 'release.mjs'
       - 'wdrozenie/**'
       - 'materialy/**'
       - 'pomoc.html'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'heatloop-b/**'
       - 'help/**'
+      - 'release.mjs'
       - 'wdrozenie/**'
       - 'materialy/**'
       - 'pomoc.html'

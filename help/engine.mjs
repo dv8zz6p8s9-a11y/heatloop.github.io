@@ -95,6 +95,7 @@ export function answer(question,module='home',context={}){
  module=modules.has(module)?module:'home';context=context&&typeof context==='object'&&!Array.isArray(context)?context:{};
  const q=normalise(question);if(!q)return {kind:'empty',message:'Napisz pytanie słowami, np. „Jak zapisać projekt?”.'};
  const blocked=inputPolicy(question);if(blocked)return {...blocked,...(blocked.topicIds?{choices:blocked.topicIds.map(getArticle)}:{})};
+ if(/^(jaka|ktora) (jest )?(aktualna )?wersja( aplikacji| heatloop)?$/.test(q)||/^wersja( aplikacji| heatloop)?$/.test(q))return {kind:'scope',message:`HeatLoop BETA ${applicationVersion}. Baza pomocy: ${knowledgeVersion}.`};
  const pending=(Array.isArray(context.pendingIds)?context.pendingIds:[]).filter(id=>getArticle(id)).slice(0,4);
  const last=getArticle(context.lastArticleId);
  let focus=q;const contrast=q.match(/\btylko\b(.+)$/)||q.match(/^nie interesuje mnie .+?\bchce\b(.+)$/);if(/^nie\b/.test(q)&&contrast){focus=contrast[1].trim();if(/\b(pokoj|pokoju|pomieszczeni\w*)\b/.test(q)&&!concepts(focus).room&&/nazw|powierzch|usun\w* go|go usun/.test(focus))focus='pokoj '+focus;}
@@ -103,8 +104,9 @@ export function answer(question,module='home',context={}){
  if(pending.length&&(Object.hasOwn(ordinals,focus)||focus==='ostatnia')){const id=pending[focus==='ostatnia'?pending.length-1:ordinals[focus]];return id?found(id):choose(pending,'Wybierz jedną z pokazanych opcji.');}
  if(pending.length&&/^\d+$/.test(q))return choose(pending,'Wybierz jedną z pokazanych opcji.');
  if(pending.includes('manifolds')&&pending.includes('quote')&&/^w planie nie w wycenie$/.test(q))return found('manifolds');
+ if(pending.includes('manifolds')&&pending.includes('quote')&&/^w wycenie nie w planie$/.test(q))return found('quote');
  if(/^(nie o to mi chodzilo|to nie pomoglo|a inna opcja|zadna z tych opcji|usun wszystko)$/.test(q))return choose(['bugs',...topics(module).slice(0,2).map(a=>a.id)],'Opisz cel i ekran. Nie zmieniam ani nie usuwam projektu. Wybierz temat lub napisz, czego potrzebujesz.');
- if(/^nie (chce|chodzi|interesuje)/.test(q)&&focus===q)return choose(topics(module).slice(0,3).map(a=>a.id),'Co chcesz zrobić zamiast tego? Podaj nazwę funkcji.');
+ if(/^nie (chce|chodzi|interesuje|usun\w*|usuw\w*|dodaw\w*|zmien\w*|wysyl\w*)/.test(q)&&focus===q)return choose(topics(module).slice(0,3).map(a=>a.id),'Co chcesz zrobić zamiast tego? Podaj nazwę funkcji.');
  const parts=focus.split(/\b(?:i|oraz|a takze)\b/).map(x=>x.trim()).filter(Boolean);
  if(parts.length>1&&parts.every(x=>/\b(zapis\w*|wygener\w*|ustaw\w*|dodac|usun\w*|zmien\w*|narys\w*)\b/.test(x))){const ids=parts.flatMap(x=>{if(concepts(focus).room&&!concepts(x).room&&/nazw/.test(x))x='pokoj '+x;const r=answer(x,module);return r.article?[r.article.id]:(r.choices||[]).map(a=>a.id);});if(new Set(ids).size>1)return choose(ids,'Pytasz o kilka czynności. Którą wyjaśnić najpierw?');}
  const referential=/^(a )?(gdzie( to)?( znajde| jest)?|jak to( zrobic| znalezc)?|gdzie to kliknac|ktory przycisk|a gdzie jest ten przycisk|co dalej|pokaz( to)?|powtorz|jeszcze raz|to samo|a potem)$/.test(q);
@@ -116,7 +118,7 @@ export function answer(question,module='home',context={}){
  if(c.manifold&&!c.quote&&!c.cabinet&&!c.supply&&!c.loop&&!c.flow&&!/\b(r[2-9]|r10|drugi|kolejny|druga|kolejna)\b/.test(q)&&!['loops','quote'].includes(module))return choose(['manifolds','quote'],'Chcesz dodać rozdzielacz w planie pętli czy bezpośrednio w wycenie?');
  if(c.manifold&&module==='quote'&&!c.supply&&!c.loop&&!c.flow&&!c.drawing)return found('quote');
  const results=search(focus,module);
- if(pending.length){const candidate=results.find(r=>pending.includes(r.article.id));if(candidate)return found(candidate.article.id);if(c.quote&&pending.includes('quote'))return found('quote');if(c.loop&&pending.includes('manifolds'))return found('manifolds');}
+ if(pending.length){if(pending.includes('quote')&&/^(w )?wycen(?:a|ie|y)$/.test(focus))return found('quote');if(pending.includes('manifolds')&&/^(w )?plan(?:ie)?( petli)?$/.test(focus))return found('manifolds');}
  if(!results.length){if(hasAbuse(q))return {kind:'civil',message:'Mogę pomóc w obsłudze HeatLoop. Opisz ekran i czynność, z którą masz problem.'};if(/\b(model|producent|cena|email|e mail|instalacja|plik|zapisac|usunac|zmienic)\b/.test(q))return choose(topics(module).slice(0,3).map(a=>a.id),'Czego dotyczy pytanie w HeatLoop? Podaj nazwę funkcji lub pliku.');return unknown();}
  if(results[0].score<12)return choose(['bugs',...topics(module).slice(0,2).map(a=>a.id)],'Opisz ekran, wykonane działanie i dokładny komunikat. Bez tego nie mogę wskazać przyczyny.');
  if(results[1]&&results[0].score-results[1].score<5&&results[0].article.id!==results[1].article.id)return choose(results.slice(0,3).map(r=>r.article.id));

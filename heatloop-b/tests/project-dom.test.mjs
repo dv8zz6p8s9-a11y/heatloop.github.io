@@ -2,6 +2,7 @@ import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 const require=createRequire(import.meta.url);const {JSDOM}=require('jsdom');
 import fs from 'node:fs';import assert from 'node:assert/strict';
+import {release} from '../../release.mjs';
 import * as drawingTools from '../drawing-tools.mjs';
 import * as drawingHelp from '../drawing-help.mjs';
 import * as boiler from '../boiler-room.mjs';
@@ -13,9 +14,9 @@ import {mountControls} from '../tech-controls-ui.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const dom=new JSDOM(fs.readFileSync(root+'index.html','utf8'),{runScripts:'outside-only',url:'http://localhost/heatloop-b/'});const w=dom.window;const runtimeErrors=[];w.addEventListener('error',e=>runtimeErrors.push(e.error?.message||e.message));globalThis.document=w.document;globalThis.window=w;
 w.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:()=>()=>{},set:()=>true});w.scrollTo=()=>{};w.alert=message=>{throw Error(message)};w.confirm=()=>true;globalThis.confirm=w.confirm;globalThis.alert=w.alert;w.Blob=Blob;w.URL.createObjectURL=blob=>{w.lastBlob=blob;return 'blob:mock'};w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=()=>{};
-w.__drawingTools=drawingTools;w.__drawingHelp=drawingHelp;w.__tech=tech;w.__mount=mountControls;w.__floor=floor;w.__loopMount=mountLoopPlanner;w.__boiler=boiler;w.__boilerMount=mountBoiler;
+w.__release=release;w.__drawingTools=drawingTools;w.__drawingHelp=drawingHelp;w.__tech=tech;w.__mount=mountControls;w.__floor=floor;w.__loopMount=mountLoopPlanner;w.__boiler=boiler;w.__boilerMount=mountBoiler;
 let code=fs.readFileSync(root+'app.js','utf8').replace(/^import .*;\n/gm,'');
-code='const {drawRaster,rotateDrawing,rotationValue,normalizeWallGuides,detectWallCandidates}=window.__drawingTools;const {drawingHelpSnapshot,drawingHelpAdvice}=window.__drawingHelp;const {catalog:techCatalog,defaults:techDefaults,normalizeControls,projectSignature,calculateControls}=window.__tech;const mountControls=window.__mount;const {planDefaults,normalizePlan,ensureRoomIds,prepareAssignments,analyzeLoops,controlEntries,numberPL,loopLabel}=window.__floor;const mountLoopPlanner=window.__loopMount;const {boilerDefaults,normalizeBoiler,boilerKeys,analyzeBoiler,boilerQuoteRows}=window.__boiler;const mountBoiler=window.__boilerMount;\n'+code;
+code='const release=window.__release;const {drawRaster,rotateDrawing,rotationValue,normalizeWallGuides,detectWallCandidates}=window.__drawingTools;const {drawingHelpSnapshot,drawingHelpAdvice}=window.__drawingHelp;const {catalog:techCatalog,defaults:techDefaults,normalizeControls,projectSignature,calculateControls}=window.__tech;const mountControls=window.__mount;const {planDefaults,normalizePlan,ensureRoomIds,prepareAssignments,analyzeLoops,controlEntries,numberPL,loopLabel}=window.__floor;const mountLoopPlanner=window.__loopMount;const {boilerDefaults,normalizeBoiler,boilerKeys,analyzeBoiler,boilerQuoteRows}=window.__boiler;const mountBoiler=window.__boilerMount;\n'+code;
 w.eval(code+'\nwindow.testOffer=()=>offerHtml(offerSnapshot());window.testState=()=>state;window.testImage=()=>{image={};};');
 const $=id=>w.document.getElementById(id);
 const change=(id,value)=>{const el=$(id);if(el.type==='checkbox')el.checked=value;else el.value=value;el.dispatchEvent(new w.Event(el.tagName==='SELECT'||el.type==='checkbox'?'change':'input',{bubbles:true}))};
@@ -24,7 +25,7 @@ assert($('qRows').rows.length);change('tEnabled',true);assert($('qExport').disab
 change('tMode','wireless');change('tController','lx');assert($('qRows').textContent.includes('WG.20.0156'));assert(!$('qRows').textContent.includes('WG.05.0049'));
 const price=$('qRows').querySelector('input[aria-label^="Cena: TECH R-8b"]');price.value='200,50';price.dispatchEvent(new w.Event('input',{bubbles:true}));assert($('tStatus').textContent.replace(/\s/g,'').includes('2540,50'));
 assert(w.testOffer().includes('WG.20.0156'));$('qExport').click();assert((await w.lastBlob.text()).includes('WG.20.0156'));
-$('save').click();const saved=JSON.parse(await w.lastBlob.text());assert.equal(saved.controls.controller,'lx');assert.equal(saved.controls.internet,undefined);assert.equal(saved.quote.prices.techWireless,200.5);
+$('save').click();const saved=JSON.parse(await w.lastBlob.text());assert.equal(saved.version,1);assert.equal(saved.appVersion,release.version);assert.equal(saved.controls.controller,'lx');assert.equal(saved.controls.internet,undefined);assert.equal(saved.quote.prices.techWireless,200.5);
 change('tMode','wired');assert($('qRows').textContent.includes('WG.11.0730'));
 async function load(obj){await $('projectFile').onchange({target:{files:[{size:100,text:async()=>JSON.stringify(obj)}]}})}
 await load(saved);assert($('tEnabled').checked&&$('tController').value==='lx');assert.equal($('tRooms').rows.length,1);assert.equal($('qRows').querySelector('input[aria-label^="Cena: TECH R-8b"]').value,'200,5');

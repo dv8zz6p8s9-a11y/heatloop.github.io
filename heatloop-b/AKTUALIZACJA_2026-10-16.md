@@ -106,3 +106,10 @@ Dodano opcjonalny lokalny podgląd kreatora w pomocniku, bez wysyłania rastra/d
 Na górze przygotowanego landing page panel „Najnowsza aktualizacja”, krótka lista zmian i link do pełnego Bug/Fix. Instrukcja online i PDF pozostają zgodnie z decyzją użytkownika; na stronie jako dodatkowa pomoc. Dotychczasowe stwierdzenia o braku podglądu dotyczą wcześniejszego etapu przygotowania. Aktualny zakres opisuje help/README.md. Sugestia kreatora sterowania strefowego nadal pozostaje propozycją do dopracowania.
 
 Przed publikacją wymagane testy fizycznego telefonu i rzeczywistych rzutów: czytelność miniatur, obrót z kalibracją i naniesionymi trasami, sprawdzenie fałszywych wskazań ścian, odczyt zapisanego JSON. Bez aktywacji AI i bez publikacji na etapie przygotowania.
+
+
+## Końcowy audyt i numeracja BETA 0.2
+
+Publiczna etykieta przygotowanego wydania: **0.2**. Po publikacji małe poprawki: **0.21, 0.22 itd.**, kolejne duże wydanie: **0.3**. Wspólne dane w release.mjs; polityka w wdrozenie/WERSJONOWANIE.md. Format JSON projektu pozostaje 1, a appVersion zapisuje wersję aplikacji osobno.
+
+Naprawiono pierwszeństwo nowych pytań przed poprzednim wyborem, anulowanie odpowiedzi po zamknięciu pomocy, powiązanie timera z właściwym żądaniem, błędny kontekst modułu, negacje i walidację danych podglądu. Raport: help/AUDYT_BETA_0.2.md. 302 testy pomocy/przygotowania oraz pełny zestaw BETA zaliczone. 47 plików docelowych dla dwóch hostingów; manifest odświeżony. Bez publikacji; kontrole na urządzeniach pozostają do wykonania.

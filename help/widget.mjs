@@ -1,3 +1,4 @@
+import {release} from '../release.mjs';
 import {mountDrawingPreview} from './drawing-preview.mjs';
 import {answer,getArticle,topics,modules,knowledgeVersion} from './engine.mjs';
 import {aiEndpoint} from './config.mjs';
@@ -19,7 +20,7 @@ export function mountHelp(doc=document,{standalone=false,fetcher=globalThis.fetc
  const drawingPreview=mountDrawingPreview(doc,panel);
  let useAI=null;
  if(endpoint){const l=el(doc,'label',undefined,'hl-help-consent');useAI=el(doc,'input');useAI.type='checkbox';l.append(useAI,doc.createTextNode('Dopasuj pytanie przez AI (treść pytania trafi do zewnętrznej usługi).'));panel.insertBefore(l,form);}
- const mode=el(doc,'small',`Baza wiedzy ${knowledgeVersion} · ${endpoint?'AI tylko po zaznaczeniu opcji':'Tryb instrukcji - bez połączenia z AI'}`);panel.append(mode);
+ const mode=el(doc,'small',`HeatLoop BETA ${release.version} · Baza wiedzy ${knowledgeVersion} · ${endpoint?'AI tylko po zaznaczeniu opcji':'Tryb instrukcji - bez połączenia z AI'}`);panel.append(mode);
  const host=standalone?doc.getElementById('help-root'):doc.body;if(!host)throw Error('Missing help-root');host.append(panel);if(!standalone){doc.body.append(toggle);panel.hidden=true;}
  let busy=false,controller=null,generation=0,lastArticleId=null,pendingIds=[];
  function appendLog(node){log.append(node);while(log.children.length>60)log.firstElementChild.remove();}
@@ -30,14 +31,14 @@ export function mountHelp(doc=document,{standalone=false,fetcher=globalThis.fetc
  function renderTopics(){suggest.replaceChildren();for(const a of topics(select.value)){const b=el(doc,'button',a.title);b.type='button';b.onclick=()=>selectArticle(a);suggest.append(b);}}
  function reset(){drawingPreview.clear();lastArticleId=null;pendingIds=[];generation++;controller?.abort();controller=null;busy=false;send.disabled=false;log.replaceChildren();message('W czym pomóc? Zapytaj o funkcję HeatLoop albo wybierz gotowy temat.');input.value='';renderTopics();}
  async function ask(e){e?.preventDefault();if(busy)return;const q=input.value.trim();if(!q)return;message(q.length>600?'[Pytanie przekracza limit 600 znaków]':q,'user');input.value='';const context={lastArticleId,pendingIds:[...pendingIds]};const local=answer(q,select.value,context);if(local.kind==='reset'){reset();message(local.message);return;}const stamp=generation;busy=true;send.disabled=true;let result=local;
-  try{if(useAI?.checked&&q.length<=600&&local.kind==='answer'){controller=new AbortController();const timer=setTimeout(()=>controller?.abort(),12000);try{const response=await fetcher(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,module:select.value,knowledgeVersion,context}),signal:controller.signal});const data=await response.json();if(stamp!==generation)return;if(!response.ok&&data.kind!=='version')throw Error('Help unavailable');const approved=getArticle(data.articleId);const allowed=local.article?[local.article.id]:(local.choices||[]).map(a=>a.id);if(approved&&allowed.includes(approved.id))result={kind:'answer',article:approved};else if(data.kind==='version')message('Pomoc AI ma inną wersję wiedzy. Korzystam z instrukcji zapisanej z tą aplikacją.');}finally{clearTimeout(timer);}}
+  try{if(useAI?.checked&&q.length<=600&&local.kind==='answer'){const requestController=new AbortController();controller=requestController;const timer=setTimeout(()=>requestController.abort(),12000);try{const response=await fetcher(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,module:select.value,knowledgeVersion,context}),signal:requestController.signal});const data=await response.json();if(stamp!==generation)return;if(!response.ok&&data.kind!=='version')throw Error('Help unavailable');const approved=getArticle(data.articleId);const allowed=local.article?[local.article.id]:(local.choices||[]).map(a=>a.id);if(approved&&allowed.includes(approved.id))result={kind:'answer',article:approved};else if(data.kind==='version')message('Pomoc AI ma inną wersję wiedzy. Korzystam z instrukcji zapisanej z tą aplikacją.');}finally{clearTimeout(timer);}}
    if(stamp!==generation)return;
    if(result.kind==='answer')showArticle(result.article);else{message(result.message);pendingIds=(result.choices||[]).map(a=>a.id);if(result.choices)choices(result.choices);}
   }catch{if(stamp===generation){message('Połączenie z AI jest niedostępne. Oto pomoc z instrukcji.');if(local.article)showArticle(local.article);else{message(local.message);pendingIds=(local.choices||[]).map(a=>a.id);if(local.choices)choices(local.choices);}}}
   finally{if(stamp===generation){busy=false;send.disabled=false;input.focus();}}}
  form.addEventListener('submit',ask);select.onchange=reset;clear.onclick=reset;
- function open(){const active=doc.querySelector('.tab:not([hidden])')?.id;const module=doc.body.dataset.helpModule||(modules.has(active)?active:'home');if(select.value!==module){select.value=module;reset();}else renderTopics();panel.hidden=false;toggle.setAttribute('aria-expanded','true');input.focus();}
- function shut(){drawingPreview.clear();panel.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus();}
+ function open(){const active=doc.querySelector('.tab:not([hidden])')?.id;const hinted=doc.body.dataset.helpModule||active;const module=modules.has(hinted)?hinted:'home';if(select.value!==module){select.value=module;reset();}else renderTopics();panel.hidden=false;toggle.setAttribute('aria-expanded','true');input.focus();}
+ function shut(){generation++;controller?.abort();controller=null;busy=false;send.disabled=false;drawingPreview.clear();panel.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus();}
  toggle.onclick=()=>panel.hidden?open():shut();close.onclick=shut;panel.addEventListener('keydown',e=>{if(e.key==='Escape'&&!standalone)shut();});
  if(standalone){const param=new URL(doc.URL).searchParams.get('module');if(modules.has(param))select.value=param;}
  reset();return {panel,open,showArticle};

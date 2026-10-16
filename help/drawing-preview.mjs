@@ -8,7 +8,7 @@ export function mountDrawingPreview(doc,host){
  function clear(){revision++;box.replaceChildren();box.hidden=true;}
  function show(){const stamp=++revision;box.replaceChildren();box.hidden=false;box.append(el('p','Podgląd jest lokalny. Obraz i dane kreatora nie są wysyłane do AI. Wykrywanie ścian wyszukuje propozycje długich odcinków poziomych i pionowych; wymaga sprawdzenia.'));
   let received=false;
-  doc.dispatchEvent(new doc.defaultView.CustomEvent('heatloop:preview-request',{detail:{provide(payload){if(received||stamp!==revision)return;received=true;const {snapshot:s,advice=[]}=payload||{};if(!s)return;
+  doc.dispatchEvent(new doc.defaultView.CustomEvent('heatloop:preview-request',{detail:{provide(payload){if(received||stamp!==revision)return;const {snapshot:s,advice=[]}=payload||{};if(!s||!Array.isArray(s.rooms)||!Array.isArray(advice)||['roomCount','loopCount','drawnLoopCount','manifoldCount'].some(key=>!Number.isInteger(s[key])||s[key]<0)||s.rooms.some(r=>!r||typeof r!=='object')||advice.some(a=>!a||typeof a.text!=='string'))return;received=true;
    box.append(el('h3','Stan kreatora w chwili odświeżenia'));
    if(s.image&&/^data:image\/(jpeg|png);base64,[a-zA-Z0-9+/=]+$/.test(s.image)&&s.image.length<=1500000){const img=el('img');img.src=s.image;img.alt='Lokalny obraz aktualnego kreatora rysunku';box.append(img);}else box.append(el('p',s.hasDrawing?'Miniatura jest niedostępna. Sprawdź dane i otwórz kreator.':'Nie wczytano rzutu.'));
    const facts=el('p',`Skala: ${s.scale?'ustawiona':'brak'} · Pomieszczenia na rzucie: ${s.roomCount} · Pętle: ${s.loopCount} · Narysowane pętle: ${s.drawnLoopCount} · Rozdzielacze: ${s.manifoldCount} · Obrót: ${s.rotation||0}° · Linie ścian: ${s.wallGuideCount||0}`);box.append(facts);

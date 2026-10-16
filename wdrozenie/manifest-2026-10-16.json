@@ -1,15 +1,16 @@
 {
-  "release": "heatloop-beta-2026-10-16-help4",
+  "release": "heatloop-0.2-beta",
+  "version": "0.2",
   "status": "prepared-not-published",
   "aiEnabled": false,
-  "knowledgeVersion": "2026-10-16.4",
+  "knowledgeVersion": "2026-10-16.5",
   "entries": [
     {
       "host": "github-pages",
       "source": "heatloop-b/app.js",
       "target": "heatloop-b/app.js",
-      "bytes": 48540,
-      "sha256": "ad2ccd806097fc7379f988d79f92b9966055c2ad7f6332a0483da43ffd02bae2"
+      "bytes": 48607,
+      "sha256": "42ad12b9a34102db98f68f858f6f688b032874dd131e743d31defed62ad225c6"
     },
     {
       "host": "github-pages",
@@ -36,8 +37,8 @@
       "host": "github-pages",
       "source": "heatloop-b/bugfix.html",
       "target": "heatloop-b/bugfix.html",
-      "bytes": 3660,
-      "sha256": "7f2f95a18ac409eac10e51b4161b12d8b0ea4438949892a4dcd4b96cbaef15de"
+      "bytes": 3819,
+      "sha256": "804968519ae616667e9f46089b68d2a9432b978f6bee86c4ceb0700b2a23b5a5"
     },
     {
       "host": "github-pages",
@@ -71,8 +72,8 @@
       "host": "github-pages",
       "source": "heatloop-b/grzejniki.html",
       "target": "heatloop-b/grzejniki.html",
-      "bytes": 12018,
-      "sha256": "1d95219f00736f0fbeb096cf87f672d88a8ac40f246aa9d0fa641345cff822a4"
+      "bytes": 12042,
+      "sha256": "9039942d704fc3b9c398805d914ee4d6d7f2ef38e89ac79a2aa6736fc21ca2fa"
     },
     {
       "host": "github-pages",
@@ -86,14 +87,21 @@
       "source": "heatloop-b/index.html",
       "target": "heatloop-b/index.html",
       "bytes": 146991,
-      "sha256": "933a32763d82ed08af9b84a28671672ac536e5c2fd3e672447e74e698233702a"
+      "sha256": "aba998edd5a28ecbde3eb72311d7a386e480e0c280d2247b2316385bcfca9d35"
     },
     {
       "host": "github-pages",
       "source": "heatloop-b/manifest.webmanifest",
       "target": "heatloop-b/manifest.webmanifest",
-      "bytes": 161,
-      "sha256": "fa64b9d6136bc9f9b595fd7f15a80fe93c3134ef0d764ab1766566cb2b54a734"
+      "bytes": 156,
+      "sha256": "4ae5adeee29f833aeef8d1eb72aecdc0e29798eac28fe6b8c8e153f9568b838e"
+    },
+    {
+      "host": "github-pages",
+      "source": "heatloop-b/RAPORT_TESTOW_BETA_0.1.txt",
+      "target": "heatloop-b/RAPORT_TESTOW_BETA_0.1.txt",
+      "bytes": 1971,
+      "sha256": "b4d32c2e14023e844fbd2192f8ea709d7e66b6515c12af9d5ef2c8c87be7fb8b"
     },
     {
       "host": "github-pages",
@@ -127,8 +135,8 @@
       "host": "github-pages",
       "source": "heatloop-b/zglos-blad.html",
       "target": "heatloop-b/zglos-blad.html",
-      "bytes": 10840,
-      "sha256": "f315c922ad5e8a1631050f0ff474f16aaaadab983a13aff575f166fce820d248"
+      "bytes": 10880,
+      "sha256": "0238dbaf56a9ea7943e7e228057ce7e5690169c79c94b6fa4dc57dbb6efd9bd8"
     },
     {
       "host": "github-pages",
@@ -141,15 +149,15 @@
       "host": "github-pages",
       "source": "help/drawing-preview.mjs",
       "target": "help/drawing-preview.mjs",
-      "bytes": 3671,
-      "sha256": "6c99d40e36d0ee2adcfd85ac52a73070189793548f149be1b280d2fb3bbe0c60"
+      "bytes": 3915,
+      "sha256": "8bbe1a02c22c5003b91ba2099268ff77b215346e367072f7ebf931c672497a4e"
     },
     {
       "host": "github-pages",
       "source": "help/engine.mjs",
       "target": "help/engine.mjs",
-      "bytes": 13552,
-      "sha256": "26842d005bc92dd278c176a7fed31febcb401307b7e8e222412d95442fdaee30"
+      "bytes": 13893,
+      "sha256": "0e38db020121e16bb050551f7dc085788fa539f601f21008c27861f0b79d2f32"
     },
     {
       "host": "github-pages",
@@ -162,8 +170,8 @@
       "host": "github-pages",
       "source": "help/knowledge.mjs",
       "target": "help/knowledge.mjs",
-      "bytes": 18025,
-      "sha256": "7a76d9cc8c75f853ba30aef56d68017510a258a37a6a7bbe9b4a3a4f67b5f485"
+      "bytes": 18066,
+      "sha256": "f20011d4b40f97faf701501fa3d3b05a748b7ee94e6c44058dfa34652416eae4"
     },
     {
       "host": "github-pages",
@@ -190,8 +198,8 @@
       "host": "github-pages",
       "source": "help/widget.mjs",
       "target": "help/widget.mjs",
-      "bytes": 7461,
-      "sha256": "35c53f8e6f20cf022f5dafa98cf024cef4324d5322c963464c3d0855c5702292"
+      "bytes": 7690,
+      "sha256": "c482ece6572a41820e0e24a3a8b8d6995937224c9c714efb506faf3035f2e07f"
     },
     {
       "host": "github-pages",
@@ -211,15 +219,22 @@
       "host": "github-pages",
       "source": "pomoc.html",
       "target": "pomoc.html",
-      "bytes": 1696,
-      "sha256": "0fb1b08b9da6e54cdb755141dffc5376087d5eb380af75ec6d50fdd47b441919"
+      "bytes": 1729,
+      "sha256": "1f01fe256a6127c09d340477fa9bfbe914511df8c159c1a5d4c6475eb6c97b57"
+    },
+    {
+      "host": "github-pages",
+      "source": "release.mjs",
+      "target": "release.mjs",
+      "bytes": 233,
+      "sha256": "51b38da81d8db5e98ec7fc37619464aef5fe7d078df1f54406e10b4441733968"
     },
     {
       "host": "heatloop-pl",
       "source": "wdrozenie/strona-glowna/bug-fix.html",
       "target": "bug-fix.html",
-      "bytes": 3866,
-      "sha256": "a23bab036369f7897e3de1adaff9fb3483c0c43b68beb224b11b34f05f0701aa"
+      "bytes": 4025,
+      "sha256": "241444ed47f14dfea87c441f37dc7fcd6c2639db5e0a4cb7b9d0849a78253961"
     },
     {
       "host": "heatloop-pl",
@@ -232,15 +247,15 @@
       "host": "heatloop-pl",
       "source": "help/drawing-preview.mjs",
       "target": "help/drawing-preview.mjs",
-      "bytes": 3671,
-      "sha256": "6c99d40e36d0ee2adcfd85ac52a73070189793548f149be1b280d2fb3bbe0c60"
+      "bytes": 3915,
+      "sha256": "8bbe1a02c22c5003b91ba2099268ff77b215346e367072f7ebf931c672497a4e"
     },
     {
       "host": "heatloop-pl",
       "source": "help/engine.mjs",
       "target": "help/engine.mjs",
-      "bytes": 13552,
-      "sha256": "26842d005bc92dd278c176a7fed31febcb401307b7e8e222412d95442fdaee30"
+      "bytes": 13893,
+      "sha256": "0e38db020121e16bb050551f7dc085788fa539f601f21008c27861f0b79d2f32"
     },
     {
       "host": "heatloop-pl",
@@ -253,8 +268,8 @@
       "host": "heatloop-pl",
       "source": "help/knowledge.mjs",
       "target": "help/knowledge.mjs",
-      "bytes": 18025,
-      "sha256": "7a76d9cc8c75f853ba30aef56d68017510a258a37a6a7bbe9b4a3a4f67b5f485"
+      "bytes": 18066,
+      "sha256": "f20011d4b40f97faf701501fa3d3b05a748b7ee94e6c44058dfa34652416eae4"
     },
     {
       "host": "heatloop-pl",
@@ -281,15 +296,15 @@
       "host": "heatloop-pl",
       "source": "help/widget.mjs",
       "target": "help/widget.mjs",
-      "bytes": 7461,
-      "sha256": "35c53f8e6f20cf022f5dafa98cf024cef4324d5322c963464c3d0855c5702292"
+      "bytes": 7690,
+      "sha256": "c482ece6572a41820e0e24a3a8b8d6995937224c9c714efb506faf3035f2e07f"
     },
     {
       "host": "heatloop-pl",
       "source": "wdrozenie/strona-glowna/index.html",
       "target": "index.html",
       "bytes": 40305,
-      "sha256": "d22b1f1f63b394b18c0269d6ef8c7251f4155f6a7c083798596d2df9ab75ade7"
+      "sha256": "eebad44599e05871c6af1e01759ba7d1efebdc03e2fd0dd7927c55bd6ab44e36"
     },
     {
       "host": "heatloop-pl",
@@ -309,8 +324,15 @@
       "host": "heatloop-pl",
       "source": "pomoc.html",
       "target": "pomoc.html",
-      "bytes": 1696,
-      "sha256": "0fb1b08b9da6e54cdb755141dffc5376087d5eb380af75ec6d50fdd47b441919"
+      "bytes": 1729,
+      "sha256": "1f01fe256a6127c09d340477fa9bfbe914511df8c159c1a5d4c6475eb6c97b57"
+    },
+    {
+      "host": "heatloop-pl",
+      "source": "release.mjs",
+      "target": "release.mjs",
+      "bytes": 233,
+      "sha256": "51b38da81d8db5e98ec7fc37619464aef5fe7d078df1f54406e10b4441733968"
     }
   ]
 }

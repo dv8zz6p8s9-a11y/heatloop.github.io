@@ -1,3 +1,4 @@
+import {release} from '../release.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -6,9 +7,9 @@ export const root=fileURLToPath(new URL('../',import.meta.url));
 const manifestPath=path.join(root,'wdrozenie/manifest-2026-10-16.json');
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 export async function buildManifest(){
- const common=['instrukcja.html','pomoc.html','materialy/HeatLoop_instrukcja_BETA.pdf'];
+ const common=['release.mjs','instrukcja.html','pomoc.html','materialy/HeatLoop_instrukcja_BETA.pdf'];
  const help=(await fs.readdir(path.join(root,'help'))).filter(x=>/\.(mjs|css)$/.test(x)).map(x=>'help/'+x);
- const beta=(await fs.readdir(path.join(root,'heatloop-b'))).filter(x=>/\.(html|js|mjs|css|webmanifest)$/.test(x)||x==='TESTY_PLATFORM.md').map(x=>'heatloop-b/'+x);
+ const beta=(await fs.readdir(path.join(root,'heatloop-b'))).filter(x=>/\.(html|js|mjs|css|webmanifest)$/.test(x)||['TESTY_PLATFORM.md','RAPORT_TESTOW_BETA_0.1.txt'].includes(x)).map(x=>'heatloop-b/'+x);
  const entries=[];
  async function add(host,source,target=source){const bytes=await fs.readFile(path.join(root,source));entries.push({host,source,target,bytes:bytes.length,sha256:digest(bytes)});}
  for(const source of [...common,...help,...beta])await add('github-pages',source);
@@ -16,7 +17,7 @@ export async function buildManifest(){
  await add('heatloop-pl','wdrozenie/strona-glowna/index.html','index.html');
  await add('heatloop-pl','wdrozenie/strona-glowna/bug-fix.html','bug-fix.html');
  entries.sort((a,b)=>(a.host+'/'+a.target).localeCompare(b.host+'/'+b.target,'en'));
- return {release:'heatloop-beta-2026-10-16-help4',status:'prepared-not-published',aiEnabled:false,knowledgeVersion:'2026-10-16.4',entries};
+ return {release:'heatloop-'+release.version+'-beta',version:release.version,status:'prepared-not-published',aiEnabled:false,knowledgeVersion:release.knowledgeVersion,entries};
 }
 export async function prepareUpdate(out){
  const expected=JSON.parse(await fs.readFile(manifestPath,'utf8')),actual=await buildManifest();
