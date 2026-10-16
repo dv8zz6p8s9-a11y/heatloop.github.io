@@ -1,8 +1,8 @@
-import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength} from './floor-loops.mjs';
+import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel} from './floor-loops.mjs?v=20261016-2';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
- let active=null;
+ let active=null,selected='R1';
  function status(result){
   $('pStatus').replaceChildren();
   const p=document.createElement('p');p.textContent=result.rows.length+' pętli · '+format(result.totalLength)+' m · '+format(result.power)+' W · '+format(result.flow)+' l/h'+(result.estimated?' · długości częściowo lub w całości szacowane':'');$('pStatus').append(p);
@@ -13,12 +13,12 @@ export function mountLoopPlanner(state,api){
   const result=analyzeLoops(state);status(result);$('pLoops').replaceChildren();
   for(const row of result.rows){
    const tr=document.createElement('tr');
-   for(const value of ['R1/P'+row.section,row.room+' / '+row.zone,format(row.area),format(row.length),format(row.power),format(row.flow),format(row.flow/60),row.drawn?'Narysowana (z dojściami)':'Szacunek (z dojściami)']){const td=document.createElement('td');td.textContent=value;tr.append(td)}
+   for(const value of [loopLabel(row),row.room+' / '+row.zone,format(row.area),format(row.length),format(row.power),format(row.flow),format(row.flow/60),row.drawn?'Narysowana (z dojściami)':'Szacunek (z dojściami)']){const td=document.createElement('td');td.textContent=value;tr.append(td)}
    const td=document.createElement('td'),draw=document.createElement('button');draw.type='button';draw.textContent=row.drawn?'Rysuj ponownie':'Rysuj';draw.setAttribute('aria-label','Rysuj pętlę R1/P'+row.section);
    draw.onclick=()=>{
-    if(!state.loopPlan.manifold||!(state.scale>0))return alert('Najpierw ustaw skalę i wskaż rozdzielacz R1 na rzucie.');
+    const m=manifoldPoint(state.loopPlan,row.manifoldId);if(!m||!(state.scale>0))return alert('Najpierw ustaw skalę i wskaż rozdzielacz '+manifoldId(row.manifoldId)+' na rzucie.');
     if(state.loopPlan.signature!==sourceSignature(state))return alert('Dane zmieniły się. Wygeneruj ponownie propozycję pętli.');
-    active=row.id;api.startRoute(state.loopPlan.manifold);api.openDrawing();
+    active=row.id;api.startRoute(m);api.openDrawing();
    };td.append(draw);
    if(row.drawn){const clear=document.createElement('button');clear.type='button';clear.textContent='Usuń trasę';clear.onclick=()=>{if(!confirm('Usunąć trasę i wrócić do szacowanej długości?'))return;state.loopPlan.loops.find(l=>l.id===row.id).route=[];api.render()};td.append(clear)}
    tr.append(td);$('pLoops').append(tr);
@@ -28,10 +28,17 @@ export function mountLoopPlanner(state,api){
   prepareAssignments(state);
   for(const [id,key] of [['pMax','maxLength'],['pDt','dt'],['pPipe','pipe']])$(id).value=state.loopPlan[key];
   $('pLinked').checked=state.loopPlan.linked;
-  const manifold=state.loopPlan.manifold;$('pManifold').textContent=manifold?'Rozdzielacz R1 wskazany na rzucie. Dojścia przyjmij według rzeczywistych tras.':'R1 nie został wskazany na rzucie. Możesz wykonać wstępny podział z ręcznie podanymi dojściami.';
+  if(!state.loopPlan.manifolds.some(m=>m.id===selected))selected='R1';
+  $('pSelect').replaceChildren();
+  for(const m of state.loopPlan.manifolds){const option=document.createElement('option');option.value=m.id;option.textContent=m.id;$('pSelect').append(option)}$('pSelect').value=selected;
+  const current=state.loopPlan.manifolds.find(m=>m.id===selected);$('pSupply').value=current.supply;$('pReturn').value=current.return;
+  $('pRemove').disabled=selected==='R1';$('pAdd').disabled=state.loopPlan.manifolds.length>=10;
+  $('pManifold').textContent=state.loopPlan.manifolds.map(m=>m.id+': '+(manifoldPoint(state.loopPlan,m.id)?'wskazany na rzucie':'bez punktu na rzucie')).join(' · ')+'. Dojścia pętli i zasilanie od źródła podaj osobno.';
   $('pRooms').replaceChildren();
   for(const a of state.loopPlan.assignments){
    const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId),tr=document.createElement('tr'),td=document.createElement('td');td.textContent=room?.name||'Usunięte';tr.append(td);
+   const mc=document.createElement('td'),select=document.createElement('select');select.setAttribute('aria-label','Rozdzielacz — '+room?.name);
+   for(const m of state.loopPlan.manifolds){const o=document.createElement('option');o.value=m.id;o.textContent=m.id;select.append(o)}select.value=manifoldId(a.manifoldId);select.onchange=()=>{a.manifoldId=select.value;showResult();api.changed()};mc.append(select);tr.append(mc);
    for(const [key,label] of [['zone','Strefa'],['out','Dojście zasilania'],['back','Dojście powrotu'],['count','Liczba pętli']]){
     const cell=document.createElement('td'),input=document.createElement('input');input.value=a[key];input.type='text';input.maxLength=key==='zone'?80:10;if(key!=='zone')input.inputMode=key==='count'?'numeric':'decimal';input.setAttribute('aria-label',label+' — '+room?.name);
     input.oninput=()=>{a[key]=input.value;showResult();api.changed()};cell.append(input);tr.append(cell);
@@ -39,6 +46,10 @@ export function mountLoopPlanner(state,api){
   }showResult();
  }
  for(const [id,key] of [['pMax','maxLength'],['pDt','dt'],['pPipe','pipe']])$(id).oninput=()=>{state.loopPlan[key]=$(id).value;showResult();api.changed()};
+ $('pSelect').onchange=()=>{selected=$('pSelect').value;active=null;refresh()};
+ $('pAdd').onclick=()=>{if(state.loopPlan.manifolds.length>=10)return;const id=Array.from({length:10},(_,i)=>'R'+(i+1)).find(id=>!state.loopPlan.manifolds.some(m=>m.id===id));state.loopPlan.manifolds.push({id,supply:'10',return:'10',position:null});selected=id;active=null;api.render()};
+ $('pRemove').onclick=()=>{if(selected==='R1')return;if(state.loopPlan.assignments.some(a=>manifoldId(a.manifoldId)===selected))return alert('Najpierw przypisz pomieszczenia tego rozdzielacza do innego.');if(state.loopPlan.loops.some(l=>manifoldId(l.manifoldId)===selected))return alert('Najpierw wygeneruj ponownie pętle po zmianie przypisań.');state.loopPlan.manifolds=state.loopPlan.manifolds.filter(m=>m.id!==selected);selected='R1';active=null;api.render()};
+ for(const [id,key] of [['pSupply','supply'],['pReturn','return']])$(id).oninput=()=>{state.loopPlan.manifolds.find(m=>m.id===selected)[key]=$(id).value;showResult();api.changed()};
  $('pPlace').onclick=()=>{api.placeManifold();api.openDrawing()};
  $('pGenerate').onclick=()=>{
   prepareAssignments(state);
@@ -50,20 +61,20 @@ export function mountLoopPlanner(state,api){
   const result=analyzeLoops(state);if($('pLinked').checked&&result.errors.length){$('pLinked').checked=false;return alert('Popraw plan pętli przed powiązaniem z wyceną.');}
   state.loopPlan.linked=$('pLinked').checked;api.render();
  };
- $('pExport').onclick=()=>{const r=analyzeLoops(state);if(r.errors.length)return;api.exportCsv([['Sekcja','Pomieszczenie','Strefa','Rura','Powierzchnia m2','Dlugosc m z dojsciami','Moc W','Przeplyw l/h','Przeplyw l/min','Zrodlo dlugosci'],...r.rows.map(l=>['R1/P'+l.section,l.room,l.zone,state.loopPlan.pipe,l.area,l.length,l.power,l.flow,l.flow/60,l.drawn?'Narysowana':'Szacunek'])])};
+ $('pExport').onclick=()=>{const r=analyzeLoops(state);if(r.errors.length)return;api.exportCsv([['Sekcja','Pomieszczenie','Strefa','Rura','Powierzchnia m2','Dlugosc m z dojsciami','Moc W','Przeplyw l/h','Przeplyw l/min','Zrodlo dlugosci'],...r.rows.map(l=>[loopLabel(l),l.room,l.zone,state.loopPlan.pipe,l.area,l.length,l.power,l.flow,l.flow/60,l.drawn?'Narysowana':'Szacunek'])])};
  refresh();
  return {refresh,active:()=>active,
-  setManifold(pos){if(state.loopPlan.loops.length&&!confirm('Zmiana R1 wymaga ponownego podziału pętli i narysowania tras. Kontynuować?'))return;state.loopPlan.manifold={...pos};active=null;api.render()},
+  setManifold(pos){if(state.loopPlan.loops.length&&!confirm('Zmiana '+selected+' wymaga ponownego podziału pętli i narysowania tras. Kontynuować?'))return;if(selected==='R1')state.loopPlan.manifold={...pos};else state.loopPlan.manifolds.find(m=>m.id===selected).position={...pos};active=null;api.render()},
   finishRoute(points){
-   const loop=state.loopPlan.loops.find(l=>l.id===active),m=state.loopPlan.manifold;
+   const loop=state.loopPlan.loops.find(l=>l.id===active),m=loop&&manifoldPoint(state.loopPlan,loop.manifoldId);
    if(!loop||!m)throw Error('Wybierz pętlę przyciskiem „Rysuj” w zakładce Pętle i rozdzielacz.');
    const start=points[0];if(!start||Math.hypot(start.x-m.x,start.y-m.y)>0.01)throw Error('Zacznij rysowanie przyciskiem Rysuj dla wybranej pętli.');
    const route=[...points.map(p=>({...p})),{...m}];if(route.length<3||!(routeLength(route,state.scale)>0))throw Error('Wskaż trasę pętli przed jej zakończeniem.');
    loop.route=route;active=null;
   },
   overlay(ctx){
-   for(const l of state.loopPlan.loops){if(!l.route.length)continue;ctx.beginPath();ctx.moveTo(l.route[0].x,l.route[0].y);for(const p of l.route.slice(1))ctx.lineTo(p.x,p.y);ctx.strokeStyle='hsl('+((l.section*61)%360)+' 65% 40%)';ctx.lineWidth=2;ctx.stroke();const p=l.route[Math.floor(l.route.length/2)];ctx.fillStyle='#10263a';ctx.font='bold 13px sans-serif';ctx.fillText('R1/P'+l.section,p.x+5,p.y-5)}
-   const m=state.loopPlan.manifold;if(m){ctx.fillStyle='#10263a';ctx.fillRect(m.x-15,m.y-10,30,20);ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.fillText('R1',m.x-8,m.y+4)}
+   for(const l of state.loopPlan.loops){if(!l.route.length)continue;ctx.beginPath();ctx.moveTo(l.route[0].x,l.route[0].y);for(const p of l.route.slice(1))ctx.lineTo(p.x,p.y);ctx.strokeStyle='hsl('+((l.section*61)%360)+' 65% 40%)';ctx.lineWidth=2;ctx.stroke();const p=l.route[Math.floor(l.route.length/2)];ctx.fillStyle='#10263a';ctx.font='bold 13px sans-serif';ctx.fillText(loopLabel(l),p.x+5,p.y-5)}
+   for(const manifold of state.loopPlan.manifolds){const m=manifoldPoint(state.loopPlan,manifold.id);if(m){ctx.fillStyle='#10263a';ctx.fillRect(m.x-15,m.y-10,30,20);ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.fillText(manifold.id,m.x-8,m.y+4)}}
   }
  };
 }

@@ -29,4 +29,9 @@ test('Zapis i odczyt zachowuje plan, powiązania i trasy',()=>{const s=fixture()
 test('Przecinek dziesiętny w dojściach',()=>{const s=fixture();s.loopPlan.assignments[0].out='5,5';assert.equal(generate(s).rows[0].out,5.5)});
 test('Limit liczby pętli chroni przed nadmiernym generowaniem',()=>{const s=fixture();s.rooms[0].area=10000;assert(proposeLoops(s).errors.length)});
 test('Długość wieloodcinkowej trasy według skali',()=>assert.equal(routeLength([{x:0,y:0},{x:3,y:4},{x:6,y:8}],2),20));
+test('Dwa rozdzielacze zachowują sumy i numerują sekcje osobno',()=>{
+ const s=fixture();s.rooms.push({name:'Pokój',area:15,load:50,spacing:15,heatingType:'wet'});ensureRoomIds(s);prepareAssignments(s);s.loopPlan.manifolds.push({id:'R2',supply:'15',return:'17',position:{x:200,y:200}});s.loopPlan.assignments[1].manifoldId='R2';const r=generate(s);assert.deepEqual(r.errors,[]);assert.equal(r.rows.length,6);assert.equal(r.rows.find(l=>l.manifoldId==='R2').section,1);assert.equal(r.rows.reduce((sum,l)=>sum+l.area,0),45);assert.equal(r.power,2550);assert.equal(controlEntries(s,r)[1].manifoldId,'R2');assert.deepEqual(normalizePlan(JSON.parse(JSON.stringify(s.loopPlan))),s.loopPlan);
+ s.loopPlan.assignments[1].manifoldId='R1';assert(analyzeLoops(s).errors.length);
+});
+test('Nieistniejący rozdzielacz i błędna długość zasilania blokują plan',()=>{const s=fixture();s.loopPlan.assignments[0].manifoldId='R3';assert(proposeLoops(s).errors.length);s.loopPlan.assignments[0].manifoldId='R1';s.loopPlan.manifolds[0].supply='';assert(proposeLoops(s).errors.length)});
 console.log(count+' testów zakończonych pomyślnie');
