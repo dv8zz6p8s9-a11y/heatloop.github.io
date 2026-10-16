@@ -18,10 +18,13 @@ test('Every local module import exists in its prepared host bundle',async()=>{
 test('Prepared entry points contain help links and omit the owner name and personal email',async()=>{
  const landing=await fs.readFile(path.join(root,'wdrozenie/strona-glowna/index.html'),'utf8'),beta=await fs.readFile(path.join(root,'heatloop-b/index.html'),'utf8');
  assert(landing.includes('pomoc.html'));assert(beta.includes('../help/start.mjs'));for(const text of [landing,beta]){assert(!text.includes('sroczynski.rafal@gmail.com'));assert(!text.includes('Rafał Sroczyński'));}
- const help=await fs.readFile(path.join(root,'pomoc.html'),'utf8');assert(help.includes('Nie ogląda rzutu'));assert((await fs.readFile(path.join(root,'help/config.mjs'),'utf8')).includes('aiEndpoint=null'));
+ const help=await fs.readFile(path.join(root,'pomoc.html'),'utf8');assert(help.includes('lokalny podgląd rzutu'));assert(help.includes('Obraz nie jest wysyłany do AI'));assert((await fs.readFile(path.join(root,'help/config.mjs'),'utf8')).includes('aiEndpoint=null'));
 });
 test('Staged copies match every SHA-256; repeated staging refuses overwriting; source directory is protected',async t=>{
  const temp=await fs.mkdtemp(path.join(os.tmpdir(),'heatloop-release-'));t.after(()=>fs.rm(temp,{recursive:true,force:true}));const out=path.join(temp,'prepared'),manifest=await prepareUpdate(out);
  for(const entry of manifest.entries){const bytes=await fs.readFile(path.join(out,entry.host,entry.target));assert.equal(bytes.length,entry.bytes);assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),entry.sha256);}
  assert.deepEqual(JSON.parse(await fs.readFile(path.join(out,'manifest.json'),'utf8')),manifest);await assert.rejects(()=>prepareUpdate(out),/pusty/);await assert.rejects(()=>prepareUpdate(root),/osobny/);await assert.rejects(()=>prepareUpdate(path.join(root,'help','bad-output')),/osobny/);
+});
+test('Latest-change panel is visible before the hero, with an explicit history link and retained instructions',async()=>{
+ const html=await fs.readFile(path.join(root,'wdrozenie/strona-glowna/index.html'),'utf8');const panel=html.indexOf('class="latest-release"'),hero=html.indexOf('class="hero"');assert(panel>0&&panel<hero);const part=html.slice(panel,html.indexOf('</section>',panel));assert(part.includes('Najnowsza aktualizacja'));assert(part.includes('href="bug-fix.html"'));assert(part.includes('<ul>'));assert(!part.includes(' hidden'));assert(html.includes('Więcej pomocy — instrukcja i PDF'));assert(html.includes('materialy/HeatLoop_instrukcja_BETA.pdf'));
 });

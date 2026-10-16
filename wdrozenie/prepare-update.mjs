@@ -16,7 +16,7 @@ export async function buildManifest(){
  await add('heatloop-pl','wdrozenie/strona-glowna/index.html','index.html');
  await add('heatloop-pl','wdrozenie/strona-glowna/bug-fix.html','bug-fix.html');
  entries.sort((a,b)=>(a.host+'/'+a.target).localeCompare(b.host+'/'+b.target,'en'));
- return {release:'heatloop-beta-2026-10-16-help3',status:'prepared-not-published',aiEnabled:false,knowledgeVersion:'2026-10-16.3',entries};
+ return {release:'heatloop-beta-2026-10-16-help4',status:'prepared-not-published',aiEnabled:false,knowledgeVersion:'2026-10-16.4',entries};
 }
 export async function prepareUpdate(out){
  const expected=JSON.parse(await fs.readFile(manifestPath,'utf8')),actual=await buildManifest();

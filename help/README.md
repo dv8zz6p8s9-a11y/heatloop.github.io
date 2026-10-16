@@ -72,3 +72,14 @@ Rozpoznawane adresy e-mail i długie numery są zatrzymywane w przeglądarce prz
 Okno zachowuje do 60 ostatnich elementów rozmowy w pamięci karty. Zbyt długie wejście nie jest w całości kopiowane do logu. Nieprawidłowe żądania JSON i konteksty serwera nie powodują przerwania obsługi.
 
 Wynik rozszerzenia: 279/279 testów runnera. Obejmują co najmniej 10 064 próby wejść i kontekstów, w tym 5000 testów losowych dotyczących odporności, a nie jakości rozumienia. Dokładny podział, ograniczenia i polecenia: `EXTREME_TEST_REPORT_2026-10-16.md`. Cały zestaw BETA także przeszedł. Wszystko pozostaje robocze; płatne AI wyłączone.
+
+
+## Podgląd rzutu, obrót i wykrywanie ścian — baza 2026-10-16.4
+
+W BETA pomocnik oferuje przycisk „Podgląd kreatora rysunku”. Dopiero jego użycie pobiera lokalny obraz canvas i ograniczoną projekcję danych: skalę, liczbę i powierzchnie obrysów, technologie, pętle, położenia rozdzielaczy i liczbę komunikatów. Nazwy pokoi są zastępowane etykietami; ceny i dane oferty nie są odczytywane. Sam rzut może zawierać dane osobowe, dlatego miniatura pozostaje wyłącznie lokalna. Nie trafia do żądania AI ani kontekstu rozmowy. Odświeżenie jest ręczne; zmiana rysunku unieważnia i usuwa miniaturę. Zamknięcie/wyczyszczenie pomocy usuwa podgląd.
+
+Nowe narzędzia aplikacji: obrót o 90° w lewo/prawo i „Wykryj propozycje ścian”. Lokalny detektor znajduje długie, grubsze odcinki poziome i pionowe. Nie rozpoznaje semantycznie wszystkich ścian, nie gwarantuje odróżnienia mebli/tekstu i nie obejmuje ukośnych ścian. Użytkownik reguluje próg, odznacza błędne propozycje i zatwierdza wybrane jako pomocnicze. Nie tworzą one pomieszczeń, pętli ani zmian w obliczeniach.
+
+Obrót zachowuje oryginalny raster i kąt w projekcie, przekształca geometrię wokół środka oraz skaluje jednostki tak, aby długości i powierzchnie nie uległy zmianie. Cztery obroty nie zmniejszają wielokrotnie obrazu. Aktualny plan pętli zachowuje aktualność, a plan wcześniej nieaktualny pozostaje nieaktualny. Nowe pola JSON to drawingRotation i wallGuides; stare projekty przyjmują 0° i brak linii. Projekt z obrotem należy otwierać w zaktualizowanej aplikacji.
+
+Nie uruchomiono modelu wizyjnego ani płatnego AI. Instrukcja online i PDF pozostają; asystent jest głównym wejściem pomocy, a dodatkowe instrukcje na landing page są pod „Więcej pomocy”. PDF 1.2 nie był przebudowywany dla tego rozszerzenia — nowe narzędzia opisują komunikaty aplikacji i ten dokument. Przed publikacją nadal sprawdzić urządzenia i rzeczywiste rzuty testerów.

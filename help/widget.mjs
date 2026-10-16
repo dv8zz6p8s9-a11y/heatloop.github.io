@@ -1,3 +1,4 @@
+import {mountDrawingPreview} from './drawing-preview.mjs';
 import {answer,getArticle,topics,modules,knowledgeVersion} from './engine.mjs';
 import {aiEndpoint} from './config.mjs';
 const labels={home:'Start i zapis',manual:'Dane ręczne',drawing:'Praca z rysunku',loops:'Pętle i rozdzielacze',boiler:'Kotłownia',quote:'Wycena i sterowanie',radiators:'Grzejniki'};
@@ -15,6 +16,7 @@ export function mountHelp(doc=document,{standalone=false,fetcher=globalThis.fetc
  const suggest=el(doc,'div',undefined,'hl-help-suggestions');suggest.setAttribute('aria-label','Proponowane tematy');panel.append(suggest);
  const form=el(doc,'form');const label=el(doc,'label','Twoje pytanie o HeatLoop');label.htmlFor='hl-help-question';const input=el(doc,'textarea');input.id=label.htmlFor;input.rows=2;input.maxLength=600;input.required=true;input.placeholder='Np. Jak dodać drugi rozdzielacz?';const send=el(doc,'button','Zapytaj');send.type='submit';form.append(label,input,send);panel.append(form);
  const online=el(doc,'a','Pełna instrukcja ze zrzutami ↗');online.href=new URL('instrukcja.html',rootUrl).href;panel.append(online);
+ const drawingPreview=mountDrawingPreview(doc,panel);
  let useAI=null;
  if(endpoint){const l=el(doc,'label',undefined,'hl-help-consent');useAI=el(doc,'input');useAI.type='checkbox';l.append(useAI,doc.createTextNode('Dopasuj pytanie przez AI (treść pytania trafi do zewnętrznej usługi).'));panel.insertBefore(l,form);}
  const mode=el(doc,'small',`Baza wiedzy ${knowledgeVersion} · ${endpoint?'AI tylko po zaznaczeniu opcji':'Tryb instrukcji - bez połączenia z AI'}`);panel.append(mode);
@@ -26,7 +28,7 @@ export function mountHelp(doc=document,{standalone=false,fetcher=globalThis.fetc
  function selectArticle(a){generation++;controller?.abort();busy=false;send.disabled=false;showArticle(a);}
  function showArticle(a){lastArticleId=a.id;pendingIds=[];const n=message(a.title);const ol=el(doc,'ol');for(const s of a.steps)ol.append(el(doc,'li',s));n.append(ol);if(a.note)n.append(el(doc,'p',a.note,'hl-help-note'));const link=el(doc,'a','Pokaż ten rozdział instrukcji →');link.href=new URL(`instrukcja.html#${a.section}`,rootUrl).href;n.append(link);n.scrollIntoView?.({block:'nearest'});}
  function renderTopics(){suggest.replaceChildren();for(const a of topics(select.value)){const b=el(doc,'button',a.title);b.type='button';b.onclick=()=>selectArticle(a);suggest.append(b);}}
- function reset(){lastArticleId=null;pendingIds=[];generation++;controller?.abort();controller=null;busy=false;send.disabled=false;log.replaceChildren();message('W czym pomóc? Zapytaj o funkcję HeatLoop albo wybierz gotowy temat.');input.value='';renderTopics();}
+ function reset(){drawingPreview.clear();lastArticleId=null;pendingIds=[];generation++;controller?.abort();controller=null;busy=false;send.disabled=false;log.replaceChildren();message('W czym pomóc? Zapytaj o funkcję HeatLoop albo wybierz gotowy temat.');input.value='';renderTopics();}
  async function ask(e){e?.preventDefault();if(busy)return;const q=input.value.trim();if(!q)return;message(q.length>600?'[Pytanie przekracza limit 600 znaków]':q,'user');input.value='';const context={lastArticleId,pendingIds:[...pendingIds]};const local=answer(q,select.value,context);if(local.kind==='reset'){reset();message(local.message);return;}const stamp=generation;busy=true;send.disabled=true;let result=local;
   try{if(useAI?.checked&&q.length<=600&&local.kind==='answer'){controller=new AbortController();const timer=setTimeout(()=>controller?.abort(),12000);try{const response=await fetcher(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,module:select.value,knowledgeVersion,context}),signal:controller.signal});const data=await response.json();if(stamp!==generation)return;if(!response.ok&&data.kind!=='version')throw Error('Help unavailable');const approved=getArticle(data.articleId);const allowed=local.article?[local.article.id]:(local.choices||[]).map(a=>a.id);if(approved&&allowed.includes(approved.id))result={kind:'answer',article:approved};else if(data.kind==='version')message('Pomoc AI ma inną wersję wiedzy. Korzystam z instrukcji zapisanej z tą aplikacją.');}finally{clearTimeout(timer);}}
    if(stamp!==generation)return;
@@ -35,7 +37,7 @@ export function mountHelp(doc=document,{standalone=false,fetcher=globalThis.fetc
   finally{if(stamp===generation){busy=false;send.disabled=false;input.focus();}}}
  form.addEventListener('submit',ask);select.onchange=reset;clear.onclick=reset;
  function open(){const active=doc.querySelector('.tab:not([hidden])')?.id;const module=doc.body.dataset.helpModule||(modules.has(active)?active:'home');if(select.value!==module){select.value=module;reset();}else renderTopics();panel.hidden=false;toggle.setAttribute('aria-expanded','true');input.focus();}
- function shut(){panel.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus();}
+ function shut(){drawingPreview.clear();panel.hidden=true;toggle.setAttribute('aria-expanded','false');toggle.focus();}
  toggle.onclick=()=>panel.hidden?open():shut();close.onclick=shut;panel.addEventListener('keydown',e=>{if(e.key==='Escape'&&!standalone)shut();});
  if(standalone){const param=new URL(doc.URL).searchParams.get('module');if(modules.has(param))select.value=param;}
  reset();return {panel,open,showArticle};

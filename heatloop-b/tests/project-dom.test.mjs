@@ -2,6 +2,8 @@ import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 const require=createRequire(import.meta.url);const {JSDOM}=require('jsdom');
 import fs from 'node:fs';import assert from 'node:assert/strict';
+import * as drawingTools from '../drawing-tools.mjs';
+import * as drawingHelp from '../drawing-help.mjs';
 import * as boiler from '../boiler-room.mjs';
 import {mountBoiler} from '../boiler-room-ui.mjs';
 import * as tech from '../tech-controls.mjs';
@@ -11,9 +13,9 @@ import {mountControls} from '../tech-controls-ui.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const dom=new JSDOM(fs.readFileSync(root+'index.html','utf8'),{runScripts:'outside-only',url:'http://localhost/heatloop-b/'});const w=dom.window;const runtimeErrors=[];w.addEventListener('error',e=>runtimeErrors.push(e.error?.message||e.message));globalThis.document=w.document;globalThis.window=w;
 w.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:()=>()=>{},set:()=>true});w.scrollTo=()=>{};w.alert=message=>{throw Error(message)};w.confirm=()=>true;globalThis.confirm=w.confirm;globalThis.alert=w.alert;w.Blob=Blob;w.URL.createObjectURL=blob=>{w.lastBlob=blob;return 'blob:mock'};w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=()=>{};
-w.__tech=tech;w.__mount=mountControls;w.__floor=floor;w.__loopMount=mountLoopPlanner;w.__boiler=boiler;w.__boilerMount=mountBoiler;
+w.__drawingTools=drawingTools;w.__drawingHelp=drawingHelp;w.__tech=tech;w.__mount=mountControls;w.__floor=floor;w.__loopMount=mountLoopPlanner;w.__boiler=boiler;w.__boilerMount=mountBoiler;
 let code=fs.readFileSync(root+'app.js','utf8').replace(/^import .*;\n/gm,'');
-code='const {catalog:techCatalog,defaults:techDefaults,normalizeControls,projectSignature,calculateControls}=window.__tech;const mountControls=window.__mount;const {planDefaults,normalizePlan,ensureRoomIds,prepareAssignments,analyzeLoops,controlEntries,numberPL,loopLabel}=window.__floor;const mountLoopPlanner=window.__loopMount;const {boilerDefaults,normalizeBoiler,boilerKeys,analyzeBoiler,boilerQuoteRows}=window.__boiler;const mountBoiler=window.__boilerMount;\n'+code;
+code='const {drawRaster,rotateDrawing,rotationValue,normalizeWallGuides,detectWallCandidates}=window.__drawingTools;const {drawingHelpSnapshot,drawingHelpAdvice}=window.__drawingHelp;const {catalog:techCatalog,defaults:techDefaults,normalizeControls,projectSignature,calculateControls}=window.__tech;const mountControls=window.__mount;const {planDefaults,normalizePlan,ensureRoomIds,prepareAssignments,analyzeLoops,controlEntries,numberPL,loopLabel}=window.__floor;const mountLoopPlanner=window.__loopMount;const {boilerDefaults,normalizeBoiler,boilerKeys,analyzeBoiler,boilerQuoteRows}=window.__boiler;const mountBoiler=window.__boilerMount;\n'+code;
 w.eval(code+'\nwindow.testOffer=()=>offerHtml(offerSnapshot());window.testState=()=>state;');
 const $=id=>w.document.getElementById(id);
 const change=(id,value)=>{const el=$(id);if(el.type==='checkbox')el.checked=value;else el.value=value;el.dispatchEvent(new w.Event(el.tagName==='SELECT'||el.type==='checkbox'?'change':'input',{bubbles:true}))};
@@ -121,4 +123,16 @@ change('bDt','4');assert($('qExport').disabled);assert($('bFindings').textConten
 change('bTopology','separator');change('bHydraulicModel','cpn-70');change('bHydraulicSections','3');assert($('bItems').textContent.includes('WOMIX C 70'));assert(!$('bItems').querySelector('tr[data-key="bDistribution"]'));assert($('bItems').querySelector('tr[data-key="bHeatingManifold"]'));
 change('bTopology','direct');assert(!$('bItems').querySelector('tr[data-key="bSeparator"]'));assert(!$('bItems').querySelector('tr[data-key="bHeatingManifold"]'));
 change('bBrand','mitsubishi');assert.equal($('bCatalogModel').options.length,6);change('bCatalogModel','ecodan-r290-8');assert($('bItems').textContent.includes('klasa 8 kW'));change('bBrand','vaillant');assert.equal($('bCatalogModel').options.length,5);change('bCatalogModel','arotherm-plus-12');assert($('bItems').textContent.includes('VWL 125/6 A'));change('bHpKind','ground');assert.equal($('bCatalogModel').value,'');assert($('bCatalogModel').closest('label').hidden);assert.equal($('bModel').value,'');
-assert.deepEqual(runtimeErrors,[]);console.log('PASS DOM: heat pump catalogue, hydraulic circuits, group quantities, actuator, flow validation, quote/offer/CSV and JSON');w.close();
+assert.deepEqual(runtimeErrors,[]);console.log('PASS DOM: heat pump catalogue, hydraulic circuits, group quantities, actuator, flow validation, quote/offer/CSV and JSON');
+
+// Read-only bridge, JSON compatibility and rotation of real application state.
+await load({version:1,rooms:[],polygons:[{name:'PRIVATE_CLIENT',area:20,load:60,spacing:15,heatingType:'wet',points:[{x:100,y:100},{x:300,y:100},{x:300,y:250},{x:100,y:250}]}],pipes:[],scale:0.1,background:null,drawingRotation:90,wallGuides:[{points:[{x:100,y:100},{x:300,y:100}],thickness:5}]});
+let payload;const beforePreview=JSON.stringify(w.testState());w.document.dispatchEvent(new w.CustomEvent('heatloop:preview-request',{detail:{provide:value=>payload=value}}));assert(payload,JSON.stringify(runtimeErrors));assert.equal(payload.snapshot.roomCount,1);assert(!JSON.stringify(payload).includes('PRIVATE_CLIENT'));assert.equal(JSON.stringify(w.testState()),beforePreview);
+assert.equal(w.testState().drawingRotation,90);assert.equal(w.testState().wallGuides.length,1);$('save').click();const oriented=JSON.parse(await w.lastBlob.text());await load(oriented);assert.equal(w.testState().drawingRotation,90);assert.equal(w.testState().wallGuides.length,1);
+console.log('PASS DOM: local helper preview is read-only and anonymized; rotation/wall metadata survive JSON');
+
+// Real rotate button keeps the linked quote and physical geometry consistent.
+await load({version:1,rooms:[],polygons:[{name:'Salon',area:20,load:60,spacing:15,heatingType:'wet',points:[{x:100,y:100},{x:300,y:100},{x:300,y:250},{x:100,y:250}]}],pipes:[],scale:0.1});
+$('pGenerate').click();change('pLinked',true);const quoteBeforeRotation=$('qTotal').textContent;const drawingBeforeRotation=JSON.parse(JSON.stringify(w.testState()));w.testState().background='data:image/png;base64,AAAA';$('rotateRight').click();assert.equal(w.testState().drawingRotation,90);assert.equal($('qTotal').textContent,quoteBeforeRotation);assert(!$('qExport').disabled);assert(Math.abs(w.testState().scale-0.1/0.7)<1e-9);assert.equal(w.testState().polygons[0].area,20);$('rotateLeft').click();assert.equal(w.testState().drawingRotation,0);assert(Math.abs(w.testState().polygons[0].points[0].x-drawingBeforeRotation.polygons[0].points[0].x)<1e-7);assert.equal($('qTotal').textContent,quoteBeforeRotation);
+console.log('PASS DOM: rotation buttons preserve the linked quote, room area, scale and coordinates');
+assert.deepEqual(runtimeErrors,[]);w.close();

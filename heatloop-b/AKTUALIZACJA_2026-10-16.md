@@ -97,3 +97,12 @@ W publicznym zestawie są wszystkie zależności pomocy, także nowe `language.m
 Sugestia testera o pytaniach do doboru sterowania strefowego jest zapisana w `wdrozenie/SUGESTIE_TESTEROW.md` jako propozycja do opracowania. Nie dołączono kreatora wyceny z wymiarów.
 
 Przed publikacją nadal sprawdzić rzeczywiste urządzenia i porównać bieżący landing page. Istniejące dokumenty prawne i zasoby hostingu pozostają poza zestawem.
+
+
+## Rozszerzenie końcowe — rzut i panel zmian (baza 2026-10-16.4)
+
+Dodano opcjonalny lokalny podgląd kreatora w pomocniku, bez wysyłania rastra/danych projektu do AI. Podgląd jest unieważniany po zmianie projektu i usuwany po zamknięciu pomocy. Obrót rzutu o 90° zachowuje oryginalny raster, długości, powierzchnie i geometrię instalacji. Zapis kąta i pomocniczych linii ścian w JSON. Detektor wyszukuje propozycje długich, grubszych ścian pionowych/poziomych; wymaga ręcznego sprawdzenia i zatwierdzenia, nie wyznacza automatycznie pomieszczeń.
+
+Na górze przygotowanego landing page panel „Najnowsza aktualizacja”, krótka lista zmian i link do pełnego Bug/Fix. Instrukcja online i PDF pozostają zgodnie z decyzją użytkownika; na stronie jako dodatkowa pomoc. Dotychczasowe stwierdzenia o braku podglądu dotyczą wcześniejszego etapu przygotowania. Aktualny zakres opisuje help/README.md. Sugestia kreatora sterowania strefowego nadal pozostaje propozycją do dopracowania.
+
+Przed publikacją wymagane testy fizycznego telefonu i rzeczywistych rzutów: czytelność miniatur, obrót z kalibracją i naniesionymi trasami, sprawdzenie fałszywych wskazań ścian, odczyt zapisanego JSON. Bez aktywacji AI i bez publikacji na etapie przygotowania.

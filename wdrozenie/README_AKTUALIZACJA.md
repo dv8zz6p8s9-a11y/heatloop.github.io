@@ -2,7 +2,7 @@
 
 Stan: przygotowane w roboczym PR #7. Bez publikacji i bez włączenia płatnego AI.
 
-Zakres: kotłownia i katalogi źródeł/hydrauliki, instrukcja HTML/PDF, 33 tematy asystenta (baza 2026-10-16.3), wejścia z aplikacji i landing page oraz Bug/Fix. Sugestia testera dotycząca wywiadu do sterowania strefowego jest osobno zapisana w SUGESTIE_TESTEROW.md; nie jest częścią tej implementacji. Asystent prowadzi przez pracę na rzucie, ale nie ogląda obrazu ani projektu.
+Zakres: kotłownia i katalogi źródeł/hydrauliki, instrukcja HTML/PDF, 33 tematy asystenta (baza 2026-10-16.4), wejścia z aplikacji i landing page oraz Bug/Fix. Sugestia testera dotycząca wywiadu do sterowania strefowego jest osobno zapisana w SUGESTIE_TESTEROW.md; nie jest częścią tej implementacji. Asystent ma opcjonalny lokalny podgląd rzutu i ograniczonych danych kreatora. Obraz nie trafia do AI. Aplikacja oferuje obrót 90° oraz propozycje ścian do zatwierdzenia.
 
 ## Przygotowanie plików bez ZIP
 
@@ -27,6 +27,10 @@ Okno uzgodnione dla dużej aktualizacji: 16.10 godz. 23:00 – 17.10 godz. 05:00
 
 Przed publikacją pozostaje kontrola wizualna na rzeczywistym iPhonie/Androidzie: klawiatura, przewijanie, zamykanie pomocy, długie nazwy katalogowe, instrukcja i powiększanie zrzutów. PDF instrukcji zachowano z przygotowanego wydania 1.2; nie był w tej operacji ponownie redagowany ani renderowany. Nie nazywaj wydania w pełni zweryfikowanym na urządzeniach bez tej kontroli.
 
-Po publikacji sprawdź oba hostingi: aplikacja, Grzejniki, Pomoc, instrukcja, PDF, Bug/Fix i formularz błędów. W pomocy ma widnieć baza 2026-10-16.3 oraz tryb bez połączenia z AI. Przetestuj R2, cenę frezowania, JSON, VAT, niejasne pytanie, uwagę testera i pracę na rzucie. Zweryfikuj zapis/odczyt projektu oraz końcowy dokument oferty. Rozdział instrukcji o przygotowywanych katalogach zachowuje ten status do rzeczywistego opublikowania — późniejsze dopasowanie instrukcji wykonuj na podstawie potwierdzonego wydania, nie samej daty.
+Po publikacji sprawdź oba hostingi: aplikacja, Grzejniki, Pomoc, instrukcja, PDF, Bug/Fix i formularz błędów. W pomocy ma widnieć baza 2026-10-16.4 oraz tryb bez połączenia z AI. Przetestuj R2, cenę frezowania, JSON, VAT, niejasne pytanie, uwagę testera i pracę na rzucie. Zweryfikuj zapis/odczyt projektu oraz końcowy dokument oferty. Rozdział instrukcji o przygotowywanych katalogach zachowuje ten status do rzeczywistego opublikowania — późniejsze dopasowanie instrukcji wykonuj na podstawie potwierdzonego wydania, nie samej daty.
 
 W razie problemów przywróć kopię zastąpionych plików jako spójny zestaw. Nie kasuj projektów, danych przeglądarki ani cenników użytkowników.
+
+Przy tej publikacji podmień także `drawing-help.mjs`, `drawing-tools.mjs` i `help/drawing-preview.mjs` oraz odświeżone HTML/CSS. Nowy panel „Najnowsza aktualizacja” jest nad główną treścią landing page; przy kolejnych wydaniach aktualizuj jego listę jednocześnie z Bug/Fix. Instrukcję i PDF zachowano jako dodatkową pomoc.
+
+Weryfikacja końcowa rozszerzenia: 288 testów pomocy/przygotowania, 12 testów narzędzi rysunku oraz pełny zestaw BETA przeszły. Sprawdzono też przyciski obrotu w integracji DOM — zachowują powiązaną wycenę, pola powierzchni i skalę. Zestaw ma 44 pliki docelowe dla dwóch hostingów. Kontrola wizualna i rzeczywiste skany nadal pozostają przed publikacją.

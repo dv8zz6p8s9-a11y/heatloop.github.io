@@ -15,7 +15,7 @@ const vocab={
  room:['pokoj','pokoju','pokoje','pokoi','pomieszczenie','pomieszczenia','pomieszczeniu','pomieszczen'],
  manifold:['rozdzielacz','rozdzielacza','rozdzielacze','rozdzielaczy','rozdzielaczu','r1','r2','r3','r10'],
  loop:['petla','petle','petli','petlach','obwod','obwody'],
- drawing:['rysunek','rysunku','rzut','rzutu','rzucie','szkic','szkicu','obrys','obrysu','kalibracja','kalibracje','kalibracji','skala','skale','skali'],
+ drawing:['sciana','sciany','scian','obrot','obrocic','obroc','podglad','rysunek','rysunku','rzut','rzutu','rzucie','szkic','szkicu','obrys','obrysu','kalibracja','kalibracje','kalibracji','skala','skale','skali'],
  radiator:['grzejnik','grzejnika','grzejniki','grzejnikow','grzejniku','kaloryfer','kaloryfery'],
  boiler:['kotlownia','kotlowni','kociol','kotla','kotly','kotlow','ozc'],
  quote:['wycena','wycenie','wyceny','kosztorys','oferta','oferte','ofercie','oferty'],
