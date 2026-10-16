@@ -19,7 +19,7 @@ Zmiany przygotowane w PR #7: https://github.com/dv8zz6p8s9-a11y/heatloop.github.
 ## Kontrola przed publikacją
 
 1. Pobierz bieżący main i aktualny head PR #7. Nie cofaj innych zmian.
-2. Sprawdź diff i CI; uruchom `npm ci --prefix heatloop-b` oraz `npm test --prefix heatloop-b`.
+2. Sprawdź diff i CI; uruchom `npm ci --prefix heatloop-b` oraz `npm test --prefix heatloop-b` oraz `node --test help/tests/*.test.mjs wdrozenie/tests/*.test.mjs`.
 3. Sprawdź składnię modułów i `git diff --check`.
 4. Kontrola funkcjonalna: pompa 16 kW, własna marka, gaz jednofunkcyjny i zasobnik w pakiecie; 2 i 3 obiegi; sprzęgło 40/55/70 kW; grupy z/bez mieszania; przepływ przekraczający katalog; brak podwójnego naliczania; zapis/odczyt JSON; CSV i oferta.
 5. Dopiero po pomyślnych kontrolach scal i opublikuj. Zweryfikuj publiczną BETĘ i wejście z heatloop.pl. Sam merge nie potwierdza publikacji.
@@ -65,7 +65,7 @@ Status: przygotowane do wspólnego wdrożenia, bez publikacji produkcyjnej na ty
 
 ## Asystent pomocy - przygotowany, bez aktywacji płatnego API
 
-- Jedna baza wiedzy `help/knowledge.mjs`, 26 zatwierdzonych tematów i wspólne odpowiedzi w aplikacji oraz na `pomoc.html`.
+- Jedna baza wiedzy `help/knowledge.mjs`, 33 zatwierdzone tematy i wspólne odpowiedzi w aplikacji oraz na `pomoc.html`.
 - W aplikacji przycisk „? Pomoc” wybiera obszar aktualnego modułu, bez odczytu projektu. Na landing page przygotowano wejście do tej samej pomocy.
 - Przy publikacji heatloop.pl skopiuj także `pomoc.html` i cały publiczny katalog `help/` bez `server/` i `tests/`. Katalog serwera nie jest potrzebny do trybu lokalnego.
 - Domyślnie działa lokalne dopasowanie do instrukcji; nie przedstawiamy go jako uruchomionego modelu AI.
@@ -86,3 +86,14 @@ Weryfikacja: 100/100 scenariuszy pytań oraz 27 dodatkowych testów — 127/127;
 Dodano obsługę sugestii i uwag bez deklarowania wysyłki, spokojne reakcje na same obelgi, zachowanie pomocy przy wulgarnym pytaniu, zaprzeczenia, kilka intencji, wybór opcji i słowne czyszczenie kontekstu. Doprecyzowano zakres, R1–R10, brak działań za użytkownika i brak obliczeń w bocie. Dane rozpoznawane jako e-mail/długi numer nie wychodzą do AI. Ograniczono rozmiar historii okna, poprawiono obsługę wadliwych żądań serwera.
 
 279/279 testów asystenta; co najmniej 10 064 próby wejść/kontekstów, w tym 5000 deterministycznych prób losowych. Pełny zestaw BETA także zaliczony. Raport: `help/EXTREME_TEST_REPORT_2026-10-16.md`. Testy nie obejmują wszystkich możliwych zdań, prawdziwych wywołań modelu ani rzeczywistego telefonu. Brak publikacji i aktywacji AI.
+
+
+## Gotowy zestaw do podmiany — przygotowanie końcowe
+
+Instrukcja wykonawcza: `wdrozenie/README_AKTUALIZACJA.md`. Dokładna lista plików z miejscami publikacji, rozmiarami i SHA-256: `wdrozenie/manifest-2026-10-16.json`. Polecenie `node wdrozenie/prepare-update.mjs` tworzy dwa osobne foldery gotowych plików bez ZIP; sprawdza aktualność manifestu i poprawność kopii. Nie publikuje.
+
+W publicznym zestawie są wszystkie zależności pomocy, także nowe `language.mjs` i `policy.mjs`; serwer i testy są wykluczone. Uzupełniono Bug/Fix i przygotowano jego samodzielną wersję dla heatloop.pl. Z przygotowanego landing page i stopki BETA usunięto nazwisko oraz prywatny e-mail, zgodnie z wcześniejszym ustaleniem; uwagi prowadzą do formularza. W pomocy jasno opisano brak odczytu rzutu i danych projektu.
+
+Sugestia testera o pytaniach do doboru sterowania strefowego jest zapisana w `wdrozenie/SUGESTIE_TESTEROW.md` jako propozycja do opracowania. Nie dołączono kreatora wyceny z wymiarów.
+
+Przed publikacją nadal sprawdzić rzeczywiste urządzenia i porównać bieżący landing page. Istniejące dokumenty prawne i zasoby hostingu pozostają poza zestawem.
