@@ -4,18 +4,18 @@
     {
       "name": "Ogólna obsługa aplikacji",
       "total": 54,
-      "full": 41,
+      "full": 50,
       "partial": 4,
-      "none": 9,
-      "percent": 80
+      "none": 0,
+      "percent": 96
     },
     {
       "name": "Praca z rysunkiem i podgląd",
       "total": 36,
-      "full": 21,
-      "partial": 12,
-      "none": 3,
-      "percent": 75
+      "full": 33,
+      "partial": 2,
+      "none": 1,
+      "percent": 94
     }
   ],
   "groups": [
@@ -78,8 +78,8 @@
           "target": "manual",
           "depth": 1,
           "note": "",
-          "score": 0,
-          "actual": "answer / milling",
+          "score": 1,
+          "actual": "answer / manual",
           "articleTitle": "Dodawanie pomieszczeń ręcznie"
         },
         {
@@ -136,9 +136,9 @@
           "title": "Usunięcie pustego rozdzielacza",
           "question": "Jak usunąć pusty rozdzielacz R2?",
           "target": "manifolds",
-          "depth": 0.5,
-          "note": "Artykuł opisuje dodawanie i przypisanie, nie przycisk usuwania.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Opis przeniesienia przypisań, ponownego generowania i przycisku usuwania; R1 pozostaje.",
+          "score": 1,
           "actual": "answer / manifolds",
           "articleTitle": "Dodawanie rozdzielacza R2-R10"
         },
@@ -156,10 +156,10 @@
           "title": "Zasilanie osobnych rozdzielaczy",
           "question": "Gdzie podać zasilanie rozdzielacza R2?",
           "target": "manifolds",
-          "depth": 0.5,
-          "note": "Instrukcja istnieje, ale pytanie może trafić do ogólnego zasilania.",
-          "score": 0,
-          "actual": "answer / supply",
+          "depth": 1,
+          "note": "Opis pól długości po wyborze konkretnego rozdzielacza.",
+          "score": 1,
+          "actual": "answer / manifolds",
           "articleTitle": "Dodawanie rozdzielacza R2-R10"
         },
         {
@@ -188,8 +188,8 @@
           "target": "locked",
           "depth": 1,
           "note": "",
-          "score": 0,
-          "actual": "unknown",
+          "score": 1,
+          "actual": "answer / locked",
           "articleTitle": "Dlaczego pole jest zablokowane?"
         },
         {
@@ -198,8 +198,8 @@
           "target": "zones",
           "depth": 1,
           "note": "",
-          "score": 0,
-          "actual": "answer / tech",
+          "score": 1,
+          "actual": "answer / zones",
           "articleTitle": "Wspólny regulator i nazwy stref"
         },
         {
@@ -238,8 +238,8 @@
           "target": "tech",
           "depth": 0.5,
           "note": "Podany limit, brak szczegółowego przebiegu rozwiązania przekroczenia.",
-          "score": 0,
-          "actual": "choose",
+          "score": 0.5,
+          "actual": "answer / tech",
           "articleTitle": "Jak dodać sterowanie TECH?"
         },
         {
@@ -256,10 +256,10 @@
           "title": "Opcjonalna grupa w wycenie podłogówki",
           "question": "Jak wyłączyć grupę pompową w wycenie podłogówki?",
           "target": "quote",
-          "depth": 0,
-          "note": "Ogólna hydraulika kotłowni nie wyjaśnia tego pola wyceny.",
-          "score": 0,
-          "actual": "answer / hydraulics",
+          "depth": 1,
+          "note": "Podano nazwę i lokalizację checkboxa oraz odróżniono kotłownię.",
+          "score": 1,
+          "actual": "answer / quote",
           "articleTitle": "Rozdzielacze i szafki w wycenie"
         },
         {
@@ -336,9 +336,9 @@
           "title": "Eksport wyceny CSV",
           "question": "Jak wyeksportować wycenę CSV?",
           "target": "prices",
-          "depth": 0.5,
-          "note": "Jest wzmianka o CSV, bez pełnej instrukcji przycisku eksportu wyceny.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Podano ekran, przycisk eksportu i kontrolę pobranego pliku.",
+          "score": 1,
           "actual": "answer / prices",
           "articleTitle": "Własne ceny netto i zamawianie materiałów"
         },
@@ -368,8 +368,8 @@
           "target": "vat",
           "depth": 1,
           "note": "",
-          "score": 0,
-          "actual": "unknown",
+          "score": 1,
+          "actual": "answer / vat",
           "articleTitle": "Gdzie zmienić VAT w ofercie?"
         },
         {
@@ -458,8 +458,8 @@
           "target": "boiler",
           "depth": 0.5,
           "note": "Opisuje ogólny charakter doboru; nie diagnozuje konkretnej konfiguracji kotłowni.",
-          "score": 0,
-          "actual": "unknown",
+          "score": 0.5,
+          "actual": "answer / boiler",
           "articleTitle": "Jak uruchomić dobór kotłowni?"
         },
         {
@@ -496,10 +496,10 @@
           "title": "Usunięcie pozycji katalogu",
           "question": "Jak usunąć produkt z katalogu grzejników?",
           "target": "csv",
-          "depth": 0.5,
-          "note": "Brak odrębnej instrukcji usuwania pozycji katalogowych.",
-          "score": 0,
-          "actual": "answer / radiators",
+          "depth": 1,
+          "note": "Opisano brak kasowania wiersza w UI i zastąpienie katalogu poprawionym CSV.",
+          "score": 1,
+          "actual": "answer / csv",
           "articleTitle": "Katalog grzejników z CSV"
         },
         {
@@ -621,9 +621,9 @@
           "title": "Cofnięcie punktu",
           "question": "Jak cofnąć ostatni punkt na rzucie?",
           "target": "drawing",
-          "depth": 0.5,
-          "note": "Brak instrukcji przycisku Cofnij punkt.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Opisano działanie Cofnij punkt wyłącznie dla bieżącego szkicu.",
+          "score": 1,
           "actual": "answer / drawing",
           "articleTitle": "Rzut i kalibracja skali"
         },
@@ -631,9 +631,9 @@
           "title": "Usunięcie niedokończonego szkicu",
           "question": "Jak usunąć bieżący szkic?",
           "target": "drawing",
-          "depth": 0.5,
-          "note": "Brak rozróżnienia szkicu od gotowego pomieszczenia.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Rozróżniono szkic od gotowego pomieszczenia.",
+          "score": 1,
           "actual": "answer / drawing",
           "articleTitle": "Rzut i kalibracja skali"
         },
@@ -641,10 +641,10 @@
           "title": "Pomocnicza trasa rury",
           "question": "Do czego służy trasa rury pomocnicza?",
           "target": "drawing",
-          "depth": 0.5,
-          "note": "Może zostać pomylona z trasą przypisanej pętli.",
-          "score": 0,
-          "actual": "unknown",
+          "depth": 1,
+          "note": "Odróżniono szkic pomocniczy od trasy pętli i jej długości.",
+          "score": 1,
+          "actual": "answer / drawing",
           "articleTitle": "Rzut i kalibracja skali"
         },
         {
@@ -653,8 +653,8 @@
           "target": "mixed",
           "depth": 1,
           "note": "",
-          "score": 0.5,
-          "actual": "choose",
+          "score": 1,
+          "actual": "answer / mixed",
           "articleTitle": "Mokre, frezowane i system mieszany"
         },
         {
@@ -663,27 +663,27 @@
           "target": "mixed",
           "depth": 1,
           "note": "",
-          "score": 0.5,
-          "actual": "choose",
+          "score": 1,
+          "actual": "answer / mixed",
           "articleTitle": "Mokre, frezowane i system mieszany"
         },
         {
           "title": "Umieszczenie R1",
           "question": "Jak umieścić rozdzielacz na rzucie?",
-          "target": "route",
-          "depth": 0.5,
-          "note": "Trasa wymaga rozdzielacza, ale brak dokładnej instrukcji narzędzia Umieść rozdzielacz.",
-          "score": 0,
-          "actual": "choose",
-          "articleTitle": "Rysowanie rzeczywistej trasy pętli"
+          "target": "manifolds",
+          "depth": 1,
+          "note": "Instrukcja wyboru rozdzielacza i przycisku wskazania znajduje się teraz w manifolds.",
+          "score": 1,
+          "actual": "answer / manifolds",
+          "articleTitle": "Dodawanie rozdzielacza R2-R10"
         },
         {
           "title": "Pozycja R2",
           "question": "Jak wskazać położenie rozdzielacza R2?",
           "target": "manifolds",
-          "depth": 0.5,
-          "note": "Opisuje wybór R2 i przypisania, nie pełen przebieg umieszczania punktu.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Opisano wybór R2 i wskazanie punktu na rzucie.",
+          "score": 1,
           "actual": "answer / manifolds",
           "articleTitle": "Dodawanie rozdzielacza R2-R10"
         },
@@ -721,9 +721,9 @@
           "title": "Usunięcie gotowej trasy",
           "question": "Jak usunąć narysowaną trasę pętli?",
           "target": "route",
-          "depth": 0.5,
-          "note": "Brak kroków przycisku Usuń trasę.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Opisano przycisk, potwierdzenie i powrót do szacunku.",
+          "score": 1,
           "actual": "answer / route",
           "articleTitle": "Rysowanie rzeczywistej trasy pętli"
         },
@@ -751,9 +751,9 @@
           "title": "Próg wykrywania",
           "question": "Jak zmienić próg ciemności wykrywania ścian?",
           "target": "drawing",
-          "depth": 0.5,
-          "note": "Brak instrukcji ustawiania progu i wpływu na wynik.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Opisano kierunek zmiany progu, zakres i ponowne wykrywanie.",
+          "score": 1,
           "actual": "answer / drawing",
           "articleTitle": "Rzut i kalibracja skali"
         },
@@ -771,9 +771,9 @@
           "title": "Usunięcie linii ścian",
           "question": "Jak usunąć zatwierdzone linie pomocnicze ścian?",
           "target": "drawing",
-          "depth": 0.5,
-          "note": "Brak opisu przycisku usuwania linii pomocniczych.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Opisano przycisk i odróżniono linie pomocnicze od obrysów.",
+          "score": 1,
           "actual": "answer / drawing",
           "articleTitle": "Rzut i kalibracja skali"
         },
@@ -781,9 +781,9 @@
           "title": "Zapis obrotu i ścian",
           "question": "Czy JSON zapisuje obrót rzutu i linie ścian?",
           "target": "json",
-          "depth": 0.5,
-          "note": "Artykuł zapisu nie wyjaśnia nowych pól i zgodności ze starszą aplikacją.",
-          "score": 0.5,
+          "depth": 1,
+          "note": "Opisano zapis obrotu i zaakceptowanych linii, brak zapisu kandydatów i ograniczenie starszych wersji.",
+          "score": 1,
           "actual": "answer / json",
           "articleTitle": "Zapis i odtworzenie projektu JSON"
         },
@@ -870,12 +870,15 @@
         {
           "title": "Diagnoza konkretnej przyczyny błędu planu",
           "state": {
-            "planErrorCount": 1
+            "planErrorCount": 1,
+            "planIssueCodes": [
+              "approaches"
+            ]
           },
-          "pattern": "Plan pętli zgłasza",
-          "depth": 0.5,
-          "note": "Podgląd zna liczbę problemów i kieruje do planu, ale nie tłumaczy konkretnych komunikatów.",
-          "score": 0.5,
+          "pattern": "suma musi być mniejsza od limitu",
+          "depth": 1,
+          "note": "Podgląd otrzymuje kod błędu dojść i wyjaśnia poprawkę; nie kopiuje nazwy pomieszczenia. Inne znane błędy obejmują osobne testy; nieznane wymagają sprawdzenia komunikatu.",
+          "score": 1,
           "actual": "oczekiwana wskazówka"
         },
         {

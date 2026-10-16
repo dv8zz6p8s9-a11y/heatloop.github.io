@@ -45,6 +45,20 @@ function retrieve(q,module){
  const remove=/\b(usun\w*|skas\w*|wywal\w*)\b/.test(q),edit=/\b(zmien\w*|edyt\w*|popraw\w*|nazwa|nazwe|nazwy)\b/.test(q),error=/\b(blad|bled\w*|problem|nie dziala|nie moge|nie chce|nie otwiera|nie wczytuje|nie laduje|odrzuca|uszkodz\w*)\b/.test(q);
  const fileContext=/\b(plik\w*|projekt\w*|zapis\w*|wczyt\w*|otwor\w*|otwier\w*|pobierz|pobrac|zachow\w*|kopia|kopie)\b/.test(q);
  const heatPump=/\bpomp\w* ciepl\w*\b/.test(q),pumpGroup=/\bgrup\w* pompow\w*\b/.test(q);
+ // Specific UI intentions outrank broad nouns such as pipe, price or drawing.
+ if(c.vat)add('vat',40);
+ if(c.room&&/obciaz|zapotrzebowan/.test(q)&&!c.boiler&&!c.radiator)add('manual',42);
+ if(/powiazan/.test(q)&&(c.quote||/plan/.test(q)))add('locked',42);
+ if((c.control||c.zone)&&/wspoln|jeden regulator/.test(q))add('zones',42);
+ if(c.zone&&/\b(9|dziewiec|limit|przekrocz)\b/.test(q))add('tech',40);
+ if(c.csv&&c.quote)add('prices',42);
+ if(c.radiator&&/katalog/.test(q))add('csv',42);
+ if(pumpGroup&&(c.floor||c.quote)&&!c.boiler&&!c.hydraulic)add('quote',42);
+ if(/moc/.test(q)&&/zrodl/.test(q))add('boiler',40);
+ if(c.manifold&&c.supply&&!c.quote)add('manifolds',42);
+ if(c.manifold&&(c.drawing||/polozen|umies/.test(q))&&!c.quote)add('manifolds',42);
+ if(c.drawing&&/system|technolog/.test(q))add('mixed',42);
+ if(/tras\w* rur\w* pomocnicz/.test(q))add('drawing',42);
  if(c.offline||/\bbez (internetu|sieci|zasiegu)\b/.test(q))add('offline',35);
  if(c.vat&&!c.price||/\bvat\b/.test(q))add('vat',30);
  if(c.room){if(remove)add('room-delete',35);else if(edit&&!/technolog|system|ogrzewan/.test(q))add('room-edit',30);else if(!c.drawing&&!c.manifold&&!c.loop&&!c.radiator&&!/regulator|stref/.test(q))add('manual',15);}
@@ -115,8 +129,8 @@ export function answer(question,module='home',context={}){
  const c=concepts(focus);
  if(/^(cena|ceny|koszt|model|email|e mail|plik|instalacja)$/.test(q))return choose(topics(module).slice(0,3).map(a=>a.id),'Czego dotyczy pytanie w HeatLoop? Podaj nazwę funkcji lub pliku.');
  // Asking for a manifold without saying which workflow is genuinely ambiguous.
- if(c.manifold&&!c.quote&&!c.cabinet&&!c.supply&&!c.loop&&!c.flow&&!/\b(r[2-9]|r10|drugi|kolejny|druga|kolejna)\b/.test(q)&&!['loops','quote'].includes(module))return choose(['manifolds','quote'],'Chcesz dodać rozdzielacz w planie pętli czy bezpośrednio w wycenie?');
- if(c.manifold&&module==='quote'&&!c.supply&&!c.loop&&!c.flow&&!c.drawing)return found('quote');
+ if(c.manifold&&!c.quote&&!c.cabinet&&!c.supply&&!c.loop&&!c.flow&&!c.drawing&&!c.control&&!c.zone&&!/\b(r[2-9]|r10|drugi|kolejny|druga|kolejna)\b/.test(q)&&!['loops','quote'].includes(module))return choose(['manifolds','quote'],'Chcesz dodać rozdzielacz w planie pętli czy bezpośrednio w wycenie?');
+ if(c.manifold&&module==='quote'&&!c.supply&&!c.loop&&!c.flow&&!c.drawing&&!c.control&&!c.zone&&!/polozen|umies/.test(q))return found('quote');
  const results=search(focus,module);
  if(pending.length){if(pending.includes('quote')&&/^(w )?wycen(?:a|ie|y)$/.test(focus))return found('quote');if(pending.includes('manifolds')&&/^(w )?plan(?:ie)?( petli)?$/.test(focus))return found('manifolds');}
  if(!results.length){if(hasAbuse(q))return {kind:'civil',message:'Mogę pomóc w obsłudze HeatLoop. Opisz ekran i czynność, z którą masz problem.'};if(/\b(model|producent|cena|email|e mail|instalacja|plik|zapisac|usunac|zmienic)\b/.test(q))return choose(topics(module).slice(0,3).map(a=>a.id),'Czego dotyczy pytanie w HeatLoop? Podaj nazwę funkcji lub pliku.');return unknown();}

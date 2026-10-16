@@ -113,3 +113,7 @@ Przed publikacją wymagane testy fizycznego telefonu i rzeczywistych rzutów: cz
 Publiczna etykieta przygotowanego wydania: **0.2**. Po publikacji małe poprawki: **0.21, 0.22 itd.**, kolejne duże wydanie: **0.3**. Wspólne dane w release.mjs; polityka w wdrozenie/WERSJONOWANIE.md. Format JSON projektu pozostaje 1, a appVersion zapisuje wersję aplikacji osobno.
 
 Naprawiono pierwszeństwo nowych pytań przed poprzednim wyborem, anulowanie odpowiedzi po zamknięciu pomocy, powiązanie timera z właściwym żądaniem, błędny kontekst modułu, negacje i walidację danych podglądu. Raport: help/AUDYT_BETA_0.2.md. 302 testy pomocy/przygotowania oraz pełny zestaw BETA zaliczone. 47 plików docelowych dla dwóch hostingów; manifest odświeżony. Bez publikacji; kontrole na urządzeniach pozostają do wykonania.
+
+## Dopracowanie asystenta (baza 2026-10-16.6)
+
+Uzupełniono instrukcje edycji rysunku, ścian, R1/R2, CSV, sterowania i powiązania wyceny. Poprawiono dopasowanie pytań niezależnie od otwartego ekranu. Podgląd wyjaśnia znane błędy planu na podstawie anonimowych kodów; nie przekazuje nazw pokoi ani surowych błędów. Ocena pokrycia 90 czynności: 96% obsługi i 94% pracy z rysunkiem; metodologia i pierwotny wynik zachowane w help/audits/. Nie zmierzono skuteczności ścian na rzeczywistych skanach ani zgodności na fizycznych telefonach.
