@@ -43,3 +43,21 @@ Zmiany przygotowane w PR #7: https://github.com/dv8zz6p8s9-a11y/heatloop.github.
 Pełny zestaw `npm test --prefix heatloop-b` przeszedł, w tym 40 scenariuszy modułu kotłowni i testy integracyjne formularza, wyceny, oferty, eksportów i zapisów projektu. Ponów dla ostatecznego head przed publikacją.
 
 Kontrola wizualna w przeglądarce pozostaje do wykonania: lokalny runtime nie ma działającego Chromium, a pobranie przeglądarki nie powiodło się. Testy DOM przeszły; przed zakończeniem wdrożenia sprawdź również widok na małym ekranie i długie nazwy katalogowe.
+
+
+## Instrukcja 1.2 i podstrona pomocy - dołączenie do tej aktualizacji
+
+- `instrukcja.html`: samodzielna podstrona z 14 rozdziałami i 11 rzeczywistymi zrzutami ekranów z oznaczonymi polami; rozwijany spis treści, powiększanie obrazów, obsługa klawiatury i druk. Zrzuty są osadzone w HTML; brak zewnętrznych bibliotek.
+- `materialy/HeatLoop_instrukcja_BETA.pdf`: pełne wydanie 1.2, 14 stron; zastępuje dotychczasowy PDF 1.1.
+- Link „Instrukcja obsługi” w nawigacji aplikacji i stopkach BETA oraz modułu Grzejniki.
+- `wdrozenie/strona-glowna/index.html`: przygotowana podmiana landing page, pobrana z heatloop.pl 16.10.2026. Sekcja pomocy ma główny przycisk „Czytaj instrukcję online” i dodatkowy PDF. Nie zastępuje pliku index.html aplikacji z głównego katalogu tego repozytorium.
+
+### Dwie lokalizacje publikacji
+
+1. Przy wspólnym wdrożeniu BETA opublikuj `instrukcja.html` i `materialy/HeatLoop_instrukcja_BETA.pdf` w katalogu głównym GitHub Pages. Sprawdź link `../instrukcja.html` z aplikacji i grzejników.
+2. Na hostingu strony heatloop.pl skopiuj te same dwa pliki, zachowując katalog `materialy`, oraz podmień stronę główną zawartością `wdrozenie/strona-glowna/index.html`. To osobny hosting - samo scalenie PR nie aktualizuje landing page.
+3. Przed podmianą landing page porównaj jego aktualną wersję z przygotowanym plikiem, aby zachować ewentualne nowsze zmiany. Nie cofaj plików prawnych ani pozostałych zasobów.
+4. Rozdział „Przygotowywane rozszerzenia” jest jawnie oznaczony. Po faktycznym udostępnieniu katalogów dopasuj jego status do wydania i uzupełnij zrzuty nowych pól; nie zmieniaj daty publicznej instrukcji na potwierdzenie niewykonanego wdrożenia.
+5. Sprawdź na telefonie: spis treści, odnośniki do rozdziałów, powiększenie i zamknięcie zrzutu, przewijanie tabel, pobranie PDF oraz wejście z obu stron.
+
+Status: przygotowane do wspólnego wdrożenia, bez publikacji produkcyjnej na tym etapie.
