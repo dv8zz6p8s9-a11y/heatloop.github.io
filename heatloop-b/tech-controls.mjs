@@ -18,7 +18,7 @@ export function normalizeControls(value) {
   c.thread=value.thread==='M28'?'M28':'M30';
   c.controller=['auto','l4x','lx'].includes(value.controller)?value.controller:'auto';
   c.entries=Array.isArray(value.entries)?value.entries.slice(0,200).map(e=>({
-    room:String(e?.room??'').slice(0,80),zone:String(e?.zone??'').slice(0,80),loops:String(e?.loops??'').slice(0,8)
+    manifoldId:String(e?.manifoldId||'R1').slice(0,10),room:String(e?.room??'').slice(0,80),zone:String(e?.zone??'').slice(0,80),loops:String(e?.loops??'').slice(0,8)
   })):[];
   c.projectSignature=typeof value.projectSignature==='string'?value.projectSignature:null;
   return c;
@@ -29,6 +29,14 @@ export function projectSignature(rooms) {
 export function calculateControls(c,quoteLoops,currentSignature) {
   const errors=[],rows=[];
   if(!c.enabled)return {errors,rows,zones:0,loops:0};
+  const manifoldIds=[...new Set(c.entries.map(e=>e.manifoldId||'R1'))];
+  if(manifoldIds.length>1){
+    let zones=0,loops=0;
+    if(c.projectSignature!==null&&c.projectSignature!==currentSignature)errors.push('Pomieszczenia projektu zmieniły się. Pobierz je ponownie i sprawdź przypisania oraz pętle.');
+    for(const id of manifoldIds){const entries=c.entries.filter(e=>(e.manifoldId||'R1')===id),count=entries.reduce((sum,e)=>sum+Number(e.loops),0);const part=calculateControls({...c,entries:entries.map(e=>({...e,manifoldId:'R1'})),projectSignature:null},count,currentSignature);errors.push(...part.errors.map(e=>id+': '+e));zones+=part.zones;loops+=part.loops;rows.push(...part.rows.map(row=>[id+': '+row[0],...row.slice(1)]));}
+    if(loops!==quoteLoops)errors.push('Suma pętli sterowania ('+loops+') musi odpowiadać liczbie pętli w wycenie ('+quoteLoops+').');
+    return {errors:[...new Set(errors)],rows:errors.length?[]:rows,zones,loops};
+  }
   if(!['wired','wireless'].includes(c.mode)||!['M30','M28'].includes(c.thread))errors.push('Nieprawidłowy wariant sterowania.');
   if(!['auto','l4x','lx'].includes(c.controller))errors.push('Wybierz sterownik L-4X Wi-Fi lub L-X Wi-Fi.');
   if(c.projectSignature!==null&&c.projectSignature!==currentSignature)errors.push('Pomieszczenia projektu zmieniły się. Pobierz je ponownie i sprawdź przypisania oraz pętle.');
