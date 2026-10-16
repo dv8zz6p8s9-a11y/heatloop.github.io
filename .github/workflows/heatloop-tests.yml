@@ -3,10 +3,16 @@ on:
   push:
     paths:
       - 'heatloop-b/**'
+      - 'help/**'
+      - 'pomoc.html'
+      - 'instrukcja.html'
       - '.github/workflows/heatloop-tests.yml'
   pull_request:
     paths:
       - 'heatloop-b/**'
+      - 'help/**'
+      - 'pomoc.html'
+      - 'instrukcja.html'
       - '.github/workflows/heatloop-tests.yml'
   workflow_dispatch:
 jobs:
@@ -25,5 +31,7 @@ jobs:
         run: |
           node --check heatloop-b/app.js
           for file in heatloop-b/*.mjs; do node --check "$file"; done
+      - name: Check help knowledge, scope and server fallback
+        run: node --test help/tests/*.test.mjs
       - name: Run calculation and integration tests
         run: npm test --prefix heatloop-b

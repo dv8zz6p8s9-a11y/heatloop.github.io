@@ -61,3 +61,14 @@ Kontrola wizualna w przeglądarce pozostaje do wykonania: lokalny runtime nie ma
 5. Sprawdź na telefonie: spis treści, odnośniki do rozdziałów, powiększenie i zamknięcie zrzutu, przewijanie tabel, pobranie PDF oraz wejście z obu stron.
 
 Status: przygotowane do wspólnego wdrożenia, bez publikacji produkcyjnej na tym etapie.
+
+
+## Asystent pomocy - przygotowany, bez aktywacji płatnego API
+
+- Jedna baza wiedzy `help/knowledge.mjs`, 26 zatwierdzonych tematów i wspólne odpowiedzi w aplikacji oraz na `pomoc.html`.
+- W aplikacji przycisk „? Pomoc” wybiera obszar aktualnego modułu, bez odczytu projektu. Na landing page przygotowano wejście do tej samej pomocy.
+- Przy publikacji heatloop.pl skopiuj także `pomoc.html` i cały publiczny katalog `help/` bez `server/` i `tests/`. Katalog serwera nie jest potrzebny do trybu lokalnego.
+- Domyślnie działa lokalne dopasowanie do instrukcji; nie przedstawiamy go jako uruchomionego modelu AI.
+- Opcjonalny serwer AI wybiera wyłącznie ID zatwierdzonego tematu. Wymaga osobnego hostingu HTTPS, sekretu API, wyboru modelu i kontroli kosztów. `help/config.mjs` pozostaje z `aiEndpoint=null`.
+- Przed publikacją sprawdź widok mobilny i działanie z klawiaturą. AI nie aktywować do czasu konfiguracji limitów i informacji o przetwarzaniu pytań.
+- Wiedzę aktualizuj wraz ze zmianami funkcji; wersja klienta i serwera musi się zgadzać. Rozmowy nie zmieniają wiedzy automatycznie.

@@ -1,6 +1,6 @@
 <!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10263a"><title>HeatLoop — Grzejniki</title><style>
 :root{font-family:system-ui,-apple-system,sans-serif;background:#0c1927;color:#eaf4ff}*{box-sizing:border-box}body{margin:0}header{padding:20px;background:#10263a;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}a{color:#7bd7ff}main{max-width:1100px;margin:auto;padding:18px}section{background:#12283b;border:1px solid #31516b;border-radius:14px;padding:18px;margin:16px 0}h1,h2{margin:0 0 14px}h1{font-size:1.5rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}label{display:flex;flex-direction:column;gap:5px}input,select{background:#eaf3f9;color:#12283b;border:0;border-radius:7px;padding:10px;max-width:100%;width:100%}button{background:#187caa;color:white;border:0;border-radius:8px;padding:11px 14px;cursor:pointer;font-weight:600}button:hover{background:#2c9bc6}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.hint{color:#b7d1e0;font-size:.9rem;line-height:1.5}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:650px}th,td{padding:10px;border-bottom:1px solid #36536a;text-align:left}output{font-weight:700}.status{color:#9ee0bb}.warn{color:#ffd28a}.metric{font-size:1.35rem}footer{text-align:center;padding:20px;color:#b7d1e0}@media print{header,.toolbar,input[type=file],button,.hint{display:none!important}body,:root{background:white;color:black}section{background:white;color:black;border:1px solid #bbb}th,td{border-color:#aaa}}
-</style></head><body><header><h1>♨ HeatLoop — Grzejniki</h1><a href="./index.html">← Powrót do HeatLoop</a></header><main>
+</style></head><body data-help-module="radiators"><header><h1>♨ HeatLoop — Grzejniki</h1><a href="./index.html">← Powrót do HeatLoop</a></header><main>
 <section><h2>1. Pomieszczenie i parametry instalacji</h2><div class="grid">
 <label>Nazwa pomieszczenia<input id="room" value="Salon"></label>
 <label>Powierzchnia [m²]<input id="area" type="number" min="0.1" step="0.1" value="20"></label>
@@ -37,4 +37,4 @@ $("catalogFile").onchange=async e=>{const file=e.target.files[0];if(!file)return
 $("sample").onclick=()=>download("HeatLoop-szablon-katalogu.csv",toCSV([["dostawca","producent","kod","nazwa","typ","moc_w","cena_pln"]]),"text/csv;charset=utf-8");
 $("resetCatalog").onclick=()=>{if(confirm("Usunąć lokalny katalog?")){catalog=[];localStorage.removeItem(catalogKey);renderCatalog()}};$("filter").oninput=renderCatalog;
 render();renderCatalog();show();
-</script></body></html>
+</script><script type="module" src="../help/start.mjs"></script></body></html>
