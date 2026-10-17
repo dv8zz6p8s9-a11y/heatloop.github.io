@@ -3,7 +3,7 @@ import {generateMeander,rectangularInsetArea} from './loop-generator.mjs';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
- let active=null,selected='R1',approachRoomId=null;
+ let active=null,selected='R1',approachRoomId=null,lastSavedApproachRoomId=null;
  function status(result){
   $('pStatus').replaceChildren();
   const p=document.createElement('p');p.textContent=result.rows.length+' pętli · '+format(result.totalLength)+' m · '+format(result.power)+' W · '+format(result.flow)+' l/h'+(result.estimated?' · długości częściowo lub w całości szacowane':'');$('pStatus').append(p);
@@ -40,7 +40,7 @@ export function mountLoopPlanner(state,api){
    const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId),tr=document.createElement('tr'),td=document.createElement('td');td.textContent=room?.name||'Usunięte';
    if(room){
     const approachButton=document.createElement('button');approachButton.type='button';approachButton.textContent=a.approach?.length?'Edytuj dojście ('+a.approach.length+' punktów)':'Wskaż dojście od rozdzielacza';
-    approachButton.onclick=()=>{if(!(state.scale>0)||!manifoldPoint(state.loopPlan,manifoldId(a.manifoldId)))return alert('Najpierw skalibruj rzut i wskaż rozdzielacz.');approachRoomId=a.roomId;api.startApproach();api.openDrawing();alert('Klikaj kolejne punkty od rozdzielacza, przez korytarz i drzwi, aż do wnętrza pomieszczenia '+room.name+'. Następnie kliknij „Zakończ obrys / trasę”.');};
+    approachButton.onclick=()=>{if(!(state.scale>0)||!manifoldPoint(state.loopPlan,manifoldId(a.manifoldId)))return alert('Najpierw skalibruj rzut i wskaż rozdzielacz.');approachRoomId=a.roomId;api.startApproach(a.approach||[]);api.openDrawing();alert('Klikaj kolejne punkty od rozdzielacza, przez korytarz i drzwi, aż do wnętrza pomieszczenia '+room.name+'. Następnie kliknij „Zakończ obrys / trasę”.');};
     td.append(document.createElement('br'),approachButton);
     for(const [label,value,callback] of [
     ['Odsunięcie od ścian (cm)',a.offsetCm??'10',v=>{a.offsetCm=v;}],
@@ -107,7 +107,8 @@ export function mountLoopPlanner(state,api){
  $('pExport').onclick=()=>{const r=analyzeLoops(state);if(r.errors.length)return;api.exportCsv([['Sekcja','Pomieszczenie','Strefa','Rura','Powierzchnia m2','Dlugosc m z dojsciami','Moc W','Przeplyw l/h','Przeplyw l/min','Zrodlo dlugosci'],...r.rows.map(l=>[loopLabel(l),l.room,l.zone,state.loopPlan.pipe,l.area,l.length,l.power,l.flow,l.flow/60,l.drawn?'Narysowana':'Szacunek'])])};
  refresh();
  return {refresh,active:()=>active,
-  finishApproach(points){const a=state.loopPlan.assignments.find(a=>a.roomId===approachRoomId);if(!a)throw Error('Wybierz pomieszczenie w zakładce Pętle i rozdzielacz.');if(points.length<1||points.length>100)throw Error('Wskaż 1–100 punktów dojścia.');const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId);if(!room?.points)throw Error('Dojście wymaga pomieszczenia obrysowanego na rzucie.');a.approach=points.map(p=>({...p}));approachRoomId=null;},
+  reopenLastApproachForUndo(){const a=state.loopPlan.assignments.find(a=>a.roomId===lastSavedApproachRoomId);if(!a?.approach?.length)return null;approachRoomId=a.roomId;return a.approach.slice(0,-1).map(p=>({...p}));},
+  finishApproach(points){const a=state.loopPlan.assignments.find(a=>a.roomId===approachRoomId);if(!a)throw Error('Wybierz pomieszczenie w zakładce Pętle i rozdzielacz.');if(points.length<1||points.length>100)throw Error('Wskaż 1–100 punktów dojścia.');const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId);if(!room?.points)throw Error('Dojście wymaga pomieszczenia obrysowanego na rzucie.');a.approach=points.map(p=>({...p}));lastSavedApproachRoomId=a.roomId;approachRoomId=null;},
   setManifold(pos){if(state.loopPlan.loops.length&&!confirm('Zmiana '+selected+' wymaga ponownego podziału pętli i narysowania tras. Kontynuować?'))return;if(selected==='R1')state.loopPlan.manifold={...pos};else state.loopPlan.manifolds.find(m=>m.id===selected).position={...pos};active=null;api.render()},
   finishRoute(points){
    const loop=state.loopPlan.loops.find(l=>l.id===active),m=loop&&manifoldPoint(state.loopPlan,loop.manifoldId);
