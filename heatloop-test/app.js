@@ -132,7 +132,7 @@ function updateDrawingLoopPreview(){
 }
 $('drawingLoopSpacing').addEventListener('input',updateDrawingLoopPreview);
 $('drawingLoopOffset').addEventListener('input',updateDrawingLoopPreview);
-function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f4f6f8';ctx.fillRect(0,0,canvas.width,canvas.height);if(image)drawRaster(ctx,image,state.drawingRotation,canvas.width,canvas.height);drawTechnicalGrid();function path(pts,color,close=false,fill=false){if(!pts.length)return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));if(close)ctx.closePath();if(fill){ctx.fillStyle='rgba(15,130,200,.18)';ctx.fill()}ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fillStyle=color;ctx.fill()})}state.polygons.forEach((p,i)=>path(i===editRoomIndex&&editActive()?editPoints:p.points,i===editRoomIndex&&editActive()?'#e48a28':'#1476c1',true,true));if(editActive()&&editPoints){editPoints.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,i===editVertex?10:7,0,Math.PI*2);ctx.fillStyle=i===editVertex?'#e48a28':'#fff';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#ad6419';ctx.stroke()})}state.pipes.forEach(p=>path(p.points,'#d43636'));state.radiators.forEach(r=>{ctx.fillStyle='#bc3030';ctx.fillRect(r.x-11,r.y-6,22,12);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(r.x-11,r.y-6,22,12)});for(const wall of state.wallGuides||[])path(wall.points,'#d47812');ctx.setLineDash([6,4]);for(const wall of wallCandidates)path(wall.points,'#b217a6');ctx.setLineDash([]);if(loopUI)loopUI.overlay(ctx);if(rectangleDraft)path(rectanglePoints(rectangleDraft.start,rectangleDraft.end),'#e48a28',true,true);path(points,$('tool').value==='pipe'?'#e44':'#14a46c');updateDrawingLoopPreview();drawPointGuides();document.dispatchEvent(new Event('heatloop:drawing-changed'))}
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f4f6f8';ctx.fillRect(0,0,canvas.width,canvas.height);if(image)drawRaster(ctx,image,state.drawingRotation,canvas.width,canvas.height);drawTechnicalGrid();function path(pts,color,close=false,fill=false){if(!pts.length)return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));if(close)ctx.closePath();if(fill){ctx.fillStyle='rgba(15,130,200,.18)';ctx.fill()}ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fillStyle=color;ctx.fill()})}state.polygons.forEach((p,i)=>path(i===editRoomIndex&&editActive()?editPoints:p.points,i===editRoomIndex&&editActive()?'#e48a28':'#1476c1',true,true));if(editActive()&&editPoints){editPoints.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,i===editVertex?10:7,0,Math.PI*2);ctx.fillStyle=i===editVertex?'#e48a28':'#fff';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#ad6419';ctx.stroke()})}state.pipes.forEach(p=>path(p.points,'#d43636'));if(spiralStart){ctx.save();ctx.beginPath();ctx.arc(spiralStart.x,spiralStart.y,9,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#e11d48';ctx.stroke();ctx.fillStyle='#a10f33';ctx.font='bold 14px sans-serif';ctx.fillText('START',spiralStart.x+12,spiralStart.y-10);ctx.restore();}state.radiators.forEach(r=>{ctx.fillStyle='#bc3030';ctx.fillRect(r.x-11,r.y-6,22,12);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(r.x-11,r.y-6,22,12)});for(const wall of state.wallGuides||[])path(wall.points,'#d47812');ctx.setLineDash([6,4]);for(const wall of wallCandidates)path(wall.points,'#b217a6');ctx.setLineDash([]);if(loopUI)loopUI.overlay(ctx);if(rectangleDraft)path(rectanglePoints(rectangleDraft.start,rectangleDraft.end),'#e48a28',true,true);path(points,$('tool').value==='pipe'?'#e44':'#14a46c');updateDrawingLoopPreview();drawPointGuides();document.dispatchEvent(new Event('heatloop:drawing-changed'))}
 
 /* Edycja geometrii istniejącego pomieszczenia — zmiany pozostają robocze aż do zapisu. */
 let editRoomIndex=-1,editPoints=null,editVertex=-1,editDragging=-1,editPointer=null;
@@ -175,6 +175,8 @@ function endEditDrag(e){
 canvas.addEventListener('pointerleave',()=>{hoverPoint=null;draw()});
 canvas.addEventListener('pointerup',endEditDrag);canvas.addEventListener('pointercancel',endEditDrag);
 canvas.addEventListener('pointerdown',e=>{const r=canvas.getBoundingClientRect();const pos=drawingPoint(e);
+if(markingSpiralStart){const room=state.polygons.find(p=>insidePolygon(pos,p.points));if(!room){alert('Zaznacz punkt wewnątrz pomieszczenia.');return;}spiralStart={roomId:room.loopRoomId,x:pos.x,y:pos.y};markingSpiralStart=false;$('drawingMarkStart').textContent='Oznacz początek ślimaka';draw();return;}
+
 if($('tool').value==='editLoopRoute'){if(loopUI?.beginRouteDrag(pos)){loopRoutePointer=e.pointerId;canvas.setPointerCapture?.(e.pointerId)}else $('gridStatus').textContent='Przeciągnij kolorowy punkt wybranej pętli.';return}
 if($('tool').value==='moveGrid'){technicalGrid.visible=true;$('gridVisible').checked=true;gridDrag={pointerId:e.pointerId,clientX:e.clientX,clientY:e.clientY,x:technicalGrid.offsetX,y:technicalGrid.offsetY};canvas.setPointerCapture?.(e.pointerId);return}
 if($('tool').value==='rectangleRoom'){
@@ -217,6 +219,9 @@ $('gridMove').onclick=()=>{technicalGrid.visible=true;$('gridVisible').checked=t
 $('gridReset').onclick=()=>{technicalGrid.offsetX=0;technicalGrid.offsetY=0;draw()};
 $('axisGuides').onchange=()=>draw();
 editButtons();$('roomForm').onsubmit=e=>{e.preventDefault();const r={name:$('roomName').value.trim().slice(0,80),area:n($('roomArea').value),load:n($('roomLoad').value),spacing:n($('roomSpacing').value),heatingType:heatType()};if(!r.name||!validRoom(r))return alert('Nieprawidłowe dane pomieszczenia.');state.rooms.push(r);$('roomForm').reset();render()};function openTab(id){document.querySelectorAll('[data-tab]').forEach(x=>{const active=x.dataset.tab===id;x.classList.toggle('active',active);x.setAttribute('aria-current',active?'page':'false')});document.querySelectorAll('.tab').forEach(s=>s.hidden=s.id!==id);window.scrollTo({top:0,behavior:'instant'})}document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>openTab(b.dataset.tab));document.querySelectorAll('[data-open-tab]').forEach(b=>b.onclick=()=>openTab(b.dataset.openTab));
+let spiralStart=null,markingSpiralStart=false;
+$('drawingMarkStart').onclick=()=>{markingSpiralStart=true;$('drawingMarkStart').textContent='Kliknij początek na rzucie…';};
+$('drawingClearStart').onclick=()=>{spiralStart=null;markingSpiralStart=false;$('drawingMarkStart').textContent='Oznacz początek ślimaka';draw();};
 const drawingStepIds=['load','scale','rooms','confirm','manifolds','loops','approaches','review'];
 const drawingHelp={
  load:'Wczytaj plik PNG, JPG lub PDF.',
@@ -252,6 +257,7 @@ $('drawingGenerateLoops').onclick=()=>{
  prepareAssignments(state);
  for(const room of [...state.rooms,...state.polygons])if(room.heatingType!=='radiators')room.spacing=spacing;
  for(const a of state.loopPlan.assignments)a.offsetCm=String(offset);
+ window.__heatloopSpiralStart=spiralStart;
  $('pGenerateRoutes').click();
 };
 $('drawingOpenLoopSettings').onclick=()=>openTab('loops');
