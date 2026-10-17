@@ -56,6 +56,13 @@
     },
     {
       "host": "github-pages",
+      "source": "heatloop-b/field-layout.css",
+      "target": "heatloop-b/field-layout.css",
+      "bytes": 578,
+      "sha256": "7464ed02562000ff3c7d3989f382a2cc3c0d6979e1a4233ee0e5933caeb78699"
+    },
+    {
+      "host": "github-pages",
       "source": "heatloop-b/floor-loops-ui.mjs",
       "target": "heatloop-b/floor-loops-ui.mjs",
       "bytes": 8513,
@@ -72,8 +79,8 @@
       "host": "github-pages",
       "source": "heatloop-b/grzejniki.html",
       "target": "heatloop-b/grzejniki.html",
-      "bytes": 12042,
-      "sha256": "9039942d704fc3b9c398805d914ee4d6d7f2ef38e89ac79a2aa6736fc21ca2fa"
+      "bytes": 12100,
+      "sha256": "ace73cc363c80c495980210488b13408601b24db80a906ff18414b5322c07a56"
     },
     {
       "host": "github-pages",
@@ -86,8 +93,8 @@
       "host": "github-pages",
       "source": "heatloop-b/index.html",
       "target": "heatloop-b/index.html",
-      "bytes": 146991,
-      "sha256": "aba998edd5a28ecbde3eb72311d7a386e480e0c280d2247b2316385bcfca9d35"
+      "bytes": 147049,
+      "sha256": "f81af819c33582b3d3ca3233ce466e9982998fde57c33c170d94be1b2c52d7c1"
     },
     {
       "host": "github-pages",
