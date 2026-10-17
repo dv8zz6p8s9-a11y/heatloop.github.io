@@ -259,7 +259,7 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
    const exit=rightAnglePath([spiral[spiral.length-1],base[base.length-1]]);
    const route=[...base,...entry.slice(1),...spiral.slice(1),...exit.slice(1),...[...base].reverse().slice(1)];
    if(length(route,scale)>maxMeters+1e-6)return null;
-   routes.push({route,stripes:1});
+   routes.push({route,stripes:1,coil:spiral,approachIn:[...base,...entry.slice(1)],approachOut:[...exit,...[...base].reverse().slice(1)]});
   }
   return routes;
  }
