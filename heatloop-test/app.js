@@ -122,14 +122,13 @@ function endEditDrag(e){
   const draft=rectangleDraft;rectangleDraft=null;const end=drawingPoint(e);
   const poly=rectanglePoints(draft.start,end),newArea=area(poly)*state.scale**2;
   if(Math.abs(end.x-draft.start.x)<8||Math.abs(end.y-draft.start.y)<8||newArea<0.05){alert('Przeciągnij po przekątnej prostokąta pomieszczenia.');draw();return}
+  // Obrys nie może być odrzucany tylko dlatego, że pole rozstawu zostało
+  // wyczyszczone lub przeglądarka przywróciła nieprawidłową wartość.
   const spacingField=$('defaultSpacing'),loadField=$('defaultLoad');
-  if(!spacingField.value.trim()){spacingField.value='15';$('gridStatus').textContent='Przywrócono domyślny rozstaw rur: 15 cm.'}
-  if(!loadField.value.trim()){loadField.value='60';$('gridStatus').textContent='Przywrócono domyślne obciążenie: 60 W/m².'}
-  const spacing=n(spacingField.value),load=n(loadField.value);
-  if(!(spacing>=5&&spacing<=40)||!(load>0&&load<=1000)){
-    alert('Sprawdź parametry pod rysunkiem. Rozstaw rur: '+(Number.isFinite(spacing)?spacing+' cm':'brak poprawnej liczby')+' (5–40 cm). Obciążenie: '+(Number.isFinite(load)?load+' W/m²':'brak poprawnej liczby')+' (1–1000 W/m²).');
-    rectangleDraft={start:draft.start,end};(Number.isFinite(spacing)&&spacing>=5&&spacing<=40?loadField:spacingField).focus();draw();return;
-  }
+  const rawSpacing=n(spacingField.value),rawLoad=n(loadField.value);
+  const {spacing,load}=drawingDefaults();
+  if(rawSpacing!==spacing){spacingField.value=String(spacing);$('gridStatus').textContent='Przywrócono rozstaw rur '+spacing+' cm.'}
+  if(rawLoad!==load){loadField.value=String(load);$('gridStatus').textContent='Przywrócono obciążenie '+load+' W/m².'}
   const name=prompt('Potwierdź nazwę pomieszczenia:','Pomieszczenie '+(state.polygons.length+1));
   if(name){const room={name:name.trim().slice(0,80),points:poly,area:newArea,load,spacing,heatingType:heatType()};
    if(validRoom(room)){state.polygons.push(room);render()}else{alert(roomValidationMessage(room));rectangleDraft={start:draft.start,end};draw()}}
