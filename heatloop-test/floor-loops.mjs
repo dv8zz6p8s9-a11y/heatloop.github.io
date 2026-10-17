@@ -29,7 +29,7 @@ export function normalizePlan(raw){
  for(const key of ['maxLength','dt','pipe'])if(typeof raw[key]==='string')p[key]=raw[key].slice(0,40);
  p.linked=raw.linked===true;p.signature=typeof raw.signature==='string'?raw.signature:null;
  p.assignments=Array.isArray(raw.assignments)?raw.assignments.slice(0,200).map(a=>({manifoldId:manifoldId(a?.manifoldId),roomId:String(a?.roomId??'').slice(0,100),zone:String(a?.zone??'').slice(0,80),out:String(a?.out??'').slice(0,10),back:String(a?.back??'').slice(0,10),count:String(a?.count??'').slice(0,4),offsetCm:String(a?.offsetCm??'10').slice(0,8),approachConfirmed:a?.approachConfirmed===true,approach:Array.isArray(a?.approach)&&a.approach.length<=100&&a.approach.every(point)?a.approach.map(p=>({x:p.x,y:p.y})):[]})):[];
- p.loops=Array.isArray(raw.loops)?raw.loops.slice(0,100).map(l=>({manifoldId:manifoldId(l?.manifoldId),id:String(l?.id??'').slice(0,100),roomId:String(l?.roomId??'').slice(0,100),section:l?.section,area:l?.area,heatingLength:l?.heatingLength,out:l?.out,back:l?.back,route:Array.isArray(l?.route)&&l.route.length<=20000&&l.route.every(point)?l.route.map(p=>({x:p.x,y:p.y})):[]})):[];
+ p.loops=Array.isArray(raw.loops)?raw.loops.slice(0,100).map(l=>({manifoldId:manifoldId(l?.manifoldId),id:String(l?.id??'').slice(0,100),roomId:String(l?.roomId??'').slice(0,100),section:l?.section,area:l?.area,heatingLength:l?.heatingLength,out:l?.out,back:l?.back,approachVerified:l?.approachVerified!==false,route:Array.isArray(l?.route)&&l.route.length<=20000&&l.route.every(point)?l.route.map(p=>({x:p.x,y:p.y})):[]})):[];
  return p;
 }
 export function prepareAssignments(state){
@@ -90,6 +90,7 @@ export function analyzeLoops(state){
   ids.add(loop.id);sections.add(sectionKey);
   if(![loop.area,loop.heatingLength,loop.out,loop.back].every(Number.isFinite)||loop.area<=0||loop.heatingLength<=0||loop.out<0||loop.back<0){errors.push('Nieprawidłowe parametry pętli.');continue;}
   const drawn=loop.route.length>0;
+  if(drawn&&loop.approachVerified===false)errors.push(loopLabel(loop)+': automatyczne dojście wymaga sprawdzenia i zatwierdzenia przejść przez ściany przed eksportem.');
   let length=loop.heatingLength+loop.out+loop.back;
   if(drawn){
    if(!(state.scale>0)||!m||loop.route.length<3||!loop.route.every(point))errors.push('Trasa wymaga skali i rozdzielacza na rzucie.');
