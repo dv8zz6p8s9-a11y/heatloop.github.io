@@ -28,17 +28,17 @@ export function normalizePlan(raw){
  }
  for(const key of ['maxLength','dt','pipe'])if(typeof raw[key]==='string')p[key]=raw[key].slice(0,40);
  p.linked=raw.linked===true;p.signature=typeof raw.signature==='string'?raw.signature:null;
- p.assignments=Array.isArray(raw.assignments)?raw.assignments.slice(0,200).map(a=>({manifoldId:manifoldId(a?.manifoldId),roomId:String(a?.roomId??'').slice(0,100),zone:String(a?.zone??'').slice(0,80),out:String(a?.out??'').slice(0,10),back:String(a?.back??'').slice(0,10),count:String(a?.count??'').slice(0,4),offsetCm:String(a?.offsetCm??'10').slice(0,8),approach:Array.isArray(a?.approach)&&a.approach.length<=100&&a.approach.every(point)?a.approach.map(p=>({x:p.x,y:p.y})):[]})):[];
+ p.assignments=Array.isArray(raw.assignments)?raw.assignments.slice(0,200).map(a=>({manifoldId:manifoldId(a?.manifoldId),roomId:String(a?.roomId??'').slice(0,100),zone:String(a?.zone??'').slice(0,80),out:String(a?.out??'').slice(0,10),back:String(a?.back??'').slice(0,10),count:String(a?.count??'').slice(0,4),offsetCm:String(a?.offsetCm??'10').slice(0,8),approachConfirmed:a?.approachConfirmed===true,approach:Array.isArray(a?.approach)&&a.approach.length<=100&&a.approach.every(point)?a.approach.map(p=>({x:p.x,y:p.y})):[]})):[];
  p.loops=Array.isArray(raw.loops)?raw.loops.slice(0,100).map(l=>({manifoldId:manifoldId(l?.manifoldId),id:String(l?.id??'').slice(0,100),roomId:String(l?.roomId??'').slice(0,100),section:l?.section,area:l?.area,heatingLength:l?.heatingLength,out:l?.out,back:l?.back,route:Array.isArray(l?.route)&&l.route.length<=20000&&l.route.every(point)?l.route.map(p=>({x:p.x,y:p.y})):[]})):[];
  return p;
 }
 export function prepareAssignments(state){
  const old=new Map(state.loopPlan.assignments.map(a=>[a.roomId,a]));
- state.loopPlan.assignments=floorRooms(state).map((r,i)=>old.get(r.loopRoomId)||{roomId:r.loopRoomId,manifoldId:'R1',zone:r.name+' ['+(i+1)+']',out:'5',back:'5',count:'',offsetCm:'10',approach:[]});
+ state.loopPlan.assignments=floorRooms(state).map((r,i)=>old.get(r.loopRoomId)||{roomId:r.loopRoomId,manifoldId:'R1',zone:r.name+' ['+(i+1)+']',out:'5',back:'5',count:'',offsetCm:'10',approachConfirmed:false,approach:[]});
 }
 export function sourceSignature(state){
  return JSON.stringify({rooms:floorRooms(state).map(r=>[r.loopRoomId,r.name,r.area,r.load,r.spacing,r.heatingType||'wet',r.points||null]),scale:state.scale,
-  ...(state.loopPlan.manifolds.length>1?{manifolds:state.loopPlan.manifolds.map(m=>[m.id,manifoldPoint(state.loopPlan,m.id)]),distribution:state.loopPlan.assignments.map(a=>[a.roomId,manifoldId(a.manifoldId)])}:{}),manifold:state.loopPlan.manifold,assignments:state.loopPlan.assignments.map(a=>[a.roomId,a.out,a.back,a.count,a.offsetCm??'10',a.approach||[]])});
+  ...(state.loopPlan.manifolds.length>1?{manifolds:state.loopPlan.manifolds.map(m=>[m.id,manifoldPoint(state.loopPlan,m.id)]),distribution:state.loopPlan.assignments.map(a=>[a.roomId,manifoldId(a.manifoldId)])}:{}),manifold:state.loopPlan.manifold,assignments:state.loopPlan.assignments.map(a=>[a.roomId,a.out,a.back,a.count,a.offsetCm??'10',a.approachConfirmed===true,a.approach||[]])});
 }
 export function settingsErrors(state){
  const p=state.loopPlan,errors=[],max=numberPL(p.maxLength),dt=numberPL(p.dt);
