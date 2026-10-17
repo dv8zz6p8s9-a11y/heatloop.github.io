@@ -5,7 +5,7 @@ import {drawingHelpSnapshot, drawingHelpAdvice} from './drawing-help.mjs';
 import {boilerDefaults, boilerKeys, analyzeBoiler, boilerQuoteRows} from './boiler-room.mjs';
 import {mountBoiler} from './boiler-room-ui.mjs';
 import {planDefaults, ensureRoomIds, prepareAssignments, analyzeLoops, controlEntries, numberPL, loopLabel} from './floor-loops.mjs?v=20261016-3';
-import {mountLoopPlanner} from './floor-loops-ui.mjs?v=20261017-irregular-2';
+import {mountLoopPlanner} from './floor-loops-ui.mjs?v=20261017-autolink-2';
 import {catalog as techCatalog, defaults as techDefaults, projectSignature, calculateControls} from './tech-controls.mjs?v=20261016-3';
 import {mountControls} from './tech-controls-ui.mjs?v=20261016-3';
 let techUI=null,loopUI=null,boilerUI=null;
@@ -133,8 +133,10 @@ $('editAddVertex').onclick=()=>{if(!editPoints||editVertex<0)return;const a=edit
 $('editRemoveVertex').onclick=()=>{if(!editPoints||editVertex<0||editPoints.length<=3)return;editPoints.splice(editVertex,1);editVertex=Math.min(editVertex,editPoints.length-1);editNotice('Usunięto narożnik. Zapisz, aby zatwierdzić.');editButtons();draw()};
 $('editCancel').onclick=cancelRoomEdit;
 $('editSave').onclick=()=>{if(!editPoints||editRoomIndex<0)return;const room=state.polygons[editRoomIndex],newArea=area(editPoints)*(state.scale||0)**2;if(!Number.isFinite(newArea)||newArea<=0||!editSimplePolygon(editPoints)){editNotice('Nie można zapisać: obrys ma zerowe pole lub przecinające się krawędzie.');return}const candidate={...room,points:editPoints,area:newArea};if(!validRoom(candidate)){editNotice('Nieprawidłowa powierzchnia lub parametry pomieszczenia.');return}const outside=state.radiators.filter(r=>r.room===room.name&&insidePolygon(r,room.points)&&!insidePolygon(r,editPoints));if(outside.length&&!confirm('Po zmianie obrysu '+outside.length+' grzejnik(ów) znajdzie się poza pomieszczeniem i nie będzie uwzględnianych w obliczeniach. Zapisać?'))return;room.points=editPoints.map(p=>({...p}));room.area=newArea;cancelRoomEdit();render();editNotice('Zapisano obrys. Powierzchnia: '+fmt(newArea)+' m².');};
-canvas.addEventListener('pointermove',e=>{if(!gridDrag&&!rectangleDraft&&!editActive()){hoverPoint=drawingPoint(e);draw()}if(gridDrag&&gridDrag.pointerId===e.pointerId){const r=canvas.getBoundingClientRect();technicalGrid.offsetX=gridDrag.x+(e.clientX-gridDrag.clientX)*canvas.width/r.width;technicalGrid.offsetY=gridDrag.y+(e.clientY-gridDrag.clientY)*canvas.height/r.height;draw();return}if(rectangleDraft&&e.pointerId===rectangleDraft.pointerId){rectangleDraft.end=drawingPoint(e);draw();return}if(!editActive()||editDragging<0||editPointer!==e.pointerId||!editPoints)return;const r=canvas.getBoundingClientRect();editPoints[editDragging]=drawingPoint(e);editNotice('Powierzchnia robocza: '+fmt(area(editPoints)*(state.scale||0)**2)+' m² (niezapisana)');draw()});
+let loopRoutePointer=null;
+canvas.addEventListener('pointermove',e=>{if(loopRoutePointer===e.pointerId){loopUI.moveRouteDrag(drawingPoint(e));draw();return}if(!gridDrag&&!rectangleDraft&&!editActive()){hoverPoint=drawingPoint(e);draw()}if(gridDrag&&gridDrag.pointerId===e.pointerId){const r=canvas.getBoundingClientRect();technicalGrid.offsetX=gridDrag.x+(e.clientX-gridDrag.clientX)*canvas.width/r.width;technicalGrid.offsetY=gridDrag.y+(e.clientY-gridDrag.clientY)*canvas.height/r.height;draw();return}if(rectangleDraft&&e.pointerId===rectangleDraft.pointerId){rectangleDraft.end=drawingPoint(e);draw();return}if(!editActive()||editDragging<0||editPointer!==e.pointerId||!editPoints)return;const r=canvas.getBoundingClientRect();editPoints[editDragging]=drawingPoint(e);editNotice('Powierzchnia robocza: '+fmt(area(editPoints)*(state.scale||0)**2)+' m² (niezapisana)');draw()});
 function endEditDrag(e){
+ if(loopRoutePointer===e.pointerId){loopRoutePointer=null;loopUI.endRouteDrag();if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);draw();return}
  if(gridDrag&&gridDrag.pointerId===e.pointerId){gridDrag=null;if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);return}
  if(rectangleDraft&&e.pointerId===rectangleDraft.pointerId){
   const draft=rectangleDraft;rectangleDraft=null;const end=drawingPoint(e);
@@ -157,6 +159,7 @@ function endEditDrag(e){
 canvas.addEventListener('pointerleave',()=>{hoverPoint=null;draw()});
 canvas.addEventListener('pointerup',endEditDrag);canvas.addEventListener('pointercancel',endEditDrag);
 canvas.addEventListener('pointerdown',e=>{const r=canvas.getBoundingClientRect();const pos=drawingPoint(e);
+if($('tool').value==='editLoopRoute'){if(loopUI?.beginRouteDrag(pos)){loopRoutePointer=e.pointerId;canvas.setPointerCapture?.(e.pointerId)}else $('gridStatus').textContent='Przeciągnij kolorowy punkt wybranej pętli.';return}
 if($('tool').value==='moveGrid'){technicalGrid.visible=true;$('gridVisible').checked=true;gridDrag={pointerId:e.pointerId,clientX:e.clientX,clientY:e.clientY,x:technicalGrid.offsetX,y:technicalGrid.offsetY};canvas.setPointerCapture?.(e.pointerId);return}
 if($('tool').value==='rectangleRoom'){
  if(!(state.scale>0)){alert('Najpierw skalibruj rzut.');return}
@@ -206,8 +209,8 @@ const drawingHelp={
  confirm:'Sprawdź powierzchnie i popraw narożniki. Potwierdź każdy obrys przed projektowaniem rur.',
  manifolds:'Wskaż położenie rozdzielacza R1. Kolejne rozdzielacze dodasz w ustawieniach pętli.',
  loops:'Ustaw dla każdego pomieszczenia rozstaw rur i odsunięcie od ścian. Generator ślimakowy jest jeszcze w przygotowaniu.',
- approaches:'W ustawieniach pętli zaznacz dojścia przez korytarz, drzwi lub wskazane przejścia. Nie prowadź trasy przez nieoznaczone ściany.',
- review:'Po wyznaczeniu dojść uruchom testowy generator meandra i sprawdź długości oraz przebieg każdej pętli.'
+ approaches:'Generator proponuje dojścia do rozdzielacza. Następnie przesuń punkty każdej pętli, prowadząc ją przez drzwi i korytarz; nie przecinaj ścian.',
+ review:'Uruchom generator po wskazaniu rozdzielacza, następnie skoryguj kolorowe trasy i sprawdź ich długości.'
 };
 function setDrawingStep(id){
  const idx=drawingStepIds.indexOf(id);if(idx<0)return;
@@ -343,6 +346,7 @@ loopUI=mountLoopPlanner(state,{
  changed:()=>renderQuote(),
  openDrawing:()=>{openTab('drawing');$('heatingSystem').value=$('heatingSystem').value||'wet';$('heatingSystem').dispatchEvent(new Event('change'));$('canvas').scrollIntoView?.({block:'center'})},
  startRoute:m=>{points=[{...m}];$('tool').value='loopRoute';draw()},
+ startRouteEdit:()=>{points=[];$('tool').value='editLoopRoute';draw()},
  startApproach:existing=>{points=(existing||[]).map(p=>({...p}));$('tool').value='approachRoute';draw()},
  placeManifold:()=>{points=[];$('tool').value='manifold';draw()},
  exportCsv:rows=>download(new Blob(['\ufeff'+rows.map(row=>row.map(csvCell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}),'heatloop-petle.csv')
