@@ -5,7 +5,7 @@ export const numberPL=value=>{
  const s=String(value??'').trim().replace(',','.');
  return /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)?Number(s):NaN;
 };
-export const planDefaults=()=>({manifold:null,manifolds:[{id:'R1',supply:'10',return:'10',position:null}],maxLength:'80',dt:'5',pipe:'PEX 16',linked:false,assignments:[],loops:[],signature:null});
+export const planDefaults=()=>({manifold:null,manifolds:[{id:'R1',supply:'10',return:'10',position:null}],maxLength:'100',dt:'5',pipe:'PEX 16',linked:false,assignments:[],loops:[],signature:null});
 export const manifoldId=value=>value||'R1';
 export const manifoldPoint=(plan,id)=>manifoldId(id)==='R1'?plan.manifold:plan.manifolds.find(m=>m.id===id)?.position;
 export const loopLabel=loop=>manifoldId(loop.manifoldId)+'/P'+loop.section;
