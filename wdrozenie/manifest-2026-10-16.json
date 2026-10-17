@@ -9,8 +9,8 @@
       "host": "github-pages",
       "source": "heatloop-b/app.js",
       "target": "heatloop-b/app.js",
-      "bytes": 48393,
-      "sha256": "bacc4b375863e3c67ae7f7a503f371ce64d764548234778c38260b7eddecc2d0"
+      "bytes": 48464,
+      "sha256": "92ae329d47fd377740cb5168207fa1b6c4eaa91dc0743bd8cc34b96e75d4a278"
     },
     {
       "host": "github-pages",
