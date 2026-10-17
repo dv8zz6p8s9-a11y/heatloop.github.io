@@ -1,6 +1,6 @@
 import {normalizeProject,projectFileLimit,quoteInputIds} from './project-io.mjs';
 import {release} from '../release.mjs';
-import {drawRaster, rasterBounds, rotateDrawing, normalizeWallGuides, detectWallCandidates} from './drawing-tools.mjs';
+import {drawRaster, rotateDrawing, normalizeWallGuides, detectWallCandidates} from './drawing-tools.mjs?v=20261017-aspect-fix';
 import {drawingHelpSnapshot, drawingHelpAdvice} from './drawing-help.mjs';
 import {boilerDefaults, boilerKeys, analyzeBoiler, boilerQuoteRows} from './boiler-room.mjs';
 import {mountBoiler} from './boiler-room-ui.mjs';
