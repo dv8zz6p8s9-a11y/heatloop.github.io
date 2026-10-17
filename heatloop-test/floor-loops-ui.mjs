@@ -127,7 +127,10 @@ export function mountLoopPlanner(state,api){
   },
   reopenLastApproachForUndo(){const a=state.loopPlan.assignments.find(a=>a.roomId===lastSavedApproachRoomId);if(!a?.approach?.length)return null;approachRoomId=a.roomId;return a.approach.slice(0,-1).map(p=>({...p}));},
   finishApproach(points){const a=state.loopPlan.assignments.find(a=>a.roomId===approachRoomId);if(!a)throw Error('Wybierz pomieszczenie w zakładce Pętle i rozdzielacz.');if(points.length<1||points.length>100)throw Error('Wskaż 1–100 punktów dojścia.');const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId);if(!room?.points)throw Error('Dojście wymaga pomieszczenia obrysowanego na rzucie.');const poly=room.points;const last=points[points.length-1];let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const p=poly[i],q=poly[j];if((p.y>last.y)!==(q.y>last.y)&&last.x<(q.x-p.x)*(last.y-p.y)/(q.y-p.y)+p.x)inside=!inside;}
-   if(!inside)throw Error('Ostatni punkt dojścia musi leżeć wewnątrz pomieszczenia. Wskaż przejście przez drzwi i punkt wewnątrz.');
+   if(!inside){let near=Infinity;for(let i=0;i<poly.length;i++){const p=poly[i],q=poly[(i+1)%poly.length],dx=q.x-p.x,dy=q.y-p.y,den=dx*dx+dy*dy,t=den?Math.max(0,Math.min(1,((last.x-p.x)*dx+(last.y-p.y)*dy)/den)):0;near=Math.min(near,Math.hypot(last.x-p.x-t*dx,last.y-p.y-t*dy));}
+    if(near>6)throw Error('Końcowy punkt dojścia jest poza obrysem pomieszczenia „'+room.name+'”. Wróć na rzut i dodaj ostatni punkt WEWNĄTRZ niebieskiego obrysu tego pomieszczenia. Nie musisz ponownie zaznaczać całego pomieszczenia.');
+    // Punkt na linii obrysu: nie odrzucaj przez minimalne niedokładności kliknięcia.
+   }
    a.approach=points.map(p=>({...p}));a.approachConfirmed=true;lastSavedApproachRoomId=a.roomId;approachRoomId=null;},
   setManifold(pos){if(state.loopPlan.loops.length&&!confirm('Zmiana '+selected+' wymaga ponownego podziału pętli i narysowania tras. Kontynuować?'))return;if(selected==='R1')state.loopPlan.manifold={...pos};else state.loopPlan.manifolds.find(m=>m.id===selected).position={...pos};for(const a of state.loopPlan.assignments)if(manifoldId(a.manifoldId)===selected)a.approachConfirmed=false;active=null;api.render()},
   finishRoute(points){
@@ -138,6 +141,7 @@ export function mountLoopPlanner(state,api){
    loop.route=route;active=null;
   },
   overlay(ctx){
+   if(approachRoomId){const assignment=state.loopPlan.assignments.find(a=>a.roomId===approachRoomId),room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===approachRoomId);if(room?.points?.length){ctx.save();ctx.beginPath();ctx.moveTo(room.points[0].x,room.points[0].y);for(const p of room.points.slice(1))ctx.lineTo(p.x,p.y);ctx.closePath();ctx.fillStyle='rgba(255,195,0,.14)';ctx.fill();ctx.strokeStyle='#f5a000';ctx.lineWidth=5;ctx.setLineDash([9,5]);ctx.stroke();ctx.setLineDash([]);const p=room.points[0];ctx.fillStyle='#9b4700';ctx.font='bold 15px sans-serif';ctx.fillText('CEL DOJŚCIA: '+room.name,p.x+8,p.y+18);ctx.restore();}}
    for(const a of state.loopPlan.assignments){
     if(!a.approachConfirmed||!a.approach?.length)continue;
     const m=manifoldPoint(state.loopPlan,manifoldId(a.manifoldId));if(!m)continue;
