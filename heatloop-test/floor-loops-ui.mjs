@@ -1,5 +1,5 @@
 import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261017-confirm-1';
-import {generateMeander,rectangularInsetArea} from './loop-generator.mjs?v=20261017-doorway-7';
+import {generateMeander,suggestApproach,rightAnglePath,rectangularInsetArea} from './loop-generator.mjs?v=20261017-doorway-7';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
@@ -86,13 +86,11 @@ export function mountLoopPlanner(state,api){
     const mid=manifoldId(a.manifoldId),m=manifoldPoint(state.loopPlan,mid);
     let result;
     const connected=a.approachConfirmed&&a.approach?.length;
-    // Bez zatwierdzonego dojścia generujemy WYŁĄCZNIE pętlę w pokoju.
-    // Wirtualny punkt początkowy nie oznacza połączenia z rozdzielaczem.
-    const origin=connected?m:room.points?.[0];
-    if(!origin)throw Error(room.name+': wyznacz obrys pomieszczenia na rzucie.');
-    const approach=connected?a.approach:[origin];
-    if(!connected)warnings.push(room.name+': pętle są tylko w pomieszczeniu. W kroku 7 wyznacz dojście i ponownie połącz trasy.');
-    try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:origin,approach});}
+    if(!m)throw Error(room.name+': ustaw rozdzielacz na rzucie.');
+    // Propozycja dojścia nie jest zatwierdzonym przejściem przez drzwi.
+    const approach=connected?a.approach:rightAnglePath(suggestApproach(room,m));
+    if(!connected)warnings.push(room.name+': automatyczne dojście jest tylko propozycją; sprawdź ściany i drzwi w kroku 7.');
+    try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach});}
     catch(error){throw Error(room.name+': '+error.message)}
     if(result.approximate)warnings.push(room.name+': podział wielokąta na '+result.parts+' prostokątne obszary jest orientacyjny; sprawdź pokrycie rurami i przebieg dojść.');
     areas.push(room.name+': '+format(result.heatedArea)+' m² grzewcze / '+format(room.area)+' m² pomieszczenia');
@@ -103,7 +101,7 @@ export function mountLoopPlanner(state,api){
      const assigned=i===result.routes.length-1?room.area-areaAssigned:room.area*item.stripes/stripesTotal;areaAssigned+=assigned;
      const route=item.route;
      const heatingLength=Math.max(0.01,routeLength(route.slice(1,-1),state.scale));
-     generated.push({id:newId(),manifoldId:mid,roomId:room.loopRoomId,section,area:assigned,heatingLength,out:connected?Number(a.out):0,back:connected?Number(a.back):0,route:connected?route:route.slice(1,-1)});
+     generated.push({id:newId(),manifoldId:mid,roomId:room.loopRoomId,section,area:assigned,heatingLength,out:0,back:0,route,approachVerified:!!connected});
     }
    }
    if(generated.length>100)throw Error('Generator przekracza limit 100 pętli.');
