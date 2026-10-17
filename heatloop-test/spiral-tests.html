@@ -24,11 +24,11 @@ for(const [name,w,h,spacingCm,rotation=0] of cases){
   const room={points:[...corners.slice(rotation),...corners.slice(0,rotation)]};
   const result=generateSpiral(room,{scale:0.02,offsetCm:10,spacingCm,maxMeters:100,manifold:{x:500,y:500},approach:[{x:110,y:110}]});
   if(!result.routes.length)issues.push('Brak pętli');
-  for(const {route} of result.routes){
+  for(const {route,coil} of result.routes){
    const meters=route.slice(1).reduce((sum,p,i)=>sum+Math.hypot(p.x-route[i].x,p.y-route[i].y)*0.02,0);
    if(meters>100.0001)issues.push('Przekroczono 100 m');
    // Testuj odcinki wewnętrzne; dojścia mogą wymagać oddzielnego trasowania.
-   const inside=route.slice(2,-2);
+   const inside=coil;
    for(let i=1;i<inside.length;i++){
     const a=inside[i-1],b=inside[i];
     const axisX=Math.abs(a.x-b.x)<1e-6,axisY=Math.abs(a.y-b.y)<1e-6;
