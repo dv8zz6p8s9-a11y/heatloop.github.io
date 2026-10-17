@@ -1,4 +1,4 @@
-# HeatLoop B — prototyp z wyceną i doborem zasilania
+# HeatLoop BETA 0.2 — aplikacja z wyceną i doborem zasilania
 
 Uruchom `index.html` przez lokalny serwer HTTP (np. `python -m http.server 8000`) i otwórz `http://localhost:8000/heatloop-b/` przy serwowaniu katalogu nadrzędnego. PDF.js wymaga dostępu do CDN.
 

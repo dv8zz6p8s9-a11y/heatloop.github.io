@@ -1,0 +1,930 @@
+{
+  "version": "0.2",
+  "summary": [
+    {
+      "name": "Ogólna obsługa aplikacji",
+      "total": 54,
+      "full": 41,
+      "partial": 4,
+      "none": 9,
+      "percent": 80
+    },
+    {
+      "name": "Praca z rysunkiem i podgląd",
+      "total": 36,
+      "full": 21,
+      "partial": 12,
+      "none": 3,
+      "percent": 75
+    }
+  ],
+  "groups": [
+    {
+      "name": "Ogólna obsługa aplikacji",
+      "rows": [
+        {
+          "title": "Początek projektu",
+          "question": "Jak rozpocząć pierwszy projekt?",
+          "target": "start",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / start",
+          "articleTitle": "Jak rozpocząć projekt?"
+        },
+        {
+          "title": "Dodanie pokoju",
+          "question": "Jak dodać pomieszczenie ręcznie?",
+          "target": "manual",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / manual",
+          "articleTitle": "Dodawanie pomieszczeń ręcznie"
+        },
+        {
+          "title": "Usunięcie pokoju",
+          "question": "Jak usunąć pokój?",
+          "target": "room-delete",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / room-delete",
+          "articleTitle": "Usuwanie pomieszczenia"
+        },
+        {
+          "title": "Ograniczenia edycji",
+          "question": "Jak zmienić nazwę pokoju?",
+          "target": "room-edit",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / room-edit",
+          "articleTitle": "Zmiana nazwy lub danych pokoju"
+        },
+        {
+          "title": "Zmiana technologii",
+          "question": "Jak zmienić technologię ogrzewania?",
+          "target": "mixed",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / mixed",
+          "articleTitle": "Mokre, frezowane i system mieszany"
+        },
+        {
+          "title": "Szacunek zapotrzebowania",
+          "question": "Co oznacza obciążenie W/m² pokoju?",
+          "target": "manual",
+          "depth": 1,
+          "note": "",
+          "score": 0,
+          "actual": "answer / milling",
+          "articleTitle": "Dodawanie pomieszczeń ręcznie"
+        },
+        {
+          "title": "Oznaczenie rury",
+          "question": "Jak ustawić PEX 16?",
+          "target": "loops",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / loops",
+          "articleTitle": "Długość pętli, dojścia i PEX 16"
+        },
+        {
+          "title": "Limit długości",
+          "question": "Jak zmienić długość pętli 80 m?",
+          "target": "loops",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / loops",
+          "articleTitle": "Długość pętli, dojścia i PEX 16"
+        },
+        {
+          "title": "Dojścia pętli",
+          "question": "Gdzie podać dojścia pętli?",
+          "target": "loops",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / loops",
+          "articleTitle": "Długość pętli, dojścia i PEX 16"
+        },
+        {
+          "title": "Własna liczba pętli",
+          "question": "Jak ręcznie ustawić liczbę pętli?",
+          "target": "loops",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / loops",
+          "articleTitle": "Długość pętli, dojścia i PEX 16"
+        },
+        {
+          "title": "Rozdzielacz R2",
+          "question": "Jak dodać drugi rozdzielacz?",
+          "target": "manifolds",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / manifolds",
+          "articleTitle": "Dodawanie rozdzielacza R2-R10"
+        },
+        {
+          "title": "Usunięcie pustego rozdzielacza",
+          "question": "Jak usunąć pusty rozdzielacz R2?",
+          "target": "manifolds",
+          "depth": 0.5,
+          "note": "Artykuł opisuje dodawanie i przypisanie, nie przycisk usuwania.",
+          "score": 0.5,
+          "actual": "answer / manifolds",
+          "articleTitle": "Dodawanie rozdzielacza R2-R10"
+        },
+        {
+          "title": "Przypisanie pokoju do rozdzielacza",
+          "question": "Jak przypisać pokój do R2?",
+          "target": "manifolds",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / manifolds",
+          "articleTitle": "Dodawanie rozdzielacza R2-R10"
+        },
+        {
+          "title": "Zasilanie osobnych rozdzielaczy",
+          "question": "Gdzie podać zasilanie rozdzielacza R2?",
+          "target": "manifolds",
+          "depth": 0.5,
+          "note": "Instrukcja istnieje, ale pytanie może trafić do ogólnego zasilania.",
+          "score": 0,
+          "actual": "answer / supply",
+          "articleTitle": "Dodawanie rozdzielacza R2-R10"
+        },
+        {
+          "title": "Przepływy",
+          "question": "Jak czytać przepływy w l/min?",
+          "target": "flow",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / flow",
+          "articleTitle": "Jak czytać przepływy?"
+        },
+        {
+          "title": "Powiązanie planu z wyceną",
+          "question": "Dlaczego pole liczby pętli jest wyszarzone?",
+          "target": "locked",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / locked",
+          "articleTitle": "Dlaczego pole jest zablokowane?"
+        },
+        {
+          "title": "Wyłączenie powiązania",
+          "question": "Jak wyłączyć powiązanie planu z wyceną?",
+          "target": "locked",
+          "depth": 1,
+          "note": "",
+          "score": 0,
+          "actual": "unknown",
+          "articleTitle": "Dlaczego pole jest zablokowane?"
+        },
+        {
+          "title": "Wspólny regulator",
+          "question": "Jak ustawić wspólny regulator?",
+          "target": "zones",
+          "depth": 1,
+          "note": "",
+          "score": 0,
+          "actual": "answer / tech",
+          "articleTitle": "Wspólny regulator i nazwy stref"
+        },
+        {
+          "title": "Włączenie TECH",
+          "question": "Jak dodać sterowanie TECH?",
+          "target": "tech",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / tech",
+          "articleTitle": "Jak dodać sterowanie TECH?"
+        },
+        {
+          "title": "Wariant bezprzewodowy",
+          "question": "Jak wybrać bezprzewodowe sterowanie?",
+          "target": "tech",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / tech",
+          "articleTitle": "Jak dodać sterowanie TECH?"
+        },
+        {
+          "title": "Gwint siłownika",
+          "question": "Jak wybrać gwint siłownika?",
+          "target": "tech",
+          "depth": 0.5,
+          "note": "Wskazano wybór gwintu, bez instrukcji identyfikacji konkretnego zaworu.",
+          "score": 0.5,
+          "actual": "answer / tech",
+          "articleTitle": "Jak dodać sterowanie TECH?"
+        },
+        {
+          "title": "Przekroczenie 8 stref",
+          "question": "Co zrobić gdy mam 9 stref na rozdzielaczu?",
+          "target": "tech",
+          "depth": 0.5,
+          "note": "Podany limit, brak szczegółowego przebiegu rozwiązania przekroczenia.",
+          "score": 0,
+          "actual": "choose",
+          "articleTitle": "Jak dodać sterowanie TECH?"
+        },
+        {
+          "title": "Przekroczenie 4 siłowników",
+          "question": "Co zrobić gdy mam 5 siłowników na strefę?",
+          "target": "tech",
+          "depth": 0.5,
+          "note": "Podany limit, bez pełnego scenariusza doboru ponad limit.",
+          "score": 0.5,
+          "actual": "answer / tech",
+          "articleTitle": "Jak dodać sterowanie TECH?"
+        },
+        {
+          "title": "Opcjonalna grupa w wycenie podłogówki",
+          "question": "Jak wyłączyć grupę pompową w wycenie podłogówki?",
+          "target": "quote",
+          "depth": 0,
+          "note": "Ogólna hydraulika kotłowni nie wyjaśnia tego pola wyceny.",
+          "score": 0,
+          "actual": "answer / hydraulics",
+          "articleTitle": "Rozdzielacze i szafki w wycenie"
+        },
+        {
+          "title": "Ręczna wycena rozdzielaczy",
+          "question": "Jak dodać rozdzielacz z szafką do wyceny?",
+          "target": "quote",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / quote",
+          "articleTitle": "Rozdzielacze i szafki w wycenie"
+        },
+        {
+          "title": "Własne ceny",
+          "question": "Gdzie wpisać własne ceny materiałów?",
+          "target": "prices",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / prices",
+          "articleTitle": "Własne ceny netto i zamawianie materiałów"
+        },
+        {
+          "title": "Stawka frezowania",
+          "question": "Gdzie jest cena frezowania?",
+          "target": "milling",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / milling",
+          "articleTitle": "Cena frezowania i montaż podłogówki"
+        },
+        {
+          "title": "Jednostka montażu",
+          "question": "Czy montaż podłogówki jest w m2?",
+          "target": "milling",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / milling",
+          "articleTitle": "Cena frezowania i montaż podłogówki"
+        },
+        {
+          "title": "Izolacja i kształtki",
+          "question": "Jak doliczyć izolację i kształtki zasilania?",
+          "target": "supply",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / supply",
+          "articleTitle": "Zasilanie, izolacja i koszt montażu"
+        },
+        {
+          "title": "Stawka montażu zasilania",
+          "question": "Jak wycenić montaż zasilania jako całość?",
+          "target": "supply",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / supply",
+          "articleTitle": "Zasilanie, izolacja i koszt montażu"
+        },
+        {
+          "title": "Zmiana VAT",
+          "question": "Jak zmienić VAT?",
+          "target": "vat",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / vat",
+          "articleTitle": "Gdzie zmienić VAT w ofercie?"
+        },
+        {
+          "title": "Eksport wyceny CSV",
+          "question": "Jak wyeksportować wycenę CSV?",
+          "target": "prices",
+          "depth": 0.5,
+          "note": "Jest wzmianka o CSV, bez pełnej instrukcji przycisku eksportu wyceny.",
+          "score": 0.5,
+          "actual": "answer / prices",
+          "articleTitle": "Własne ceny netto i zamawianie materiałów"
+        },
+        {
+          "title": "Oferta PDF",
+          "question": "Jak zapisać ofertę PDF?",
+          "target": "export",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / export",
+          "articleTitle": "PDF i wysłanie oferty klientowi"
+        },
+        {
+          "title": "Udostępnienie klientowi",
+          "question": "Jak wysłać ofertę klientowi?",
+          "target": "export",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / export",
+          "articleTitle": "PDF i wysłanie oferty klientowi"
+        },
+        {
+          "title": "Netto a brutto",
+          "question": "Czy ceny w ofercie są netto czy brutto?",
+          "target": "vat",
+          "depth": 1,
+          "note": "",
+          "score": 0,
+          "actual": "unknown",
+          "articleTitle": "Gdzie zmienić VAT w ofercie?"
+        },
+        {
+          "title": "Start kotłowni",
+          "question": "Jak uruchomić dobór kotłowni?",
+          "target": "boiler",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / boiler",
+          "articleTitle": "Jak uruchomić dobór kotłowni?"
+        },
+        {
+          "title": "OZC i szacunek",
+          "question": "Gdzie podać OZC w kotłowni?",
+          "target": "boiler",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / boiler",
+          "articleTitle": "Jak uruchomić dobór kotłowni?"
+        },
+        {
+          "title": "Marka i model źródła",
+          "question": "Jak wybrać model kotła SAS?",
+          "target": "catalog",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / catalog",
+          "articleTitle": "Wybór producenta i modelu źródła"
+        },
+        {
+          "title": "Gaz i pakiet CWU",
+          "question": "Jak ustawić zasobnik w pakiecie kotła gazowego?",
+          "target": "gas",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / gas",
+          "articleTitle": "Kocioł gazowy i zasobnik w pakiecie"
+        },
+        {
+          "title": "Sprzęgła i grupy",
+          "question": "Jak wybrać sprzęgło i grupy pompowe?",
+          "target": "hydraulics",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / hydraulics",
+          "articleTitle": "Sprzęgło, sprzęgłorozdzielacz i grupy"
+        },
+        {
+          "title": "Parametry CWU",
+          "question": "Jak skonfigurować CWU?",
+          "target": "cwu",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / cwu",
+          "articleTitle": "Konfiguracja CWU"
+        },
+        {
+          "title": "Naczynia i zabezpieczenia",
+          "question": "Gdzie wpisać naczynie przeponowe?",
+          "target": "safety",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / safety",
+          "articleTitle": "Naczynia, bufor i zamknięte strefy"
+        },
+        {
+          "title": "Bufor i przepływ minimalny",
+          "question": "Jak sprawdzić bufor i minimalny przepływ?",
+          "target": "safety",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / safety",
+          "articleTitle": "Naczynia, bufor i zamknięte strefy"
+        },
+        {
+          "title": "Za mała moc źródła",
+          "question": "Co oznacza ostrzeżenie za mała moc źródła?",
+          "target": "boiler",
+          "depth": 0.5,
+          "note": "Opisuje ogólny charakter doboru; nie diagnozuje konkretnej konfiguracji kotłowni.",
+          "score": 0,
+          "actual": "unknown",
+          "articleTitle": "Jak uruchomić dobór kotłowni?"
+        },
+        {
+          "title": "Dobór grzejnika",
+          "question": "Jak dobrać grzejnik przy innych temperaturach?",
+          "target": "radiators",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / radiators",
+          "articleTitle": "Obsługa modułu Grzejniki"
+        },
+        {
+          "title": "Dodanie grzejnika do zestawienia",
+          "question": "Jak dodać grzejnik do zestawienia?",
+          "target": "radiators",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / radiators",
+          "articleTitle": "Obsługa modułu Grzejniki"
+        },
+        {
+          "title": "Import katalogu grzejników",
+          "question": "Jak wczytać katalog CSV grzejników?",
+          "target": "csv",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / csv",
+          "articleTitle": "Katalog grzejników z CSV"
+        },
+        {
+          "title": "Usunięcie pozycji katalogu",
+          "question": "Jak usunąć produkt z katalogu grzejników?",
+          "target": "csv",
+          "depth": 0.5,
+          "note": "Brak odrębnej instrukcji usuwania pozycji katalogowych.",
+          "score": 0,
+          "actual": "answer / radiators",
+          "articleTitle": "Katalog grzejników z CSV"
+        },
+        {
+          "title": "Zapis i odczyt JSON",
+          "question": "Jak zapisać projekt JSON?",
+          "target": "json",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / json",
+          "articleTitle": "Zapis i odtworzenie projektu JSON"
+        },
+        {
+          "title": "Błędny import JSON",
+          "question": "Projekt JSON nie wczytuje się",
+          "target": "json-errors",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / json-errors",
+          "articleTitle": "Nie mogę otworzyć pliku projektu"
+        },
+        {
+          "title": "Offline",
+          "question": "Czy działa offline?",
+          "target": "offline",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / offline",
+          "articleTitle": "Czy HeatLoop działa bez internetu?"
+        },
+        {
+          "title": "Telefon",
+          "question": "Jak zainstalować skrót na iPhonie?",
+          "target": "mobile",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / mobile",
+          "articleTitle": "Otwieranie HeatLoop na telefonie"
+        },
+        {
+          "title": "Zgłoszenie problemu",
+          "question": "Jak zgłosić błąd?",
+          "target": "bugs",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / bugs",
+          "articleTitle": "Zgłoszenie błędu i Bug/Fix"
+        },
+        {
+          "title": "Wersja aplikacji",
+          "question": "Jaka wersja HeatLoop?",
+          "target": "@scope",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "scope",
+          "articleTitle": "Odpowiedź systemowa"
+        }
+      ]
+    },
+    {
+      "name": "Praca z rysunkiem i podgląd",
+      "rows": [
+        {
+          "title": "Wczytanie PNG/JPG",
+          "question": "Jak wczytać rzut PNG?",
+          "target": "drawing",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Wczytanie PDF",
+          "question": "Jak wczytać PDF jako rzut?",
+          "target": "drawing",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Kalibracja",
+          "question": "Jak ustawić skalę rzutu?",
+          "target": "drawing",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Obrys pokoju",
+          "question": "Jak narysować obrys pomieszczenia?",
+          "target": "drawing",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Zakończenie obrysu",
+          "question": "Jak zakończyć obrys pomieszczenia?",
+          "target": "drawing",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Cofnięcie punktu",
+          "question": "Jak cofnąć ostatni punkt na rzucie?",
+          "target": "drawing",
+          "depth": 0.5,
+          "note": "Brak instrukcji przycisku Cofnij punkt.",
+          "score": 0.5,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Usunięcie niedokończonego szkicu",
+          "question": "Jak usunąć bieżący szkic?",
+          "target": "drawing",
+          "depth": 0.5,
+          "note": "Brak rozróżnienia szkicu od gotowego pomieszczenia.",
+          "score": 0.5,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Pomocnicza trasa rury",
+          "question": "Do czego służy trasa rury pomocnicza?",
+          "target": "drawing",
+          "depth": 0.5,
+          "note": "Może zostać pomylona z trasą przypisanej pętli.",
+          "score": 0,
+          "actual": "unknown",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Wybór systemu przed rysowaniem",
+          "question": "Jak wybrać system mieszany na rzucie?",
+          "target": "mixed",
+          "depth": 1,
+          "note": "",
+          "score": 0.5,
+          "actual": "choose",
+          "articleTitle": "Mokre, frezowane i system mieszany"
+        },
+        {
+          "title": "Technologia istniejącego pokoju",
+          "question": "Jak zmienić technologię pomieszczenia na rzucie?",
+          "target": "mixed",
+          "depth": 1,
+          "note": "",
+          "score": 0.5,
+          "actual": "choose",
+          "articleTitle": "Mokre, frezowane i system mieszany"
+        },
+        {
+          "title": "Umieszczenie R1",
+          "question": "Jak umieścić rozdzielacz na rzucie?",
+          "target": "route",
+          "depth": 0.5,
+          "note": "Trasa wymaga rozdzielacza, ale brak dokładnej instrukcji narzędzia Umieść rozdzielacz.",
+          "score": 0,
+          "actual": "choose",
+          "articleTitle": "Rysowanie rzeczywistej trasy pętli"
+        },
+        {
+          "title": "Pozycja R2",
+          "question": "Jak wskazać położenie rozdzielacza R2?",
+          "target": "manifolds",
+          "depth": 0.5,
+          "note": "Opisuje wybór R2 i przypisania, nie pełen przebieg umieszczania punktu.",
+          "score": 0.5,
+          "actual": "answer / manifolds",
+          "articleTitle": "Dodawanie rozdzielacza R2-R10"
+        },
+        {
+          "title": "Przypisana trasa pętli",
+          "question": "Jak narysować trasę pętli?",
+          "target": "route",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / route",
+          "articleTitle": "Rysowanie rzeczywistej trasy pętli"
+        },
+        {
+          "title": "Domknięcie trasy",
+          "question": "Jak zakończyć pełną trasę pętli?",
+          "target": "route",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / route",
+          "articleTitle": "Rysowanie rzeczywistej trasy pętli"
+        },
+        {
+          "title": "Długość z rysunku",
+          "question": "Czy narysowana długość pętli zastępuje szacunek?",
+          "target": "route",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / route",
+          "articleTitle": "Rysowanie rzeczywistej trasy pętli"
+        },
+        {
+          "title": "Usunięcie gotowej trasy",
+          "question": "Jak usunąć narysowaną trasę pętli?",
+          "target": "route",
+          "depth": 0.5,
+          "note": "Brak kroków przycisku Usuń trasę.",
+          "score": 0.5,
+          "actual": "answer / route",
+          "articleTitle": "Rysowanie rzeczywistej trasy pętli"
+        },
+        {
+          "title": "Obrót 90 stopni",
+          "question": "Jak obrócić rzut o 90 stopni?",
+          "target": "drawing",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Propozycje ścian",
+          "question": "Jak wykryć ściany na rzucie?",
+          "target": "drawing",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Próg wykrywania",
+          "question": "Jak zmienić próg ciemności wykrywania ścian?",
+          "target": "drawing",
+          "depth": 0.5,
+          "note": "Brak instrukcji ustawiania progu i wpływu na wynik.",
+          "score": 0.5,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Wybór i zatwierdzenie ścian",
+          "question": "Jak zatwierdzić wybrane ściany?",
+          "target": "drawing",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Usunięcie linii ścian",
+          "question": "Jak usunąć zatwierdzone linie pomocnicze ścian?",
+          "target": "drawing",
+          "depth": 0.5,
+          "note": "Brak opisu przycisku usuwania linii pomocniczych.",
+          "score": 0.5,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Zapis obrotu i ścian",
+          "question": "Czy JSON zapisuje obrót rzutu i linie ścian?",
+          "target": "json",
+          "depth": 0.5,
+          "note": "Artykuł zapisu nie wyjaśnia nowych pól i zgodności ze starszą aplikacją.",
+          "score": 0.5,
+          "actual": "answer / json",
+          "articleTitle": "Zapis i odtworzenie projektu JSON"
+        },
+        {
+          "title": "Grzejnik na rzucie",
+          "question": "Jak umieścić grzejnik na rzucie?",
+          "target": "radiator-plan",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / radiator-plan",
+          "articleTitle": "Grzejnik na rzucie - błąd dodawania"
+        },
+        {
+          "title": "Punkt grzejnika poza pokojem",
+          "question": "Grzejnik na szkicu nie działa",
+          "target": "radiator-plan",
+          "depth": 1,
+          "note": "",
+          "score": 1,
+          "actual": "answer / radiator-plan",
+          "articleTitle": "Grzejnik na rzucie - błąd dodawania"
+        },
+        {
+          "title": "Podgląd wykrywa brak skali",
+          "state": {
+            "scale": null
+          },
+          "pattern": "Ustaw skalę",
+          "depth": 1,
+          "score": 1,
+          "actual": "oczekiwana wskazówka"
+        },
+        {
+          "title": "Podgląd wykrywa niedokończony szkic",
+          "state": {
+            "draftPoints": 2
+          },
+          "pattern": "niedokończony",
+          "depth": 1,
+          "score": 1,
+          "actual": "oczekiwana wskazówka"
+        },
+        {
+          "title": "Podgląd wskazuje przekroczony limit",
+          "state": {
+            "overlongLoops": 1
+          },
+          "pattern": "przekraczają",
+          "depth": 1,
+          "score": 1,
+          "actual": "oczekiwana wskazówka"
+        },
+        {
+          "title": "Ostrzeżenie o ręcznych pokojach",
+          "state": {
+            "manualRoomCount": 1
+          },
+          "pattern": "drugi raz",
+          "depth": 1,
+          "score": 1,
+          "actual": "oczekiwana wskazówka"
+        },
+        {
+          "title": "Nieprzypisane pomieszczenia",
+          "state": {
+            "unassignedRooms": 1
+          },
+          "pattern": "Przypisz pomieszczenia",
+          "depth": 1,
+          "score": 1,
+          "actual": "oczekiwana wskazówka"
+        },
+        {
+          "title": "Brak położenia rozdzielacza",
+          "state": {
+            "unplacedManifolds": 1
+          },
+          "pattern": "wskaż położenie",
+          "depth": 1,
+          "score": 1,
+          "actual": "oczekiwana wskazówka"
+        },
+        {
+          "title": "Diagnoza konkretnej przyczyny błędu planu",
+          "state": {
+            "planErrorCount": 1
+          },
+          "pattern": "Plan pętli zgłasza",
+          "depth": 0.5,
+          "note": "Podgląd zna liczbę problemów i kieruje do planu, ale nie tłumaczy konkretnych komunikatów.",
+          "score": 0.5,
+          "actual": "oczekiwana wskazówka"
+        },
+        {
+          "title": "Rozpoznanie błędnej dodatniej skali",
+          "question": "Skala jest ustawiona, czy na pewno jest poprawna?",
+          "target": "drawing",
+          "depth": 0,
+          "note": "Brak niezależnego wymiaru wzorcowego i oceny obrazu; nie potwierdza poprawności kalibracji.",
+          "score": 0,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Fałszywe wskazanie mebla jako ściany",
+          "question": "Wykrywanie ścian zaznaczyło meble, co zrobić?",
+          "target": "drawing",
+          "depth": 0.5,
+          "note": "Wymaga ręcznej selekcji, bez automatycznej klasyfikacji i konkretnej diagnozy obrazu.",
+          "score": 0.5,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Ściany ukośne",
+          "question": "Dlaczego wykrywanie nie znajduje ukośnych ścian?",
+          "target": "drawing",
+          "depth": 0.5,
+          "note": "Detektor działa dla poziomych/pionowych odcinków; brak odrębnego scenariusza naprawy.",
+          "score": 0.5,
+          "actual": "answer / drawing",
+          "articleTitle": "Rzut i kalibracja skali"
+        },
+        {
+          "title": "Niedostępna miniatura",
+          "technical": "unavailable-image",
+          "depth": 1,
+          "note": "Test drawing-preview.test.mjs potwierdza tekstowy tryb i bezpieczny brak obrazu.",
+          "score": 1,
+          "actual": "potwierdzone testem integracyjnym"
+        },
+        {
+          "title": "Izolacja podglądu od AI",
+          "technical": "local-only",
+          "depth": 1,
+          "note": "Test drawing-preview.test.mjs potwierdza brak obrazu i danych w żądaniu AI.",
+          "score": 1,
+          "actual": "potwierdzone testem integracyjnym"
+        }
+      ]
+    }
+  ]
+}

@@ -1,18 +1,22 @@
+import {hydraulicSelection} from './hydraulic-catalog.mjs';
+import {brandsFor,modelsFor,gasKinds,gasKindFor,deviceName} from './boiler-catalog.mjs';
 // Preliminary equipment scope. No certified device catalogue or safety sizing.
 export const sources={gas:'Kocioł gazowy kondensacyjny',coal:'Kocioł na ekogroszek',pellet:'Kocioł na pellet',combo:'Pellet + zgazowanie drewna',wood:'Kocioł zgazowujący drewno',heatpump:'Pompa ciepła',hybrid:'Pompa ciepła + kocioł gazowy'};
 export const topologies={direct:'Układ bezpośredni',separator:'Sprzęgło hydrauliczne',distribution:'Sprzęgłorozdzielacz',buffer:'Bufor ciepła',exchanger:'Wymiennik rozdzielający obiegi'};
-export const boilerKeys=['bGasSource','bCoalSource','bPelletSource','bComboSource','bWoodSource','bHpSource','bGasFlue','bSolidFlue','bGasConnection','bCondensate','bHpBase','bHpDrain','bHpProtection','bHpElectric','bSeparator','bDistribution','bBuffer','bExchanger','bPrimaryPump','bMixGroup','bDirectGroup','bReturnProtection','bThermalProtection','bCoVessel','bCoSafety','bOpenVessel','bOpenSafety','bCwuTank','bCwuVessel','bCwuSafety','bDhwLoad','bDhwMix','bCirculation','bMagnet','bAir','bValves','bFilling','bPipes','bInsulation','bFittings','bMount','bElectrical'];
-export const boilerDefaults=()=>({source:'',hpKind:'air',basis:'project',ozc:'',margin:'15',locality:'',outdoor:'-20',model:'',rated:'',minimum:'',sourceT:'55',floorT:'35',radT:'55',dt:'10',floorGroups:'',radGroups:'',topology:'direct',system:'closed',solidClosed:false,cwu:'storage',tank:'',cold:'10',storage:'55',reheat:'60',circulation:false,antiScald:true,dhwLoad:'valve',flue:'existing',flueLength:'0',buffer:'',coVessel:'',cwuVessel:'',requiredFlow:'',availableFlow:'',requiredVolume:'',activeVolume:'',pipeMeters:'0',included:{},linked:false});
+export const boilerKeys=['bGasSource','bCoalSource','bPelletSource','bComboSource','bWoodSource','bHpSource','bGasFlue','bSolidFlue','bGasConnection','bCondensate','bHpBase','bHpDrain','bHpProtection','bHpElectric','bHeatingManifold','bMixActuator','bSeparator','bDistribution','bBuffer','bExchanger','bPrimaryPump','bMixGroup','bDirectGroup','bReturnProtection','bThermalProtection','bCoVessel','bCoSafety','bOpenVessel','bOpenSafety','bCwuTank','bCwuVessel','bCwuSafety','bDhwLoad','bDhwMix','bCirculation','bMagnet','bAir','bValves','bFilling','bPipes','bInsulation','bFittings','bMount','bElectrical'];
+export const boilerDefaults=()=>({source:'',hpKind:'air',basis:'project',ozc:'',margin:'15',locality:'',outdoor:'-20',brand:'',catalogModel:'',gasKind:'',model:'',rated:'',minimum:'',sourceT:'55',floorT:'35',radT:'55',dt:'10',floorGroups:'',radGroups:'',topology:'direct',hydraulicModel:'',hydraulicName:'',hydraulicSections:'',hydraulicPower:'',mixModel:'',mixName:'',directModel:'',directName:'',system:'closed',solidClosed:false,cwu:'storage',tank:'',cold:'10',storage:'55',reheat:'60',circulation:false,antiScald:true,dhwLoad:'valve',flue:'existing',flueLength:'0',buffer:'',coVessel:'',cwuVessel:'',requiredFlow:'',availableFlow:'',requiredVolume:'',activeVolume:'',pipeMeters:'0',included:{},linked:false});
 export function bNumber(v){const s=String(v??'').trim().replace(',','.');return /^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)?Number(s):NaN;}
 export const isSolid=s=>['coal','pellet','combo','wood'].includes(s);
 export const isHp=s=>['heatpump','hybrid'].includes(s);
 export function normalizeBoiler(raw){
  const b=boilerDefaults();if(!raw||typeof raw!=='object')return b;
  for(const k of Object.keys(b)){
-  if(typeof b[k]==='string'&&typeof raw[k]==='string')b[k]=raw[k].slice(0,k==='model'||k==='locality'?120:30);
+  if(typeof b[k]==='string'&&typeof raw[k]==='string')b[k]=raw[k].slice(0,['model','locality','catalogModel','hydraulicName','mixName','directName'].includes(k)?120:30);
   if(typeof b[k]==='boolean')b[k]=raw[k]===true;
  }
  for(const k of boilerKeys){const value=raw.included?.[k];if(Number.isFinite(value)&&value>=0&&value<=1000)b.included[k]=value;}
+ if(['storage','heating'].includes(b.gasKind))b.gasKind='single';
+ if(b.catalogModel&&!modelsFor(b.source,b.brand,b.hpKind).some(m=>m.id===b.catalogModel)){b.catalogModel='';b.brand='other';}
  return b;
 }
 export function projectDemand(state){
@@ -25,6 +29,13 @@ export function analyzeBoiler(state){
  const number=k=>bNumber(b[k]),optional=k=>String(b[k]).trim()===''?null:number(k);
  const check=(k,min,max,label)=>{const n=number(k);if(!(Number.isFinite(n)&&n>=min&&n<=max))errors.push(label);return n;};
  if(!Object.hasOwn(sources,b.source))errors.push('Wybierz źródło ciepła.');
+ if(b.brand&&!['other',...Object.keys(brandsFor(b.source,b.hpKind))].includes(b.brand))errors.push('Wybierz producenta dla wybranego paliwa.');
+ if(b.catalogModel&&!modelsFor(b.source,b.brand,b.hpKind).some(m=>m.id===b.catalogModel))errors.push('Wybierz model dla wybranego producenta i paliwa.');
+ if(b.source==='gas'){
+  const kind=gasKindFor(b);
+  if(!Object.hasOwn(gasKinds,kind))errors.push('Wybierz wariant kotła gazowego.');
+  if(kind==='single'&&!['none','storage'].includes(b.cwu)||kind==='combi'&&b.cwu!=='instant')errors.push('Wariant kotła gazowego nie odpowiada przygotowaniu CWU.');
+ }
  if(!['air','ground'].includes(b.hpKind))errors.push('Wybierz rodzaj pompy ciepła.');
  if(!['project','ozc'].includes(b.basis))errors.push('Wybierz podstawę zapotrzebowania na moc.');
  const base=b.basis==='ozc'?check('ozc',.1,1000,'Podaj moc z OZC od 0,1 do 1000 kW.'):demand.totalKW;
@@ -80,14 +91,15 @@ export function analyzeBoiler(state){
   dhwEnergy=tank*1.163*(storage-cold)/1000;dhwPower=dhwEnergy/(minutes/60);
   warnings.push('CWU: obliczono energię pełnego nagrzania i średnią moc w zadanym czasie, bez strat. Sprawdź pobór szczytowy i wydajność wężownicy. Nie dodawaj automatycznie tej mocy do szczytu CO.');
  }
+ const hydraulic=hydraulicSelection(b,floorGroups+radGroups,base,dt,rated);errors.push(...hydraulic.errors);warnings.push(...hydraulic.warnings);
  const labelVolume=(key)=>optional(key)>0?' — '+b[key]+' l':' — pojemność do doboru';
  const add=(key,name,qty=1,unit='kpl.')=>{
   if(!(qty>0))return;
   const included=b.included[key]||0;if(!Number.isFinite(included)||included<0||included>qty||(unit!=='m'&&!Number.isInteger(included)))errors.push('Liczba elementów już w zestawie przekracza ilość: '+name+'.');
   items.push({key,name,qty,unit,included,buy:Math.max(0,qty-included)});
  };
- const model=b.model.trim()?' — '+b.model.trim():' — model do doboru';
- if(b.source==='gas'||b.source==='hybrid'){add('bGasSource','Kocioł gazowy'+model);add('bGasFlue','System powietrzno-spalinowy — wg DTR',flueLength||1,flueLength?'m':'kpl.');add('bGasConnection','Armatura przyłącza gazu — wg projektu');add('bCondensate','Odprowadzenie kondensatu; neutralizacja jeśli wymagana');}
+ const name=deviceName(b),model=name?' — '+name:' — model do doboru';
+ if(b.source==='gas'||b.source==='hybrid'){add('bGasSource','Kocioł gazowy'+(b.source==='gas'?' '+gasKinds[gasKindFor(b)]+(b.cwu==='storage'&&b.included.bCwuTank===1?' — zestaw z zasobnikiem CWU':''):'')+model);add('bGasFlue','System powietrzno-spalinowy — wg DTR',flueLength||1,flueLength?'m':'kpl.');add('bGasConnection','Armatura przyłącza gazu — wg projektu');add('bCondensate','Odprowadzenie kondensatu; neutralizacja jeśli wymagana');}
  if(isSolid(b.source)){
   add({coal:'bCoalSource',pellet:'bPelletSource',combo:'bComboSource',wood:'bWoodSource'}[b.source],sources[b.source]+model);
   add('bSolidFlue',({existing:'Ocena i przyłączenie istniejącego komina',liner:'Wkład kominowy stalowy',insulated:'Komin stalowy dwuścienny izolowany',ceramic:'Komin systemowy ceramiczny'}[b.flue]||'System spalinowy')+' — wg DTR',b.flue==='existing'?1:flueLength||1,b.flue==='existing'||!flueLength?'kpl.':'m');
@@ -95,13 +107,14 @@ export function analyzeBoiler(state){
   if(b.system==='closed')add('bThermalProtection','Zabezpieczenie przed przegrzaniem / układ schładzający — wg DTR');
  }
  if(isHp(b.source)){add('bHpSource','Pompa ciepła '+(b.hpKind==='ground'?'gruntowa':'powietrze–woda')+model);if(b.hpKind==='air'){add('bHpBase','Podstawa, mocowanie i ograniczenie drgań jednostki');add('bHpDrain','Odprowadzenie wody z odszraniania — wg urządzenia');add('bHpProtection','Ochrona przed zamarzaniem — wariant wg DTR');}else{add('bHpBase','Dolne źródło gruntowe — osobny projekt i zakres robót');}add('bHpElectric','Przyłącze i zabezpieczenia elektryczne pompy — wg projektu');}
- if(b.topology==='separator')add('bSeparator','Sprzęgło hydrauliczne — dobór przepływów');
- if(b.topology==='distribution')add('bDistribution','Sprzęgłorozdzielacz — liczba obiegów '+(floorGroups+radGroups));
+ if(b.topology==='separator'){add('bSeparator','Sprzęgło hydrauliczne — '+hydraulic.name);if(hydraulic.circuits>1)add('bHeatingManifold','Rozdzielacz obiegów CO — '+(hydraulic.model?.manifold||'model do doboru')+' — '+hydraulic.circuits+' obiegi / miejsca');}
+ if(b.topology==='distribution')add('bDistribution','Sprzęgłorozdzielacz — '+hydraulic.name+' — '+hydraulic.circuits+' obiegi / miejsca');
  if(b.topology==='buffer')add('bBuffer','Bufor ciepła'+labelVolume('buffer'));
  if(b.topology==='exchanger')add('bExchanger','Wymiennik rozdzielający — dobór mocy i strat ciśnienia');
  add('bPrimaryPump','Pompa obiegu źródła — sprawdź wyposażenie wbudowane');
- add('bMixGroup','Grupa pompowa z podmieszaniem — z pompą',mixed);
- add('bDirectGroup','Grupa pompowa bez podmieszania — z pompą',direct);
+ add('bMixGroup','Grupa pompowa z podmieszaniem — '+(hydraulic.mix?.name||b.mixName||'model do doboru — z pompą'),mixed);
+ if(mixed&&hydraulic.mix?.actuator)add('bMixActuator',hydraulic.mix.actuator,mixed);
+ add('bDirectGroup','Grupa pompowa bez podmieszania — '+(hydraulic.direct?.name||b.directName||'model do doboru — z pompą'),direct);
  if(b.system==='closed'||b.topology==='exchanger'){add('bCoVessel','Naczynie przeponowe CO'+labelVolume('coVessel'));add('bCoSafety','Grupa bezpieczeństwa naczynia przeponowego / instalacji CO — wg DTR');}
  if(b.system==='open'){add('bOpenVessel','Otwarte naczynie wzbiorcze — do doboru');add('bOpenSafety','Przewody bezpieczeństwa, przelewowe i zabezpieczenia układu otwartego');}
  if(b.cwu==='storage'){
@@ -117,6 +130,6 @@ export function analyzeBoiler(state){
  add('bFittings','Kształtki, połączenia i uchwyty — zestaw do pomiaru');add('bMount','Montaż, płukanie i uruchomienie kotłowni');add('bElectrical','Połączenia automatyki kotłowni i odbiorników — zakres wg projektu');
  if(pipeMeters===0)warnings.push('Nie wyceniono metrów rur i izolacji: wpisz długość po pomiarze.');
  warnings.push('Pojemności naczyń, ciśnienia zaworów, pompy, średnice i kominy wymagają doboru według parametrów instalacji i DTR. Nie są wyznaczane z samej mocy.');
- return {errors:[...new Set(errors)],warnings,items,demand,baseKW:base,comparisonKW:base*(1+margin/100),flowLH:base*1000/(1.163*dt),floorGroups,radGroups,mixedGroups:mixed,directGroups:direct,dhwEnergy,dhwPower,missingVolume};
+ return {errors:[...new Set(errors)],warnings,items,demand,baseKW:base,comparisonKW:base*(1+margin/100),flowLH:base*1000/(1.163*dt),floorGroups,radGroups,mixedGroups:mixed,directGroups:direct,dhwEnergy,dhwPower,missingVolume,hydraulic};
 }
 export function boilerQuoteRows(result){return result.items.filter(i=>i.buy>0).map(i=>['Kotłownia (wstępnie): '+i.name,i.buy,i.unit,i.key]);}
