@@ -164,7 +164,11 @@ if($('tool').value==='rectangleRoom'){
 }if(editActive()){if(!editPoints){const index=state.polygons.findLastIndex(p=>insidePolygon(pos,p.points)||p.points.some(q=>Math.hypot(q.x-pos.x,q.y-pos.y)<18*canvas.width/(r.width||canvas.width)));if(index<0){editNotice('Dotknij wnętrza narysowanego pomieszczenia.');return}selectRoomEdit(index)}const nearest=editNearest(pos);if(nearest>=0){editVertex=nearest;editDragging=nearest;editPointer=e.pointerId;canvas.setPointerCapture?.(e.pointerId);editNotice('Przeciągnij narożnik lub użyj przycisków dodawania/usuwania.')}else if(!insidePolygon(pos,editPoints)){const index=state.polygons.findLastIndex(p=>insidePolygon(pos,p.points));if(index>=0&&index!==editRoomIndex){editNotice('Zapisz lub anuluj bieżącą edycję przed wyborem innego pomieszczenia.')}}editButtons();draw();return}if($('tool').value==='manifold'){if(!(state.scale>0))return alert('Ustaw skalę rzutu przed wskazaniem rozdzielacza.');loopUI.setManifold(pos);return}if($('tool').value==='loopRoute'&&!loopUI?.active())return alert('Wybierz pętlę przyciskiem Rysuj w zakładce Pętle i rozdzielacz.');if($('tool').value==='radiator'){if(!state.polygons.length){alert('Najpierw narysuj pomieszczenie na rzucie.');return}const eligible=state.polygons.filter(p=>p.heatingType==='radiators');if(!eligible.length){alert('Ustaw ogrzewanie grzejnikowe dla co najmniej jednego pomieszczenia.');return}const room=eligible.find(p=>insidePolygon(pos,p.points));if(!room){alert('Wskaż punkt wewnątrz pomieszczenia z ogrzewaniem grzejnikowym.');return}const input=prompt('Moc katalogowa grzejnika [W] przy 75/65/20°C:','1500');if(input===null)return;const power=parsePL(input);if(!(power>0&&power<=50000)){alert('Podaj poprawną moc.');return}state.radiators.push({...pos,room:room.name,power});render();return}points.push(pos);if($('tool').value==='scale'&&points.length===2)finish();else draw()});function finish(){const tool=$('tool').value;if(tool==='editRoom')return;if(tool==='loopRoute'){try{loopUI.finishRoute(points);points=[];$('tool').value='pipe';render()}catch(err){alert(err.message)}return}if(tool==='approachRoute'){try{loopUI.finishApproach(points);points=[];$('tool').value='pipe';render()}catch(err){alert(err.message)}return}if(tool==='manifold')return;if(tool==='scale'){if(points.length!==2)return;const value=prompt('Rzeczywista długość wskazanego odcinka (metry):');if(value===null)return;const meters=parsePL(value);const pixels=distance(points);if(!(meters>0&&meters<10000&&pixels>0)){alert('Nieprawidłowa długość.');return}state.scale=meters/pixels;technicalGrid.visible=true;$('gridVisible').checked=true;state.polygons.forEach(p=>p.area=area(p.points)*state.scale**2)}else if(tool==='room'){if(points.length<3||!state.scale){alert('Ustaw skalę i zaznacz co najmniej 3 punkty.');return}const name=prompt('Nazwa pomieszczenia:','Pomieszczenie '+(state.polygons.length+1));if(!name)return;const p={name:name.slice(0,80),points:[...points],area:area(points)*state.scale**2,...drawingDefaults(),heatingType:heatType()};if(!validRoom(p)){alert(roomValidationMessage(p));return}state.polygons.push(p)}else{if(tool==='radiator')return;if(points.length<2||!state.scale){alert('Ustaw skalę i zaznacz co najmniej 2 punkty.');return}state.pipes.push({points:[...points]})}points=[];hoverPoint=null;render()}$('finish').onclick=finish;function undoDrawingPoint(){
  if(editActive()){editNotice('W trybie edycji użyj Anuluj edycję, aby przywrócić oryginał.');return}
  if(rectangleDraft){rectangleDraft=null;draw();return}
- if(points.length){points.pop();hoverPoint=null;draw()}
+ if(points.length){points.pop();hoverPoint=null;draw();return}
+ if($('tool').value==='pipe'){
+  const restored=loopUI?.reopenLastApproachForUndo?.();
+  if(restored){points=restored;$('tool').value='approachRoute';hoverPoint=null;draw();$('gridStatus').textContent='Cofnięto ostatni punkt zapisanego dojścia. Popraw trasę i kliknij Zakończ obrys / trasę.';return}
+ }
 }
 $('undo').onclick=undoDrawingPoint;
 document.addEventListener('keydown',e=>{
@@ -172,7 +176,7 @@ document.addEventListener('keydown',e=>{
  const target=e.target;
  if(target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
  if(document.getElementById('drawing')?.hidden)return;
- if(editActive()||rectangleDraft||points.length){e.preventDefault();undoDrawingPoint()}
+ if(editActive()||rectangleDraft||points.length||$('tool').value==='pipe'){e.preventDefault();undoDrawingPoint()}
 });$('clear').onclick=()=>{if(editActive()){cancelRoomEdit();return}points=[];draw()};$('tool').onchange=()=>{points=[];hoverPoint=null;rectangleDraft=null;gridDrag=null;cancelRoomEdit();draw()};
 $('gridVisible').onchange=()=>{technicalGrid.visible=$('gridVisible').checked;draw()};
 function updateGridSpacing(){
@@ -339,7 +343,7 @@ loopUI=mountLoopPlanner(state,{
  changed:()=>renderQuote(),
  openDrawing:()=>{openTab('drawing');$('heatingSystem').value=$('heatingSystem').value||'wet';$('heatingSystem').dispatchEvent(new Event('change'));$('canvas').scrollIntoView?.({block:'center'})},
  startRoute:m=>{points=[{...m}];$('tool').value='loopRoute';draw()},
- startApproach:()=>{points=[];$('tool').value='approachRoute';draw()},
+ startApproach:existing=>{points=(existing||[]).map(p=>({...p}));$('tool').value='approachRoute';draw()},
  placeManifold:()=>{points=[];$('tool').value='manifold';draw()},
  exportCsv:rows=>download(new Blob(['\ufeff'+rows.map(row=>row.map(csvCell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}),'heatloop-petle.csv')
 });render();
