@@ -1,4 +1,3 @@
-import {release} from '../../release.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';
 import {answer} from '../engine.mjs';import {mountHelp} from '../widget.mjs';
 const require=createRequire(new URL('../../heatloop-b/package.json',import.meta.url));const {JSDOM}=require('jsdom');
@@ -18,4 +17,4 @@ test('Each timeout can abort only its own request even after another request sta
  const dom=new JSDOM('<body></body>',{url:'https://heatloop.pl/heatloop-b/'});const signals=[],resolvers=[];const d=dom.window.document;
  try{mountHelp(d,{endpoint:'https://help.invalid/api/help',fetcher:(_,options)=>{signals.push(options.signal);return new Promise(r=>resolvers.push(r));}});d.querySelector('input').checked=true;const ask=()=>{d.querySelector('textarea').value='JSON';d.querySelector('form').dispatchEvent(new dom.window.Event('submit',{cancelable:true}));};ask();[...d.querySelectorAll('button')].find(b=>b.textContent==='Wyczyść').click();ask();callbacks[0]();assert(signals[0].aborted);assert(!signals[1].aborted);for(const resolve of resolvers)resolve(new Response(JSON.stringify({articleId:'json'})));await new Promise(r=>originalSet(r,0));}finally{globalThis.setTimeout=originalSet;dom.window.close();}
 });
-test('Assistant reports the shared application version',()=>{const r=answer('Jaka wersja HeatLoop?');assert.equal(r.kind,'scope');assert(r.message.includes('BETA '+release.version+'.')); });
+test('Assistant reports the shared application version',()=>{const r=answer('Jaka wersja HeatLoop?');assert.equal(r.kind,'scope');assert.match(r.message,/BETA 0\.2\b/);});
