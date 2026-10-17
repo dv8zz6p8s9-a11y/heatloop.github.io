@@ -239,7 +239,7 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
   }
   // Przejście na wewnętrzny tor powrotny, następnie odwrotny obieg.
   const k=n-1,L=x+(2*k+1)*s,T=y+(2*k+1)*s,R=x+w-(2*k+1)*s,B=y+h-(2*k+1)*s;
-  add(L,B);
+  add(L+s,B);add(L+s,B-s);
   for(let j=n-1;j>=0;j--){
    const l=x+(2*j+1)*s,t=y+(2*j+1)*s,r=x+w-(2*j+1)*s,b=y+h-(2*j+1)*s;
    if(j<n-1)add(l,b);
