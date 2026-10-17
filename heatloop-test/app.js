@@ -171,7 +171,7 @@ document.addEventListener('keydown',e=>{
  if(!(e.ctrlKey||e.metaKey)||e.altKey||e.key.toLowerCase()!=='z')return;
  const target=e.target;
  if(target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
- if(!document.getElementById('drawing')?.classList.contains('active'))return;
+ if(document.getElementById('drawing')?.hidden)return;
  if(editActive()||rectangleDraft||points.length){e.preventDefault();undoDrawingPoint()}
 });$('clear').onclick=()=>{if(editActive()){cancelRoomEdit();return}points=[];draw()};$('tool').onchange=()=>{points=[];hoverPoint=null;rectangleDraft=null;gridDrag=null;cancelRoomEdit();draw()};
 $('gridVisible').onchange=()=>{technicalGrid.visible=$('gridVisible').checked;draw()};
