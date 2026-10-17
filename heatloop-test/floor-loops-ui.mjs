@@ -1,5 +1,5 @@
 import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261017-approach-review-1';
-import {generateMeander,suggestApproach,rightAnglePath,rectangularInsetArea} from './loop-generator.mjs?v=20261017-doorway-7';
+import {generateMeander,generateSpiral,suggestApproach,rightAnglePath,rectangularInsetArea} from './loop-generator.mjs?v=20261017-spiral-2';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
@@ -76,7 +76,7 @@ export function mountLoopPlanner(state,api){
  };
  $('pGenerateRoutes').onclick=()=>{
   prepareAssignments(state);
-  if(state.loopPlan.loops.length&&!confirm('Zastąpić obecne pętle i wszystkie narysowane trasy automatycznym meandrem?'))return;
+  if(state.loopPlan.loops.length&&!confirm('Zastąpić obecne pętle i wszystkie narysowane trasy automatycznym ślimakiem?'))return;
   const errors=settingsErrors(state);if(errors.length){alert(errors.join('\n'));return;}
   if(!(state.scale>0)){alert('Najpierw skalibruj rzut.');return;}
   const generated=[],sections=new Map(),areas=[],warnings=[];
@@ -90,7 +90,7 @@ export function mountLoopPlanner(state,api){
     // Propozycja dojścia nie jest zatwierdzonym przejściem przez drzwi.
     const approach=connected?a.approach:rightAnglePath(suggestApproach(room,m));
     if(!connected)warnings.push(room.name+': automatyczne dojście jest tylko propozycją; sprawdź ściany i drzwi w kroku 7.');
-    try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach});}
+    try{result=generateSpiral(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach});}
     catch(error){throw Error(room.name+': '+error.message)}
     if(result.approximate)warnings.push(room.name+': podział wielokąta na '+result.parts+' prostokątne obszary jest orientacyjny; sprawdź pokrycie rurami i przebieg dojść.');
     areas.push(room.name+': '+format(result.heatedArea)+' m² grzewcze / '+format(room.area)+' m² pomieszczenia');
@@ -107,7 +107,7 @@ export function mountLoopPlanner(state,api){
    if(generated.length>100)throw Error('Generator przekracza limit 100 pętli.');
   }catch(err){alert('Nie wygenerowano tras. '+err.message+'\nDotychczasowy projekt pozostaje bez zmian.');return;}
   state.loopPlan.loops=generated;state.loopPlan.signature=sourceSignature(state);state.loopPlan.linked=false;active=null;editingLoopId=null;
-  api.render();alert('Wygenerowano '+generated.length+' tras meandrowych.\n'+areas.join('\n')+(warnings.length?'\nUWAGI:\n'+warnings.join('\n'):'')+'\nTo wersja testowa. Sprawdź ręcznie ściany, dojścia i długości przed realizacją.');
+  api.render();alert('Wygenerowano '+generated.length+' tras spiralnych.\n'+areas.join('\n')+(warnings.length?'\nUWAGI:\n'+warnings.join('\n'):'')+'\nTo wersja testowa. Sprawdź ręcznie ściany, dojścia i długości przed realizacją.');
  };
  $('pLinked').onchange=()=>{
   const result=analyzeLoops(state);if($('pLinked').checked&&result.errors.length){$('pLinked').checked=false;return alert('Popraw plan pętli przed powiązaniem z wyceną.');}
