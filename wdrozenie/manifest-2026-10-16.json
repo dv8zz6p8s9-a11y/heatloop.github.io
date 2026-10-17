@@ -9,8 +9,8 @@
       "host": "github-pages",
       "source": "heatloop-b/app.js",
       "target": "heatloop-b/app.js",
-      "bytes": 48464,
-      "sha256": "92ae329d47fd377740cb5168207fa1b6c4eaa91dc0743bd8cc34b96e75d4a278"
+      "bytes": 48506,
+      "sha256": "35df76a0eb752317e7dcabc6e6ee9af81fd62e8e3510ff39287d352114844f80"
     },
     {
       "host": "github-pages",
@@ -79,8 +79,8 @@
       "host": "github-pages",
       "source": "heatloop-b/grzejniki.html",
       "target": "heatloop-b/grzejniki.html",
-      "bytes": 13044,
-      "sha256": "95d4ad0223c247de7898dda98e38942be4e94499c04a62820b3a67e8fe5be2d6"
+      "bytes": 13151,
+      "sha256": "283aa8749789ca22c1abd890d6f54ee74194dc5d40752b17c50dff6a70d27b22"
     },
     {
       "host": "github-pages",

@@ -29,7 +29,8 @@ Nie usuwano skompilowanego Reacta ani jego informacji licencyjnych. Moduł aplik
 7. **Grzejniki:** nieprawidłowe rekordy zapisane lokalnie nie zatrzymują startu. Blokada lub przepełnienie localStorage nie blokuje pracy w karcie; pojawia się komunikat o braku trwałego zapisu. Usunięto drugie, zbędne wywołanie obliczenia tego samego wyniku. Pusty CSV daje kontrolowany komunikat zamiast wyjątku przy odczycie nagłówka.
 8. **PWA wcześniejszej aplikacji:** poprawiono nieistniejące ścieżki `icons/` w manifeście. Service worker nie pokazuje wcześniejszej aplikacji jako zastępstwa niedostępnej offline strony BETA. Zmieniono nazwę cache, aby uruchomić aktualizację starej pamięci.
 9. **Niewdrożony szablon zgłoszeń:** JSON `null`, tablica lub skalar zwraca błąd walidacji zamiast wyjątku. Dokumentacja wyraźnie rozróżnia obecny FormSubmit i alternatywny szablon — nie ma nieistniejącego przełącznika `ENDPOINT`.
-10. **Dokumentacja:** poprawiono mapę repozytorium, błędne wskazanie dawnego adresu i nieprawdziwą informację, że katalog prototypu na publikowanej gałęzi nie jest publiczny.
+10. **Eksport CSV:** nazwy pomieszczeń i inne teksty rozpoczynające się od znaków formuł są eksportowane jako tekst, aby otwarcie pliku w arkuszu nie uruchamiało wpisanej formuły. W głównej aplikacji współdzielony helper zastąpił powtarzane ręczne kodowanie pól CSV.
+11. **Dokumentacja:** poprawiono mapę repozytorium, błędne wskazanie dawnego adresu i nieprawdziwą informację, że katalog prototypu na publikowanej gałęzi nie jest publiczny.
 
 ## Walidacja
 

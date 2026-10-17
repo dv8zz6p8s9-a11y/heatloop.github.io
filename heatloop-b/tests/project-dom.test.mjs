@@ -160,5 +160,6 @@ const priceInputs=[...$('qRows').querySelectorAll('input')];priceInputs[0].value
 priceInputs[0].value='5';priceInputs[0].dispatchEvent(new w.Event('input'));assert(!$('qExport').disabled);
 const firstPdf=w.testLoadPdfLib();const failedScript=w.document.querySelector('script[src*="html2pdf"]');failedScript.onerror();await assert.rejects(firstPdf,/Nie udało/);assert(!failedScript.isConnected);
 const secondPdf=w.testLoadPdfLib();const retry=w.document.querySelector('script[src*="html2pdf"]');assert(retry&&retry!==failedScript);w.html2pdf=()=>{};retry.onload();assert.equal(await secondPdf,w.html2pdf);
+await load({...old,rooms:[{...old.rooms[0],name:'=1+1'}]});$('exportCsv').click();const safeCsv=await w.lastBlob.text();assert(safeCsv.includes('"\'=1+1"'));assert(safeCsv.includes('"15"'));
 console.log('PASS DOM: atomic imports, early size limit, concurrent import order, price validation and PDF retry');
 assert(warnings.length>=4);assert.deepEqual(runtimeErrors,[]);w.close();
