@@ -16,6 +16,7 @@ export async function buildManifest(){
  for(const source of [...common,...help])await add('heatloop-pl',source);
  await add('heatloop-pl','wdrozenie/strona-glowna/index.html','index.html');
  await add('heatloop-pl','wdrozenie/strona-glowna/bug-fix.html','bug-fix.html');
+ await add('heatloop-pl','wdrozenie/strona-glowna/metrics.js','metrics.js');
  entries.sort((a,b)=>(a.host+'/'+a.target).localeCompare(b.host+'/'+b.target,'en'));
  return {release:'heatloop-'+release.version+'-beta',version:release.version,status:'prepared-not-published',aiEnabled:false,knowledgeVersion:release.knowledgeVersion,entries};
 }
