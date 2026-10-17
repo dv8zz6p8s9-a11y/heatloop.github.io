@@ -1,4 +1,4 @@
-import {generateSpiral} from './loop-generator.mjs?v=20261017-bifilar-1';
+import {generateSpiral} from './loop-generator.mjs?v=20261017-coil-export-2';
 const out=document.querySelector('#results');
 const cases=[
  ['Pokój 4 × 3 m',400,300,15],
@@ -27,6 +27,7 @@ for(const [name,w,h,spacingCm,rotation=0] of cases){
    const meters=route.slice(1).reduce((sum,p,i)=>sum+Math.hypot(p.x-route[i].x,p.y-route[i].y)*0.02,0);
    if(meters>100.0001)issues.push('Przekroczono 100 m');
    // Testuj odcinki wewnętrzne; dojścia mogą wymagać oddzielnego trasowania.
+   if(!Array.isArray(coil))throw Error('Generator nie zwrócił punktów spirali (coil).');
    const inside=coil;
    for(let i=1;i<inside.length;i++){
     const a=inside[i-1],b=inside[i];
