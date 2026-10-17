@@ -1,4 +1,4 @@
-import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261017-confirm-1';
+import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261017-approach-review-1';
 import {generateMeander,suggestApproach,rightAnglePath,rectangularInsetArea} from './loop-generator.mjs?v=20261017-doorway-7';
 
 export function mountLoopPlanner(state,api){
@@ -14,7 +14,7 @@ export function mountLoopPlanner(state,api){
   const result=analyzeLoops(state);status(result);$('pLoops').replaceChildren();
   for(const row of result.rows){
    const tr=document.createElement('tr');
-   for(const value of [loopLabel(row),row.room+' / '+row.zone,format(row.area),format(row.length),format(row.power),format(row.flow),format(row.flow/60),row.drawn?'Narysowana (z dojściami)':'Szacunek (z dojściami)']){const td=document.createElement('td');td.textContent=value;tr.append(td)}
+   for(const value of [loopLabel(row),row.room+' / '+row.zone,format(row.area),format(row.length),format(row.power),format(row.flow),format(row.flow/60),row.drawn?(row.approachVerified===false?'Automatyczna — dojście do weryfikacji':'Narysowana (z dojściami)'):'Szacunek (z dojściami)']){const td=document.createElement('td');td.textContent=value;tr.append(td)}
    const td=document.createElement('td'),draw=document.createElement('button');draw.type='button';draw.textContent=row.drawn?'Rysuj ponownie':'Rysuj';draw.setAttribute('aria-label','Rysuj pętlę R1/P'+row.section);
    draw.onclick=()=>{
     const m=manifoldPoint(state.loopPlan,row.manifoldId);if(!m||!(state.scale>0))return alert('Najpierw ustaw skalę i wskaż rozdzielacz '+manifoldId(row.manifoldId)+' na rzucie.');
