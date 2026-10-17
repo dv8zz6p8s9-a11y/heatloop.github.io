@@ -41,17 +41,32 @@ function drawTechnicalGrid(){
  const status=$('gridStatus');
  if(!technicalGrid.visible){if(status)status.textContent='Siatka ukryta';return}
  const size=gridPixels();
- if(!(size>=2)&&state.scale>0){if(status)status.textContent='Oczko za małe na ten rzut. Zwiększ je do 25–50 cm.';return}
+ if(!Number.isFinite(size)||size<2){if(status)status.textContent='Oczko jest zbyt małe na ten rzut. Zwiększ rozstaw siatki.';return}
  if(status)status.textContent=state.scale>0
-   ?'Siatka '+technicalGrid.spacingCm+' cm ('+size.toFixed(1)+' px) · '+(technicalGrid.snap?'przyciąganie aktywne':'przyciąganie wyłączone')
-   :'Siatka pomocnicza 25 px · po skalowaniu przejdzie na '+technicalGrid.spacingCm+' cm';
+   ?'Oczko: '+technicalGrid.spacingCm+' cm · '+size.toFixed(1)+' px · '+(technicalGrid.snap?'przyciąganie włączone':'przyciąganie wyłączone')
+   :'Siatka pomocnicza 25 px · ustaw skalę rzutu, aby używać centymetrów';
  ctx.save();ctx.beginPath();ctx.rect(0,0,canvas.width,canvas.height);ctx.clip();
  const ox=((technicalGrid.offsetX%size)+size)%size,oy=((technicalGrid.offsetY%size)+size)%size;
  const cols=Math.ceil(canvas.width/size),rows=Math.ceil(canvas.height/size);
- ctx.lineWidth=1;
- for(let i=0;i<=cols;i++){const x=ox+i*size;if(x>canvas.width)break;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.strokeStyle=i%5===0?'rgba(0,79,166,.9)':'rgba(0,92,179,.55)';ctx.stroke()}
- for(let j=0;j<=rows;j++){const y=oy+j*size;if(y>canvas.height)break;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.strokeStyle=j%5===0?'rgba(0,79,166,.9)':'rgba(0,92,179,.55)';ctx.stroke()}
- if(size>=9){ctx.fillStyle='rgba(0,54,143,.95)';for(let x=ox;x<canvas.width;x+=size)for(let y=oy;y<canvas.height;y+=size)ctx.fillRect(x-1.5,y-1.5,3,3)}
+ const majorEvery=5;
+ for(let i=0;i<=cols;i++){
+  const x=ox+i*size;if(x>canvas.width)break;
+  ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);
+  ctx.strokeStyle=i%majorEvery===0?'rgba(3,31,79,.95)':'rgba(8,50,102,.82)';
+  ctx.lineWidth=i%majorEvery===0?2.5:1.5;ctx.stroke();
+ }
+ for(let j=0;j<=rows;j++){
+  const y=oy+j*size;if(y>canvas.height)break;
+  ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);
+  ctx.strokeStyle=j%majorEvery===0?'rgba(3,31,79,.95)':'rgba(8,50,102,.82)';
+  ctx.lineWidth=j%majorEvery===0?2.5:1.5;ctx.stroke();
+ }
+ if(size>=8){
+  ctx.fillStyle='rgba(2,25,69,.96)';
+  for(let x=ox;x<canvas.width;x+=size)for(let y=oy;y<canvas.height;y+=size){
+   ctx.beginPath();ctx.arc(x,y,size>=16?2.5:1.6,0,Math.PI*2);ctx.fill();
+  }
+ }
  ctx.restore();
 }
 
@@ -132,7 +147,21 @@ if($('tool').value==='rectangleRoom'){
 }if(editActive()){if(!editPoints){const index=state.polygons.findLastIndex(p=>insidePolygon(pos,p.points)||p.points.some(q=>Math.hypot(q.x-pos.x,q.y-pos.y)<18*canvas.width/(r.width||canvas.width)));if(index<0){editNotice('Dotknij wnętrza narysowanego pomieszczenia.');return}selectRoomEdit(index)}const nearest=editNearest(pos);if(nearest>=0){editVertex=nearest;editDragging=nearest;editPointer=e.pointerId;canvas.setPointerCapture?.(e.pointerId);editNotice('Przeciągnij narożnik lub użyj przycisków dodawania/usuwania.')}else if(!insidePolygon(pos,editPoints)){const index=state.polygons.findLastIndex(p=>insidePolygon(pos,p.points));if(index>=0&&index!==editRoomIndex){editNotice('Zapisz lub anuluj bieżącą edycję przed wyborem innego pomieszczenia.')}}editButtons();draw();return}if($('tool').value==='manifold'){if(!(state.scale>0))return alert('Ustaw skalę rzutu przed wskazaniem rozdzielacza.');loopUI.setManifold(pos);return}if($('tool').value==='loopRoute'&&!loopUI?.active())return alert('Wybierz pętlę przyciskiem Rysuj w zakładce Pętle i rozdzielacz.');if($('tool').value==='radiator'){if(!state.polygons.length){alert('Najpierw narysuj pomieszczenie na rzucie.');return}const eligible=state.polygons.filter(p=>p.heatingType==='radiators');if(!eligible.length){alert('Ustaw ogrzewanie grzejnikowe dla co najmniej jednego pomieszczenia.');return}const room=eligible.find(p=>insidePolygon(pos,p.points));if(!room){alert('Wskaż punkt wewnątrz pomieszczenia z ogrzewaniem grzejnikowym.');return}const input=prompt('Moc katalogowa grzejnika [W] przy 75/65/20°C:','1500');if(input===null)return;const power=parsePL(input);if(!(power>0&&power<=50000)){alert('Podaj poprawną moc.');return}state.radiators.push({...pos,room:room.name,power});render();return}points.push(pos);if($('tool').value==='scale'&&points.length===2)finish();else draw()});function finish(){const tool=$('tool').value;if(tool==='editRoom')return;if(tool==='loopRoute'){try{loopUI.finishRoute(points);points=[];$('tool').value='pipe';render()}catch(err){alert(err.message)}return}if(tool==='approachRoute'){try{loopUI.finishApproach(points);points=[];$('tool').value='pipe';render()}catch(err){alert(err.message)}return}if(tool==='manifold')return;if(tool==='scale'){if(points.length!==2)return;const value=prompt('Rzeczywista długość wskazanego odcinka (metry):');if(value===null)return;const meters=parsePL(value);const pixels=distance(points);if(!(meters>0&&meters<10000&&pixels>0)){alert('Nieprawidłowa długość.');return}state.scale=meters/pixels;technicalGrid.visible=true;technicalGrid.snap=true;$('gridVisible').checked=true;$('gridSnap').checked=true;state.polygons.forEach(p=>p.area=area(p.points)*state.scale**2)}else if(tool==='room'){if(points.length<3||!state.scale){alert('Ustaw skalę i zaznacz co najmniej 3 punkty.');return}const name=prompt('Nazwa pomieszczenia:','Pomieszczenie '+(state.polygons.length+1));if(!name)return;const p={name:name.slice(0,80),points:[...points],area:area(points)*state.scale**2,...drawingDefaults(),heatingType:heatType()};if(!validRoom(p)){alert(roomValidationMessage(p));return}state.polygons.push(p)}else{if(tool==='radiator')return;if(points.length<2||!state.scale){alert('Ustaw skalę i zaznacz co najmniej 2 punkty.');return}state.pipes.push({points:[...points]})}points=[];hoverPoint=null;render()}$('finish').onclick=finish;$('undo').onclick=()=>{if(editActive()){editNotice('W trybie edycji użyj Anuluj edycję, aby przywrócić oryginał.');return}points.pop();draw()};$('clear').onclick=()=>{if(editActive()){cancelRoomEdit();return}points=[];draw()};$('tool').onchange=()=>{points=[];hoverPoint=null;rectangleDraft=null;gridDrag=null;cancelRoomEdit();draw()};
 $('gridVisible').onchange=()=>{technicalGrid.visible=$('gridVisible').checked;draw()};
 $('gridSnap').onchange=()=>{technicalGrid.snap=$('gridSnap').checked;draw()};
-$('gridSpacing').onchange=()=>{const value=Number($('gridSpacing').value);if(!Number.isFinite(value)||value<5||value>100){$('gridSpacing').value=technicalGrid.spacingCm;return alert('Oczko siatki: 5–100 cm.')}technicalGrid.spacingCm=value;draw()};
+function updateGridSpacing(){
+ const value=Number($('gridSpacing').value);
+ if(!Number.isFinite(value)||value<5||value>100){
+  $('gridStatus').textContent='Podaj oczko siatki od 5 do 100 cm.';
+  return;
+ }
+ technicalGrid.spacingCm=value;
+ draw();
+}
+$('gridSpacing').addEventListener('input',updateGridSpacing);
+$('gridSpacing').addEventListener('change',()=>{
+ const value=Number($('gridSpacing').value);
+ if(!Number.isFinite(value)||value<5||value>100){$('gridSpacing').value=technicalGrid.spacingCm;draw()}
+ else updateGridSpacing();
+});
 $('gridMove').onclick=()=>{technicalGrid.visible=true;$('gridVisible').checked=true;$('tool').value='moveGrid';points=[];rectangleDraft=null;draw();$('gridStatus').textContent='Przeciągnij siatkę palcem lub myszą po rzucie.'};
 $('gridReset').onclick=()=>{technicalGrid.offsetX=0;technicalGrid.offsetY=0;draw()};
 $('axisGuides').onchange=()=>draw();
