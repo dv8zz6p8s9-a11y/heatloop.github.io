@@ -1,5 +1,5 @@
 import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261017-confirm-1';
-import {generateMeander,rectangularInsetArea,rightAnglePath} from './loop-generator.mjs?v=20261017-corners-2';
+import {generateMeander,rectangularInsetArea} from './loop-generator.mjs?v=20261017-corners-2';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
@@ -143,7 +143,7 @@ export function mountLoopPlanner(state,api){
     const m=manifoldPoint(state.loopPlan,manifoldId(a.manifoldId));if(!m)continue;
     // Po wygenerowaniu nie nakladaj drugiej pomaranczowej linii na kolorowe petle.
     if(state.loopPlan.loops.some(l=>l.roomId===a.roomId&&l.route?.length))continue;
-    const path=rightAnglePath([m,...a.approach]);ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);
+    const path=[m,...a.approach];ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);
     for(const p of path.slice(1))ctx.lineTo(p.x,p.y);
     ctx.save();ctx.setLineDash([7,5]);ctx.strokeStyle='#cf7200';ctx.lineWidth=2;ctx.stroke();ctx.restore();
    }
