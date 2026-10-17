@@ -1,4 +1,4 @@
-import {generateSpiral} from './loop-generator.mjs?v=20261017-regression-2';
+import {generateSpiral} from './loop-generator.mjs?v=20261017-center-fix-1';
 const out=document.querySelector('#results');
 const cases=[
  ['Pokój 4 × 3 m',400,300,15],
