@@ -202,48 +202,56 @@ export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifol
 }
 
 
+// Generator testowy ślimaka: ortogonalne przejścia i kontrola samoprzecięć.
 export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold,approach=[]}){
  if(!(scale>0)||!(spacingCm>=5&&spacingCm<=40)||!(offsetCm>=0&&offsetCm<=100)||!(maxMeters>=10)||!valid(manifold)||!approach.length||!approach.every(valid))throw Error('Nieprawidłowe parametry ślimaka lub dojścia.');
  const g=rectangle(room?.points);
  if(!g)throw Error('Ślimak w tej wersji wymaga prostokątnego pomieszczenia.');
- const d=offsetCm/100/scale,s=spacingCm/100/scale;
- const width=g.w-2*d,height=g.h-2*d;
- if(width<4*s||height<4*s)throw Error('Pomieszczenie jest za wąskie na spiralę przy tym rozstawie.');
+ const d=offsetCm/100/scale,s=spacingCm/100/scale,W=g.w-2*d,H=g.h-2*d;
+ if(W<4*s||H<4*s)throw Error('Pomieszczenie jest za wąskie na ślimak przy wybranym rozstawie.');
  const xy=(x,y)=>({x:g.a.x+g.ux*x+g.vx*y,y:g.a.y+g.uy*x+g.vy*y});
- const approachLen=length([manifold,...approach],scale);
- const budget=maxMeters-2*approachLen;
- if(budget<=0)throw Error('Dojście przekracza limit długości pętli.');
- function coil(x0,y0,w,h){
-  const pts=[],turns=Math.floor(Math.min(w,h)/(4*s));
+ const cross=(a,b,c,d)=>{
+  const orient=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
+  const o1=orient(a,b,c),o2=orient(a,b,d),o3=orient(c,d,a),o4=orient(c,d,b);
+  return o1*o2 < -1e-6 && o3*o4 < -1e-6;
+ };
+ const validate=pts=>{
+  for(let i=1;i<pts.length;i++){
+   if(dist(pts[i-1],pts[i])<1e-5)return false;
+   for(let j=1;j<i-1;j++)if(cross(pts[i-1],pts[i],pts[j-1],pts[j]))return false;
+  }
+  return true;
+ };
+ // Zwoje co dwa rozstawy, a powrót pomiędzy nimi. Bez ukośnych łączników.
+ function coil(x,y,w,h){
+  const turns=Math.floor(Math.min(w,h)/(4*s));
   if(turns<1)return null;
-  // Zasilanie: prostokątna spirala do wewnątrz co 2s.
+  const inward=[];
   for(let k=0;k<turns;k++){
-   const l=x0+2*k*s,t=y0+2*k*s,r=x0+w-2*k*s,b=y0+h-2*k*s;
-   if(k===0)pts.push(xy(l,t));
-   else pts.push(xy(l,t));
-   pts.push(xy(r,t),xy(r,b),xy(l+s,b));
+   const L=x+2*k*s,T=y+2*k*s,R=x+w-2*k*s,B=y+h-2*k*s;
+   if(k===0)inward.push({x:L,y:T});
+   else inward.push({x:L,y:T});
+   inward.push({x:R,y:T},{x:R,y:B},{x:L+s,y:B});
   }
-  // Łącznik w środku do toru powrotnego.
+  // Ścieżka powrotna rozpoczyna się przy ostatnim zwoju i wychodzi
+  // po torze przesuniętym o jeden rozstaw.
+  const back=[];
   for(let k=turns-1;k>=0;k--){
-   const l=x0+(2*k+1)*s,t=y0+(2*k+1)*s,r=x0+w-(2*k+1)*s,b=y0+h-(2*k+1)*s;
-   pts.push(xy(l+s,b),xy(r,b),xy(r,t),xy(l,t));
+   const L=x+(2*k+1)*s,T=y+(2*k+1)*s,R=x+w-(2*k+1)*s,B=y+h-(2*k+1)*s;
+   back.push({x:L+s,y:B},{x:L,y:B},{x:L,y:T},{x:R,y:T});
   }
-  return pts;
+  const pts=[...inward,...back];
+  // Nie dopuszczamy skosów i skrzyżowań; błędnej spirali nie rysujemy.
+  for(let i=1;i<pts.length;i++)if(Math.abs(pts[i].x-pts[i-1].x)>1e-6&&Math.abs(pts[i].y-pts[i-1].y)>1e-6)return null;
+  const world=pts.map(p=>xy(p.x,p.y));
+  return validate(world)?world:null;
  }
- function build(n){
+ const approachLength=length([manifold,...approach],scale);
+ if(2*approachLength>=maxMeters)throw Error('Dojścia przekraczają limit długości pętli.');
+ function build(nx,ny){
   const routes=[];
-  // Każda komórka musi zostać pokryta: nigdy nie pomijaj ostatnich pól siatki.
-  // Wybieramy pełną siatkę o możliwie najmniejszej liczbie stref.
-  let nx=1,ny=n,best=Infinity;
-  for(let x=1;x<=n;x++){
-   const y=Math.ceil(n/x),ratio=Math.abs(Math.log((width/x)/(height/y)));
-   const score=x*y*100+ratio;
-   if(score<best){best=score;nx=x;ny=y;}
-  }
-  const cells=[];
-  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)cells.push({x:d+i*width/nx,y:d+j*height/ny,w:width/nx,h:height/ny});
-  for(const cell of cells){
-   const spiral=coil(cell.x,cell.y,cell.w,cell.h);
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
+   const spiral=coil(d+i*W/nx,d+j*H/ny,W/nx,H/ny);
    if(!spiral)return null;
    const route=[manifold,...approach,...spiral,...[...approach].reverse(),manifold];
    if(length(route,scale)>maxMeters+1e-6)return null;
@@ -251,9 +259,15 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
   }
   return routes;
  }
- for(let n=1;n<=Math.min(40,Math.ceil(width*height/(4*s*s)));n++){
-  const routes=build(n);
-  if(routes)return {routes,heatedArea:width*height*scale*scale,offsetCm,spacingCm,spiral:true};
+ // Pełna siatka pokrywająca każde pole, najmniejsza liczba pętli.
+ for(let n=1;n<=40;n++){
+  const variants=[];
+  for(let nx=1;nx<=n;nx++)if(n%nx===0)variants.push([nx,n/nx]);
+  variants.sort((a,b)=>Math.abs(Math.log((W/a[0])/(H/a[1])))-Math.abs(Math.log((W/b[0])/(H/b[1]))));
+  for(const [nx,ny] of variants){
+   const routes=build(nx,ny);
+   if(routes)return {routes,heatedArea:W*H*scale*scale,offsetCm,spacingCm,spiral:true};
+  }
  }
- throw Error('Nie udało się podzielić pomieszczenia na spirale mieszczące się w limicie. Zmień rozstaw lub położenie rozdzielacza.');
+ throw Error('Nie udało się wygenerować ślimaka bez nieprawidłowych łączników. Zmień rozstaw lub obrys; projekt pozostaje bez zmian.');
 }
