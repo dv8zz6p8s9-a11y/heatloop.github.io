@@ -5,7 +5,7 @@ import {drawingHelpSnapshot, drawingHelpAdvice} from './drawing-help.mjs';
 import {boilerDefaults, boilerKeys, analyzeBoiler, boilerQuoteRows} from './boiler-room.mjs';
 import {mountBoiler} from './boiler-room-ui.mjs';
 import {planDefaults, ensureRoomIds, prepareAssignments, analyzeLoops, controlEntries, numberPL, loopLabel} from './floor-loops.mjs?v=20261016-3';
-import {mountLoopPlanner} from './floor-loops-ui.mjs?v=20261017-per-room-1';
+import {mountLoopPlanner} from './floor-loops-ui.mjs?v=20261017-geometry-2';
 import {catalog as techCatalog, defaults as techDefaults, projectSignature, calculateControls} from './tech-controls.mjs?v=20261016-3';
 import {mountControls} from './tech-controls-ui.mjs?v=20261016-3';
 let techUI=null,loopUI=null,boilerUI=null;
