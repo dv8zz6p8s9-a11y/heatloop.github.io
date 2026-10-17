@@ -32,7 +32,7 @@ for(const [name,w,h,spacingCm,rotation=0] of cases){
     const a=inside[i-1],b=inside[i];
     const axisX=Math.abs(a.x-b.x)<1e-6,axisY=Math.abs(a.y-b.y)<1e-6;
     if(!axisX&&!axisY)issues.push('Ukośny odcinek spirali');
-    for(let j=1;j<i-1;j++)if(segmentCross(a,b,inside[j-1],inside[j]))issues.push('Przecięcie spirali');
+    for(let j=1;j<i-1;j++)if(segmentCross(a,b,inside[j-1],inside[j]))issues.push('Przecięcie spirali: odcinki '+j+' i '+i+'; A('+a.x.toFixed(2)+','+a.y.toFixed(2)+') B('+b.x.toFixed(2)+','+b.y.toFixed(2)+')');
    }
   }
  }catch(e){issues.push(e.message)}
