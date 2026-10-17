@@ -90,7 +90,13 @@ export function mountLoopPlanner(state,api){
     // Propozycja dojścia nie jest zatwierdzonym przejściem przez drzwi.
     const approach=connected?a.approach:rightAnglePath(suggestApproach(room,m));
     if(!connected)warnings.push(room.name+': automatyczne dojście jest tylko propozycją; sprawdź ściany i drzwi w kroku 7.');
-    try{result=generateSpiral(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach});}
+    const marker=window.__heatloopSpiralStart;
+    let spiralRoom=room;
+    if(marker?.roomId===room.loopRoomId&&room.points?.length===4){
+     const corners=room.points,nearest=corners.reduce((best,p,i)=>Math.hypot(p.x-marker.x,p.y-marker.y)<Math.hypot(corners[best].x-marker.x,corners[best].y-marker.y)?i:best,0);
+     spiralRoom={...room,points:[...corners.slice(nearest),...corners.slice(0,nearest)]};
+    }
+    try{result=generateSpiral(spiralRoom,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach});}
     catch(error){throw Error(room.name+': '+error.message)}
     if(result.approximate)warnings.push(room.name+': podział wielokąta na '+result.parts+' prostokątne obszary jest orientacyjny; sprawdź pokrycie rurami i przebieg dojść.');
     areas.push(room.name+': '+format(result.heatedArea)+' m² grzewcze / '+format(room.area)+' m² pomieszczenia');
