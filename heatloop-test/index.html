@@ -7,7 +7,7 @@
   <option value="manifolds">5. Umieść rozdzielacze</option><option value="loops">6. Ustaw parametry pętli</option>
   <option value="approaches">7. Wyznacz dojścia</option><option value="review">8. Generuj pętle i sprawdź</option>
  </select></label><button id="drawingPrevStep" type="button">← Wstecz</button><button id="drawingNextStep" type="button">Dalej →</button></div>
- <p id="drawingStepHelp" class="hint" role="status" aria-live="polite"></p>
+ <p id="drawingStepHelp" class="hint" role="status" aria-live="polite"></p><div id="drawingLoopPreviewControls" hidden style="padding:12px;border:1px solid #467b9d;border-radius:10px;margin:10px 0"><strong>Parametry obszaru ogrzewania</strong><div class="toolbar"><label>Rozstaw rur (cm) <input id="drawingLoopSpacing" type="number" min="5" max="40" step="1" value="15"></label><label>Odsunięcie od ścian (cm) <input id="drawingLoopOffset" type="number" min="0" max="100" step="1" value="10"></label></div><p id="drawingLoopPreview" role="status" aria-live="polite">Zaznacz obszar na rzucie, aby zobaczyć orientacyjną powierzchnię i długość rury.</p><p class="hint">Podgląd szacunkowy: nie jest jeszcze zapisaną trasą pętli ani projektem hydraulicznym.</p></div>
  <div id="drawingStepActions" class="toolbar">
   <button id="drawingRectTool" type="button">Prostokąt / kwadrat — przeciągnij</button>
   <button id="drawingPolyTool" type="button">Wielokąt — zaznacz narożniki</button>
