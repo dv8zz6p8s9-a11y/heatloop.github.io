@@ -1,5 +1,5 @@
 import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261016-3';
-import {generateMeander,rectangularInsetArea,suggestApproach} from './loop-generator.mjs?v=20261017-autolink-1';
+import {generateMeander,rectangularInsetArea,suggestApproach,rightAnglePath} from './loop-generator.mjs?v=20261017-orthogonal-1';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
@@ -140,8 +140,11 @@ export function mountLoopPlanner(state,api){
    for(const a of state.loopPlan.assignments){
     if(!a.approach?.length)continue;
     const m=manifoldPoint(state.loopPlan,manifoldId(a.manifoldId));if(!m)continue;
-    ctx.beginPath();ctx.moveTo(m.x,m.y);for(const p of a.approach)ctx.lineTo(p.x,p.y);
-    ctx.save();ctx.setLineDash([7,5]);ctx.strokeStyle='#cf7200';ctx.lineWidth=3;ctx.stroke();ctx.restore();
+    // Po wygenerowaniu nie nakladaj drugiej pomaranczowej linii na kolorowe petle.
+    if(state.loopPlan.loops.some(l=>l.roomId===a.roomId&&l.route?.length))continue;
+    const path=rightAnglePath([m,...a.approach]);ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);
+    for(const p of path.slice(1))ctx.lineTo(p.x,p.y);
+    ctx.save();ctx.setLineDash([7,5]);ctx.strokeStyle='#cf7200';ctx.lineWidth=2;ctx.stroke();ctx.restore();
    }
    state.loopPlan.loops.forEach((l,i)=>{if(!l.route.length)return;const color='hsl('+((i*137.508+20)%360)+' 85% 38%)';ctx.beginPath();ctx.moveTo(l.route[0].x,l.route[0].y);for(const p of l.route.slice(1))ctx.lineTo(p.x,p.y);ctx.strokeStyle=color;ctx.lineWidth=l.id===editingLoopId?4:2.5;ctx.stroke();const p=l.route[Math.floor(l.route.length/2)];ctx.fillStyle=color;ctx.font='bold 13px sans-serif';ctx.fillText(loopLabel(l),p.x+5,p.y-5);if(l.id===editingLoopId){l.route.slice(1,-1).forEach(pt=>{ctx.beginPath();ctx.arc(pt.x,pt.y,6,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=color;ctx.stroke()})}});
    for(const manifold of state.loopPlan.manifolds){const m=manifoldPoint(state.loopPlan,manifold.id);if(m){ctx.fillStyle='#10263a';ctx.fillRect(m.x-15,m.y-10,30,20);ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.fillText(manifold.id,m.x-8,m.y+4)}}
