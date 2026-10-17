@@ -24,33 +24,38 @@ function roomValidationMessage(room){
 }
 function insidePolygon(point,polygon){let hit=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){const a=polygon[i],b=polygon[j];if((a.y>point.y)!==(b.y>point.y)&&point.x<(b.x-a.x)*(point.y-a.y)/(b.y-a.y)+a.x)hit=!hit}return hit}function radiatorPower(nominal,supply=55,ret=45,room=20,exponent=1.3){if(!(nominal>0&&supply>=ret&&ret>room&&exponent>=1&&exponent<=2))return NaN;const lm=(a,b)=>Math.abs(a-b)<1e-9?a:(a-b)/Math.log(a/b);return nominal*Math.pow(lm(supply-room,ret-room)/lm(55,45),exponent)};const heatType=()=>{const s=$('heatingSystem');return s&&s.value==='mixed'?$('roomHeatingSystem').value:s&&s.value||'wet'};const isFloor=r=>!['radiators'].includes(r.heatingType||'wet');const floorMeters=r=>isFloor(r)?r.area/(r.spacing/100)*1.1:0;const typeLabel={radiators:'Grzejniki',wet:'Podłogowe mokre',milled:'Podłogowe frezowane'};function renderHeatingDetails(){const editor=$('roomTechnologyEditor'),markers=$('radiatorMarkers'),bom=$('heatingBOM');if(!editor||!markers||!bom)return;editor.replaceChildren();const all=[...state.rooms,...state.polygons];all.forEach(r=>{const wrap=document.createElement('label');wrap.textContent=r.name+' — ';const select=document.createElement('select');for(const [value,label] of Object.entries(typeLabel)){const opt=document.createElement('option');opt.value=value;opt.textContent=label;select.append(opt)}select.value=r.heatingType||'wet';select.onchange=()=>{r.heatingType=select.value;if(r.points&&select.value!=='radiators')state.radiators=state.radiators.filter(x=>!(x.room===r.name&&insidePolygon(x,r.points)));render()};wrap.append(select);editor.append(wrap)});markers.replaceChildren();state.radiators.forEach((r,i)=>{const row=document.createElement('div');row.textContent=(i+1)+'. '+r.room+' — '+fmt(r.power)+' W (katalogowo 75/65/20) · ';const del=document.createElement('button');del.textContent='Usuń';del.onclick=()=>{state.radiators.splice(i,1);render()};row.append(del);markers.append(row)});const wet=all.filter(r=>(r.heatingType||'wet')==='wet'),milled=all.filter(r=>r.heatingType==='milled'),rad=all.filter(r=>r.heatingType==='radiators');const meters=arr=>arr.reduce((s,r)=>s+floorMeters(r),0);const total=state.radiators.filter(x=>state.polygons.some(p=>p.name===x.room&&p.heatingType==='radiators'&&insidePolygon(x,p.points))).length;bom.replaceChildren();for(const room of rad){const installed=state.radiators.filter(x=>x.room===room.name&&(!room.points||insidePolygon(x,room.points))).reduce((s,x)=>s+radiatorPower(x.power),0),required=room.area*room.load;const p=document.createElement('p');p.style.color=installed>=required?'#9ee0bb':'#ffd28a';p.textContent=room.name+': wymagane '+fmt(required)+' W, grzejniki przy 55/45/20°C '+fmt(installed)+' W — '+(installed>=required?'moc wystarczająca':'UWAGA: za mała moc lub brak grzejnika');bom.append(p)};for(const line of ['Mokra podłogówka: '+wet.length+' pom., '+fmt(meters(wet))+' m rury (szacunek)','Frezowana podłogówka: '+milled.length+' pom., '+fmt(meters(milled))+' m rury (szacunek)','Ogrzewanie grzejnikowe: '+rad.length+' pom., '+total+' grzejników na rzucie','Armatura grzejnikowa orientacyjna: '+total+' zaworów termostatycznych, '+total+' głowic, '+total+' zaworów powrotnych, '+total+' kompletów mocowań']){const p=document.createElement('p');p.textContent=line;bom.append(p)}}function render(){ensureRoomIds(state);prepareAssignments(state);const rows=[...state.rooms,...state.polygons.map(p=>({name:p.name,area:p.area,load:p.load,spacing:p.spacing,heatingType:p.heatingType,source:'rysunek'}))];$('rooms').replaceChildren();rows.forEach((r,i)=>{const tr=document.createElement('tr');[r.name,fmt(r.area),fmt(r.load),fmt(r.area*r.load),fmt(r.spacing),fmt(floorMeters(r))].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td)});const td=document.createElement('td');const b=document.createElement('button');b.textContent='Usuń';b.onclick=()=>{if(i<state.rooms.length)state.rooms.splice(i,1);else {if(editRoomIndex===i-state.rooms.length)cancelRoomEdit();const removed=state.polygons.splice(i-state.rooms.length,1)[0];state.radiators=state.radiators.filter(x=>!(x.room===removed.name&&insidePolygon(x,removed.points)))}render()};td.append(b);tr.append(td);$('rooms').append(tr)});const totalArea=rows.reduce((s,r)=>s+r.area,0),power=rows.reduce((s,r)=>s+r.area*r.load,0),pipe=rows.reduce((s,r)=>s+floorMeters(r),0),drawn=state.pipes.reduce((s,p)=>s+distance(p.points)*(state.scale||0),0);$('summary').innerHTML=`<p>Pomieszczenia: <b>${rows.length}</b></p><p>Powierzchnia: <b>${fmt(totalArea)} m²</b></p><p>Moc orientacyjna: <b>${fmt(power)} W</b></p><p>Szacowana rura: <b>${fmt(pipe)} m</b></p><p>Narysowane trasy: <b>${fmt(drawn)} m</b></p><p>Trasy: <b>${state.pipes.length}</b></p>`;$('elements').replaceChildren();[...state.polygons.map(p=>`${p.name}: ${fmt(p.area)} m² · ${typeLabel[p.heatingType||'wet']||'Podłogowe mokre'}`),...state.pipes.map((p,i)=>`Trasa ${i+1}: ${fmt(distance(p.points)*(state.scale||0))} m`)].forEach(t=>{const d=document.createElement('div');d.textContent=t;$('elements').append(d)});renderHeatingDetails();if(loopUI)loopUI.refresh();if(boilerUI)boilerUI.refresh();if(techUI){techUI.refresh();renderQuote()}if(state.quote&&state.quote.useProject)syncQuoteFromProject();$('scaleLabel').textContent=state.scale?`1 px = ${fmt(state.scale)} m`:'nieustawiona';draw()}
 let rectangleDraft=null;
-const technicalGrid={visible:true,snap:true,spacingCm:10,offsetX:0,offsetY:0};
+const technicalGrid={visible:true,snap:true,spacingCm:25,offsetX:0,offsetY:0};
 let hoverPoint=null;
 let gridDrag=null;
-function gridPixels(){return state.scale>0?technicalGrid.spacingCm/100/state.scale:0}
+function gridPixels(){return state.scale>0?technicalGrid.spacingCm/100/state.scale:25}
 function snapDrawingPoint(p){
  const size=gridPixels();
- if(!technicalGrid.visible||!technicalGrid.snap||!(size>=5))return p;
+ if(!technicalGrid.visible||!technicalGrid.snap||!(size>=2))return p;
  const x=technicalGrid.offsetX+Math.round((p.x-technicalGrid.offsetX)/size)*size;
  const y=technicalGrid.offsetY+Math.round((p.y-technicalGrid.offsetY)/size)*size;
  return {x:Math.max(0,Math.min(canvas.width,x)),y:Math.max(0,Math.min(canvas.height,y))};
 }
 function drawTechnicalGrid(){
- if(!technicalGrid.visible)return;
- const size=gridPixels(),status=$('gridStatus');
- if(!(size>=5)){if(status)status.textContent='Skalibruj rzut lub zwiększ oczko siatki.';return;}
- if(status)status.textContent='Oczko: '+technicalGrid.spacingCm+' cm · '+(technicalGrid.snap?'przyciąganie włączone':'bez przyciągania');
+ const status=$('gridStatus');
+ if(!technicalGrid.visible){if(status)status.textContent='Siatka ukryta';return}
+ const size=gridPixels();
+ if(!(size>=2)&&state.scale>0){if(status)status.textContent='Oczko za małe na ten rzut. Zwiększ je do 25–50 cm.';return}
+ if(status)status.textContent=state.scale>0
+   ?'Siatka '+technicalGrid.spacingCm+' cm ('+size.toFixed(1)+' px) · '+(technicalGrid.snap?'przyciąganie aktywne':'przyciąganie wyłączone')
+   :'Siatka pomocnicza 25 px · po skalowaniu przejdzie na '+technicalGrid.spacingCm+' cm';
  ctx.save();ctx.beginPath();ctx.rect(0,0,canvas.width,canvas.height);ctx.clip();
- ctx.strokeStyle='rgba(20,95,150,.38)';ctx.lineWidth=1;
  const ox=((technicalGrid.offsetX%size)+size)%size,oy=((technicalGrid.offsetY%size)+size)%size;
- for(let x=ox;x<=canvas.width;x+=size){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}
- for(let y=oy;y<=canvas.height;y+=size){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}
+ const cols=Math.ceil(canvas.width/size),rows=Math.ceil(canvas.height/size);
+ ctx.lineWidth=1;
+ for(let i=0;i<=cols;i++){const x=ox+i*size;if(x>canvas.width)break;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.strokeStyle=i%5===0?'rgba(0,79,166,.9)':'rgba(0,92,179,.55)';ctx.stroke()}
+ for(let j=0;j<=rows;j++){const y=oy+j*size;if(y>canvas.height)break;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.strokeStyle=j%5===0?'rgba(0,79,166,.9)':'rgba(0,92,179,.55)';ctx.stroke()}
+ if(size>=9){ctx.fillStyle='rgba(0,54,143,.95)';for(let x=ox;x<canvas.width;x+=size)for(let y=oy;y<canvas.height;y+=size)ctx.fillRect(x-1.5,y-1.5,3,3)}
  ctx.restore();
 }
 
 function drawingPoint(e){
  const r=canvas.getBoundingClientRect(),p={x:Math.max(0,Math.min(canvas.width,(e.clientX-r.left)*canvas.width/r.width)),y:Math.max(0,Math.min(canvas.height,(e.clientY-r.top)*canvas.height/r.height))};
- if($('tool').value==='scale')return p; // Kalibracja musi być niezależna od starej siatki.
+ if($('tool').value==='scale')return p; // Kalibracja precyzyjna bez zaokrąglania do siatki.
  const q=snapDrawingPoint(p),last=points[points.length-1];
  if($('tool').value==='room'&&last&&$('axisGuides')?.checked){
   const threshold=Math.max(6,Math.min(12,gridPixels()/2||8));
