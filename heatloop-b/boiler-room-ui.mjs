@@ -1,6 +1,6 @@
 import {hydraulicOptions,groupOptions} from './hydraulic-catalog.mjs';
 import {brandsFor,modelsFor,gasKindFor,setGasKind} from './boiler-catalog.mjs';
-import {sources,topologies,isHp,isSolid,analyzeBoiler,bNumber} from './boiler-room.mjs';
+import {sources,isHp,isSolid,analyzeBoiler,bNumber} from './boiler-room.mjs';
 export const boilerFields={bHydraulicModel:'hydraulicModel',bHydraulicName:'hydraulicName',bHydraulicSections:'hydraulicSections',bHydraulicPower:'hydraulicPower',bMixModel:'mixModel',bMixName:'mixName',bDirectModel:'directModel',bDirectName:'directName',bBasis:'basis',bOzc:'ozc',bMargin:'margin',bLocality:'locality',bOutdoor:'outdoor',bModel:'model',bRated:'rated',bMinimum:'minimum',bHpKind:'hpKind',bTopology:'topology',bSystem:'system',bSolidClosed:'solidClosed',bSourceT:'sourceT',bFloorT:'floorT',bRadT:'radT',bDt:'dt',bFloorGroups:'floorGroups',bRadGroups:'radGroups',bBuffer:'buffer',bCwu:'cwu',bTank:'tank',bCold:'cold',bStorage:'storage',bReheat:'reheat',bCirculation:'circulation',bAntiScald:'antiScald',bDhwLoad:'dhwLoad',bFlue:'flue',bFlueLength:'flueLength',bCoVessel:'coVessel',bCwuVessel:'cwuVessel',bRequiredFlow:'requiredFlow',bAvailableFlow:'availableFlow',bRequiredVolume:'requiredVolume',bActiveVolume:'activeVolume',bPipeMeters:'pipeMeters'};
 export function mountBoiler(state,prices,api){
  const $=id=>document.getElementById(id),fmt=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';

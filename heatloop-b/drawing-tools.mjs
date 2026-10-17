@@ -21,7 +21,7 @@ export function detectWallCandidates({data,width,height},{threshold=115,minLengt
  const all=[];
  for(const vertical of [false,true]){
   const major=vertical?height:width,minor=vertical?width:height;let active=[];
-  const complete=g=>{const thickness=g.last-g.first+1;if(thickness<minThickness||thickness>maxThickness)return;const a=(g.start+g.end)/2,length=g.end-g.start+1;if(length<minLength)return;const mid=(g.first+g.last)/2;all.push({points:vertical?[{x:mid,y:g.start},{x:mid,y:g.end}]:[{x:g.start,y:mid},{x:g.end,y:mid}],thickness,length,axis:vertical?'vertical':'horizontal'});};
+  const complete=g=>{const thickness=g.last-g.first+1;if(thickness<minThickness||thickness>maxThickness)return;const length=g.end-g.start+1;if(length<minLength)return;const mid=(g.first+g.last)/2;all.push({points:vertical?[{x:mid,y:g.start},{x:mid,y:g.end}]:[{x:g.start,y:mid},{x:g.end,y:mid}],thickness,length,axis:vertical?'vertical':'horizontal'});};
   for(let line=0;line<minor;line++){
    const runs=[];let start=-1,last=-1;
    for(let pos=0;pos<=major+2;pos++){const dark=pos<major&&mask[vertical?pos*width+line:line*width+pos];if(dark){if(start<0)start=pos;last=pos;}if(start>=0&&pos-last>2){if(last-start+1>=minLength)runs.push({start,end:last});start=-1;}}

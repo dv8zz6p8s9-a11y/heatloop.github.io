@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 const require=createRequire(import.meta.url);const {JSDOM}=require('jsdom');
 import fs from 'node:fs';import assert from 'node:assert/strict';
 import {release} from '../../release.mjs';
+import * as projectIO from '../project-io.mjs';
 import * as drawingTools from '../drawing-tools.mjs';
 import * as drawingHelp from '../drawing-help.mjs';
 import * as boiler from '../boiler-room.mjs';
@@ -14,10 +15,10 @@ import {mountControls} from '../tech-controls-ui.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const dom=new JSDOM(fs.readFileSync(root+'index.html','utf8'),{runScripts:'outside-only',url:'http://localhost/heatloop-b/'});const w=dom.window;const runtimeErrors=[];w.addEventListener('error',e=>runtimeErrors.push(e.error?.message||e.message));globalThis.document=w.document;globalThis.window=w;
 w.HTMLCanvasElement.prototype.getContext=()=>new Proxy({},{get:()=>()=>{},set:()=>true});w.scrollTo=()=>{};w.alert=message=>{throw Error(message)};w.confirm=()=>true;globalThis.confirm=w.confirm;globalThis.alert=w.alert;w.Blob=Blob;w.URL.createObjectURL=blob=>{w.lastBlob=blob;return 'blob:mock'};w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=()=>{};
-w.__release=release;w.__drawingTools=drawingTools;w.__drawingHelp=drawingHelp;w.__tech=tech;w.__mount=mountControls;w.__floor=floor;w.__loopMount=mountLoopPlanner;w.__boiler=boiler;w.__boilerMount=mountBoiler;
+w.__projectIO=projectIO;w.__release=release;w.__drawingTools=drawingTools;w.__drawingHelp=drawingHelp;w.__tech=tech;w.__mount=mountControls;w.__floor=floor;w.__loopMount=mountLoopPlanner;w.__boiler=boiler;w.__boilerMount=mountBoiler;
 let code=fs.readFileSync(root+'app.js','utf8').replace(/^import .*;\n/gm,'');
-code='const release=window.__release;const {drawRaster,rotateDrawing,rotationValue,normalizeWallGuides,detectWallCandidates}=window.__drawingTools;const {drawingHelpSnapshot,drawingHelpAdvice}=window.__drawingHelp;const {catalog:techCatalog,defaults:techDefaults,normalizeControls,projectSignature,calculateControls}=window.__tech;const mountControls=window.__mount;const {planDefaults,normalizePlan,ensureRoomIds,prepareAssignments,analyzeLoops,controlEntries,numberPL,loopLabel}=window.__floor;const mountLoopPlanner=window.__loopMount;const {boilerDefaults,normalizeBoiler,boilerKeys,analyzeBoiler,boilerQuoteRows}=window.__boiler;const mountBoiler=window.__boilerMount;\n'+code;
-w.eval(code+'\nwindow.testOffer=()=>offerHtml(offerSnapshot());window.testState=()=>state;window.testImage=()=>{image={};};');
+code='const {normalizeProject,projectFileLimit,quoteInputIds}=window.__projectIO;const release=window.__release;const {drawRaster,rotateDrawing,rotationValue,normalizeWallGuides,detectWallCandidates}=window.__drawingTools;const {drawingHelpSnapshot,drawingHelpAdvice}=window.__drawingHelp;const {catalog:techCatalog,defaults:techDefaults,normalizeControls,projectSignature,calculateControls}=window.__tech;const mountControls=window.__mount;const {planDefaults,normalizePlan,ensureRoomIds,prepareAssignments,analyzeLoops,controlEntries,numberPL,loopLabel}=window.__floor;const mountLoopPlanner=window.__loopMount;const {boilerDefaults,normalizeBoiler,boilerKeys,analyzeBoiler,boilerQuoteRows}=window.__boiler;const mountBoiler=window.__boilerMount;\n'+code;
+w.eval(code+'\nwindow.testLoadPdfLib=()=>loadPdfLib();window.testValidateOffer=()=>validateOffer();window.testOffer=()=>offerHtml(offerSnapshot());window.testState=()=>state;window.testImage=()=>{image={};};');
 const $=id=>w.document.getElementById(id);
 const change=(id,value)=>{const el=$(id);if(el.type==='checkbox')el.checked=value;else el.value=value;el.dispatchEvent(new w.Event(el.tagName==='SELECT'||el.type==='checkbox'?'change':'input',{bubbles:true}))};
 function cell(row,index,value){const el=$('tRooms').rows[row].querySelectorAll('input')[index];el.value=value;el.dispatchEvent(new w.Event('input',{bubbles:true}))}
@@ -140,4 +141,20 @@ console.log('PASS DOM: rotation buttons preserve the linked quote, room area, sc
 const wallRaster={data:new Uint8ClampedArray(1000*700*4).fill(255),width:1000,height:700};for(let y=20;y<26;y++)for(let x=20;x<220;x++){const i=(y*1000+x)*4;wallRaster.data[i]=wallRaster.data[i+1]=wallRaster.data[i+2]=0;}
 w.HTMLCanvasElement.prototype.getContext=()=>new Proxy({getImageData:()=>wallRaster},{get:(target,key)=>target[key]||(()=>{}),set:(target,key,value)=>{target[key]=value;return true;}});w.testImage();const areaBeforeWalls=w.testState().polygons[0].area;await $('detectWalls').onclick();assert.equal($('wallCandidates').querySelectorAll('input').length,1);assert.equal(w.testState().wallGuides.length,0);$('wallCandidates').querySelector('input').checked=false;$('acceptWalls').click();assert.equal(w.testState().wallGuides.length,0);$('wallCandidates').querySelector('input').checked=true;$('acceptWalls').click();assert.equal(w.testState().wallGuides.length,1);assert.equal(w.testState().polygons[0].area,areaBeforeWalls);assert.equal($('qTotal').textContent,quoteBeforeRotation);$('save').click();assert.equal(JSON.parse(await w.lastBlob.text()).wallGuides.length,1);$('clearWalls').click();assert.equal(w.testState().wallGuides.length,0);assert.equal($('qTotal').textContent,quoteBeforeRotation);
 console.log('PASS DOM: wall detection, explicit selection/acceptance, JSON and clearing preserve rooms and quote');
-assert.deepEqual(runtimeErrors,[]);w.close();
+// Import failures leave the currently open project untouched, including UI fields.
+const warnings=[];w.alert=message=>warnings.push(message);
+const beforeInvalid=JSON.stringify(w.testState()),beforeRoomField=$('roomName').value;
+await load({version:1,rooms:[null],polygons:[],pipes:[]});assert.equal(JSON.stringify(w.testState()),beforeInvalid);
+await load({...old,quote:{values:{qMaterial:'constructor'}}});assert.equal(JSON.stringify(w.testState()),beforeInvalid);
+await load({...old,quote:{values:{roomName:'changed'}}});assert.equal($('roomName').value,beforeRoomField);
+let readLarge=false;await $('projectFile').onchange({target:{files:[{size:26*1024*1024,text:async()=>{readLarge=true;return '{}'}}]}});assert.equal(readLarge,false);
+const beforeBrokenImage=JSON.stringify(w.testState());w.Image=class {set src(value){queueMicrotask(()=>this.onerror())}};
+await load({...old,background:'data:image/png;base64,AAAA'});assert.equal(JSON.stringify(w.testState()),beforeBrokenImage);
+let resolveOld;const slow=$('projectFile').onchange({target:{files:[{size:100,text:()=>new Promise(resolve=>resolveOld=resolve)}]}});
+await load({...old,rooms:[{...old.rooms[0],name:'Nowszy projekt'}]});resolveOld(JSON.stringify(old));await slow;assert.equal(w.testState().rooms[0].name,'Nowszy projekt');
+const priceInputs=[...$('qRows').querySelectorAll('input')];priceInputs[0].value='-1';priceInputs[0].dispatchEvent(new w.Event('input'));priceInputs[1].value='100';priceInputs[1].dispatchEvent(new w.Event('input'));assert($('qExport').disabled);assert($('oPdf').disabled);assert.equal(w.testValidateOffer(),false);
+priceInputs[0].value='5';priceInputs[0].dispatchEvent(new w.Event('input'));assert(!$('qExport').disabled);
+const firstPdf=w.testLoadPdfLib();const failedScript=w.document.querySelector('script[src*="html2pdf"]');failedScript.onerror();await assert.rejects(firstPdf,/Nie udało/);assert(!failedScript.isConnected);
+const secondPdf=w.testLoadPdfLib();const retry=w.document.querySelector('script[src*="html2pdf"]');assert(retry&&retry!==failedScript);w.html2pdf=()=>{};retry.onload();assert.equal(await secondPdf,w.html2pdf);
+console.log('PASS DOM: atomic imports, early size limit, concurrent import order, price validation and PDF retry');
+assert(warnings.length>=4);assert.deepEqual(runtimeErrors,[]);w.close();

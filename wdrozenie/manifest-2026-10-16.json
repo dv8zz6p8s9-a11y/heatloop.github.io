@@ -9,8 +9,8 @@
       "host": "github-pages",
       "source": "heatloop-b/app.js",
       "target": "heatloop-b/app.js",
-      "bytes": 48798,
-      "sha256": "fa13f92bc1272c9d86d62b834ea55225266480bab238d6a66f6752d0d76fe54c"
+      "bytes": 48393,
+      "sha256": "bacc4b375863e3c67ae7f7a503f371ce64d764548234778c38260b7eddecc2d0"
     },
     {
       "host": "github-pages",
@@ -23,8 +23,8 @@
       "host": "github-pages",
       "source": "heatloop-b/boiler-room-ui.mjs",
       "target": "heatloop-b/boiler-room-ui.mjs",
-      "bytes": 14797,
-      "sha256": "e88841aa22494fc3dd2f2451fd571d2d44a96f0ed5f81c7a5486df5007e79c19"
+      "bytes": 14786,
+      "sha256": "82fa198350f09276ddedd3c703a0cf87658c58095c14d283e7c6414fb038b13c"
     },
     {
       "host": "github-pages",
@@ -51,8 +51,8 @@
       "host": "github-pages",
       "source": "heatloop-b/drawing-tools.mjs",
       "target": "heatloop-b/drawing-tools.mjs",
-      "bytes": 4910,
-      "sha256": "c359a12cd35ad880788c921876dae3189a2f07930712fb0a7d589839b30c3878"
+      "bytes": 4890,
+      "sha256": "2258f6b12b08e381752233a8ff6a1985cd708cb09721a1a378ff5daf9e41dcaa"
     },
     {
       "host": "github-pages",
@@ -79,8 +79,8 @@
       "host": "github-pages",
       "source": "heatloop-b/grzejniki.html",
       "target": "heatloop-b/grzejniki.html",
-      "bytes": 12289,
-      "sha256": "b3c1c320d29a19239e1f3a8e8ec88837b9380c55fd0ca3185d1b87cdeb7b2d8d"
+      "bytes": 13044,
+      "sha256": "95d4ad0223c247de7898dda98e38942be4e94499c04a62820b3a67e8fe5be2d6"
     },
     {
       "host": "github-pages",
@@ -93,8 +93,8 @@
       "host": "github-pages",
       "source": "heatloop-b/index.html",
       "target": "heatloop-b/index.html",
-      "bytes": 147131,
-      "sha256": "1dc40f883cd305fa4d80c6e8e9c38e5c224e74c96bb2ed5df954b1bb7085e704"
+      "bytes": 147135,
+      "sha256": "be39c20d0d2340e6b64fb3f7b59f2a70f97d946bd79953d597d438dbcf91c7eb"
     },
     {
       "host": "github-pages",
@@ -102,6 +102,13 @@
       "target": "heatloop-b/manifest.webmanifest",
       "bytes": 156,
       "sha256": "4ae5adeee29f833aeef8d1eb72aecdc0e29798eac28fe6b8c8e153f9568b838e"
+    },
+    {
+      "host": "github-pages",
+      "source": "heatloop-b/project-io.mjs",
+      "target": "heatloop-b/project-io.mjs",
+      "bytes": 4669,
+      "sha256": "a2584d96b2f0ed057b872fca31cbddb9b6f02f7193fd9e09ae238425106db647"
     },
     {
       "host": "github-pages",

@@ -20,6 +20,7 @@ export default {
   if(Number(req.headers.get('Content-Length')||0)>20000)return reply({error:'Too large'},413,cors);
   let body;try{body=await req.json()}catch{return reply({error:'Invalid JSON'},400,cors)}
   if(JSON.stringify(body).length>20000)return reply({error:'Too large'},413,cors);
+  if(!body||typeof body!=='object'||Array.isArray(body))return reply({error:'Invalid JSON object'},400,cors);
   if(body.website)return reply({ok:true},200,cors);
   const data=['module','severity','summary','device','browser','steps','expected','actual','notes'].map(k=>clean(body[k],k==='summary'?140:4000));
   if(data.slice(2,8).some(x=>!x))return reply({error:'Wymagane pola sa puste'},400,cors);

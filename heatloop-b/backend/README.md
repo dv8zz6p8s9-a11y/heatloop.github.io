@@ -1,6 +1,6 @@
 # HeatLoop BETA — uruchomienie bazy zgłoszeń (Cloudflare)
 
-Repozytorium zawiera gotowy Worker `worker.js` i schemat bazy `schema.sql`. **Backend nie jest jeszcze wdrożony** — wymaga konta Cloudflare, ponieważ GitHub Pages nie ma dostępu do zapisu plików.
+Repozytorium zawiera niewdrożony szablon alternatywnego Workera `worker.js` i schemat bazy `schema.sql`. **Backend nie jest jeszcze wdrożony** — wymaga konta Cloudflare, ponieważ GitHub Pages nie ma dostępu do zapisu plików.
 
 1. Utwórz bezpłatne konto https://dash.cloudflare.com/.
 2. W Cloudflare Workers & Pages utwórz Worker o nazwie `heatloop-reports`.
@@ -8,7 +8,7 @@ Repozytorium zawiera gotowy Worker `worker.js` i schemat bazy `schema.sql`. **Ba
 4. W ustawieniach Workera dodaj powiązanie D1 o nazwie `DB` do bazy `heatloop-errors` oraz KV namespace o nazwie `RATE` do ograniczenia spamu.
 5. Wklej kod `worker.js` do Workera i wdroż go.
 6. W ustawieniach Workera dodaj sekret `ADMIN_TOKEN` (długi losowy ciąg, **nigdy nie umieszczaj go w repozytorium**) oraz zmienną `ALLOWED_ORIGIN` = `https://dv8zz6p8s9-a11y.github.io`.
-7. W pliku `heatloop-b/zglos-blad.html` wpisz publiczny adres Workera w stałej `ENDPOINT`. Wdróż GitHub Pages i sprawdź wysłanie testowego zgłoszenia.
+7. Obecny `zglos-blad.html` wysyła formularz i załączniki do FormSubmit; nie ma stałej `ENDPOINT` ani klienta tego Workera. Przejście na ten szablon wymaga osobnej implementacji klienta, obsługi załączników i testów. Samo podanie adresu Workera nie przełączy formularza.
 8. Zgłoszenia są przechowywane w Cloudflare D1. Eksport TXT: GET `https://ADRES-WORKERA/reports.txt` z nagłówkiem `Authorization: Bearer ADMIN_TOKEN`. **Nie dodawaj tokenu do kodu strony**. Eksport wykonuje administrator, np. przez curl z komputera.
 
 Bezpieczny eksport z terminala (podstaw własne wartości):
