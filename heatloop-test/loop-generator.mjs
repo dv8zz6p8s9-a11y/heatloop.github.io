@@ -224,27 +224,25 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
  };
  // Zwoje co dwa rozstawy, a powrót pomiędzy nimi. Bez ukośnych łączników.
  function coil(x,y,w,h){
-  // Ciągły prostokątny ślimak: wejście po obwodach co 2s,
-  // powrót w połowie rozstawu między obwodami.
+  // Ślimak ortogonalny: zewnętrzny obieg i powrót w odległości s.
+  // Najpierw zbuduj poprawny, nieprzecinający się obieg jednokrotny.
   const n=Math.floor((Math.min(w,h)-2*s)/(4*s));
   if(n<1)return null;
   const p=[];
   const add=(X,Y)=>{const last=p[p.length-1];if(!last||Math.hypot(last.x-X,last.y-Y)>1e-7)p.push({x:X,y:Y});};
-  // Zewnętrzne U i kolejne wewnętrzne U.
+  // Spirala do środka, co dwa rozstawy.
   for(let k=0;k<n;k++){
-   const L=x+2*k*s,T=y+2*k*s,R=x+w-2*k*s,B=y+h-2*k*s;
-   if(k===0)add(L,T);else add(L,T);
-   add(R,T);add(R,B);add(L,B);
-   if(k<n-1)add(L,T+2*s);
+   const l=x+2*k*s,t=y+2*k*s,r=x+w-2*k*s,b=y+h-2*k*s;
+   add(l,t);add(r,t);add(r,b);add(l,b);
+   if(k<n-1)add(l,t+2*s);
   }
-  // Przejście na wewnętrzny tor powrotny, następnie odwrotny obieg.
-  const k=n-1,L=x+(2*k+1)*s,T=y+(2*k+1)*s,R=x+w-(2*k+1)*s,B=y+h-(2*k+1)*s;
-  add(L+s,B);add(L+s,B-s);
-  for(let j=n-1;j>=0;j--){
-   const l=x+(2*j+1)*s,t=y+(2*j+1)*s,r=x+w-(2*j+1)*s,b=y+h-(2*j+1)*s;
-   if(j<n-1)add(l,b);
-   add(r,b);add(r,t);add(l,t);
-   if(j>0)add(l,y+(2*j-1)*s);
+  // Powrót równoległy do poprzednich zwojów, bez ukośnych skoków.
+  for(let k=n-1;k>=0;k--){
+   const l=x+(2*k+1)*s,t=y+(2*k+1)*s,r=x+w-(2*k+1)*s,b=y+h-(2*k+1)*s;
+   const last=p[p.length-1];
+   if(Math.abs(last.x-l)>1e-7&&Math.abs(last.y-b)>1e-7)add(l,last.y);
+   add(l,b);add(r,b);add(r,t);add(l,t);
+   if(k>0)add(l,y+(2*k-1)*s);
   }
   for(let i=1;i<p.length;i++)if(Math.abs(p[i].x-p[i-1].x)>1e-6&&Math.abs(p[i].y-p[i-1].y)>1e-6)return null;
   const world=p.map(q=>xy(q.x,q.y));
