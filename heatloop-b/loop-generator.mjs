@@ -17,9 +17,11 @@ function rectangle(points){
  if(Math.abs(ux*vx+uy*vy)>0.015||dist(c,{x:b.x+d.x-a.x,y:b.y+d.y-a.y})>Math.max(2,Math.min(w,h)*0.015))return null;
  return {a,w,h,ux,uy,vx,vy};
 }
-export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifold}){
+export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifold,approach=[]}){
  if(!(scale>0)||!Number.isFinite(scale))throw Error('Ustaw prawidłową skalę rzutu.');
  if(!valid(manifold))throw Error('Najpierw wskaż rozdzielacz na rzucie.');
+ if(!Array.isArray(approach)||approach.length>100||!approach.every(valid))throw Error('Nieprawidłowa trasa dojścia do rozdzielacza.');
+ if(!approach.length)throw Error('Wskaż trasę dojścia od rozdzielacza przez drzwi do pomieszczenia.');
  if(!(offsetCm>=0&&offsetCm<=100&&Number.isFinite(offsetCm)))throw Error('Odsunięcie musi wynosić 0–100 cm.');
  if(!(spacingCm>=5&&spacingCm<=40&&Number.isFinite(spacingCm)))throw Error('Rozstaw rur musi wynosić 5–40 cm.');
  if(!(maxMeters>=10&&maxMeters<=300&&Number.isFinite(maxMeters)))throw Error('Nieprawidłowy limit długości pętli.');
@@ -40,13 +42,15 @@ export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifol
   return [point(forward?inset:long-inset,y),point(forward?long-inset:inset,y)];
  });
  const routes=[];let current=[],stripesInCurrent=0;
- const complete=()=>{if(!current.length)return;routes.push({route:[{...manifold},...current,{...manifold}],stripes:stripesInCurrent});current=[];stripesInCurrent=0;};
+ const back=[...approach].reverse();
+ const completeRoute=stripes=>[{...manifold},...approach.map(p=>({...p})),...stripes,...back.map(p=>({...p})),{...manifold}];
+ const complete=()=>{if(!current.length)return;routes.push({route:completeRoute(current),stripes:stripesInCurrent});current=[];stripesInCurrent=0;};
  for(const stripe of stripes){
-  const candidate=[...current,...stripe],full=[manifold,...candidate,manifold];
+  const candidate=[...current,...stripe],full=completeRoute(candidate);
   if(length(full,scale)>maxMeters+1e-7){
    if(!current.length)throw Error('Pojedyncze przejście z dojściami przekracza limit pętli. Zmień rozdzielacz lub układ.');
    complete();
-   if(length([manifold,...stripe,manifold],scale)>maxMeters+1e-7)throw Error('Przejście z dojściami przekracza limit długości pętli.');
+   if(length(completeRoute(stripe),scale)>maxMeters+1e-7)throw Error('Przejście z dojściami przekracza limit długości pętli.');
   }
   current.push(...stripe);stripesInCurrent++;
   if(routes.length>100)throw Error('Za dużo pętli. Zmień rozstaw lub parametry.');
