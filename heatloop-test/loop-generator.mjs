@@ -93,6 +93,18 @@ export function suggestApproach(room,manifold){
  const interior={x:boundary.x+(target.x-boundary.x)*t,y:boundary.y+(target.y-boundary.y)*t};
  return [boundary,inside(interior)?interior:target];
 }
+// Lacznik osiowy zamiast przypadkowego skosu pomiedzy punktami.
+// To NIE jest detekcja scian ani drzwi; geometrie nalezy zatwierdzic na rzucie.
+export function rightAnglePath(points){
+ if(!Array.isArray(points)||!points.length)return [];
+ const result=[{...points[0]}];
+ for(const b of points.slice(1)){
+  const a=result[result.length-1];
+  if(Math.abs(a.x-b.x)>0.01&&Math.abs(a.y-b.y)>0.01)result.push({x:b.x,y:a.y});
+  if(dist(result[result.length-1],b)>0.01)result.push({...b});
+ }
+ return result;
+}
 export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifold,approach=[]}){
  if(!(scale>0)||!Number.isFinite(scale))throw Error('Ustaw prawidłową skalę rzutu.');
  if(!valid(manifold))throw Error('Najpierw wskaż rozdzielacz na rzucie.');
@@ -133,7 +145,12 @@ export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifol
  });
  const routes=[];let current=[],stripesInCurrent=0;
  const back=[...approach].reverse();
- const completeRoute=stripes=>[{...manifold},...approach.map(p=>({...p})),...stripes,...back.map(p=>({...p})),{...manifold}];
+ const completeRoute=stripes=>{
+  if(!stripes.length)return [];
+  const supply=rightAnglePath([{...manifold},...approach.map(p=>({...p})),stripes[0]]);
+  const ret=rightAnglePath([stripes[stripes.length-1],...back.map(p=>({...p})),{...manifold}]);
+  return [...supply,...stripes.slice(1),...ret.slice(1)];
+ };
  const complete=()=>{if(!current.length)return;routes.push({route:completeRoute(current),stripes:stripesInCurrent});current=[];stripesInCurrent=0;};
  for(const stripe of stripes){
   const candidate=[...current,...stripe],full=completeRoute(candidate);
