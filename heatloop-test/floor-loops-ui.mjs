@@ -85,9 +85,14 @@ export function mountLoopPlanner(state,api){
     const a=state.loopPlan.assignments.find(x=>x.roomId===room.loopRoomId);
     const mid=manifoldId(a.manifoldId),m=manifoldPoint(state.loopPlan,mid);
     let result;
-    if(!a.approachConfirmed||!a.approach?.length)throw Error(room.name+': najpierw wskaż i zatwierdź trasę przez drzwi lub korytarz przy tym pomieszczeniu. Automatyczne skróty przez ściany zostały wyłączone.');
-    const approach=a.approach;
-    try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach});}
+    const connected=a.approachConfirmed&&a.approach?.length;
+    // Bez zatwierdzonego dojścia generujemy WYŁĄCZNIE pętlę w pokoju.
+    // Wirtualny punkt początkowy nie oznacza połączenia z rozdzielaczem.
+    const origin=connected?m:room.points?.[0];
+    if(!origin)throw Error(room.name+': wyznacz obrys pomieszczenia na rzucie.');
+    const approach=connected?a.approach:[origin];
+    if(!connected)warnings.push(room.name+': pętle są tylko w pomieszczeniu. W kroku 7 wyznacz dojście i ponownie połącz trasy.');
+    try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:origin,approach});}
     catch(error){throw Error(room.name+': '+error.message)}
     if(result.approximate)warnings.push(room.name+': podział wielokąta na '+result.parts+' prostokątne obszary jest orientacyjny; sprawdź pokrycie rurami i przebieg dojść.');
     areas.push(room.name+': '+format(result.heatedArea)+' m² grzewcze / '+format(room.area)+' m² pomieszczenia');
@@ -98,12 +103,12 @@ export function mountLoopPlanner(state,api){
      const assigned=i===result.routes.length-1?room.area-areaAssigned:room.area*item.stripes/stripesTotal;areaAssigned+=assigned;
      const route=item.route;
      const heatingLength=Math.max(0.01,routeLength(route.slice(1,-1),state.scale));
-     generated.push({id:newId(),manifoldId:mid,roomId:room.loopRoomId,section,area:assigned,heatingLength,out:Number(a.out),back:Number(a.back),route});
+     generated.push({id:newId(),manifoldId:mid,roomId:room.loopRoomId,section,area:assigned,heatingLength,out:connected?Number(a.out):0,back:connected?Number(a.back):0,route:connected?route:route.slice(1,-1)});
     }
    }
    if(generated.length>100)throw Error('Generator przekracza limit 100 pętli.');
   }catch(err){alert('Nie wygenerowano tras. '+err.message+'\nDotychczasowy projekt pozostaje bez zmian.');return;}
-  state.loopPlan.loops=generated;state.loopPlan.signature=sourceSignature(state);active=null;editingLoopId=null;
+  state.loopPlan.loops=generated;state.loopPlan.signature=sourceSignature(state);state.loopPlan.linked=false;active=null;editingLoopId=null;
   api.render();alert('Wygenerowano '+generated.length+' tras meandrowych.\n'+areas.join('\n')+(warnings.length?'\nUWAGI:\n'+warnings.join('\n'):'')+'\nTo wersja testowa. Sprawdź ręcznie ściany, dojścia i długości przed realizacją.');
  };
  $('pLinked').onchange=()=>{
