@@ -1,5 +1,5 @@
 import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261017-approach-review-1';
-import {generateMeander,generateSpiral,suggestApproach,rightAnglePath,rectangularInsetArea} from './loop-generator.mjs?v=20261017-regression-2';
+import {generateMeander,generateSpiral,suggestApproach,rightAnglePath,rectangularInsetArea} from './loop-generator.mjs?v=20261017-center-fix-1';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
