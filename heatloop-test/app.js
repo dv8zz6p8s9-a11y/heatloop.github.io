@@ -223,17 +223,17 @@ const drawingHelp={
  rooms:'Prostokąt: przeciągnij po przekątnej. Wielokąt: klikaj narożniki i zakończ obrys.',
  confirm:'Sprawdź powierzchnie i popraw narożniki. Potwierdź każdy obrys przed projektowaniem rur.',
  manifolds:'Wskaż położenie rozdzielacza R1. Kolejne rozdzielacze dodasz w ustawieniach pętli.',
- loops:'Ustaw rozstaw rur i odsunięcie od ścian w ustawieniach pętli. Na tym etapie nie są jeszcze generowane trasy. Następnie zatwierdź dojścia w kroku 7.',
- approaches:'Generator proponuje dojścia do rozdzielacza. Następnie przesuń punkty każdej pętli, prowadząc ją przez drzwi i korytarz; nie przecinaj ścian.',
- review:'Po zatwierdzeniu dojść uruchom generator. Sprawdź długości, przebieg rur i ewentualne kolizje ze ścianami.'
+ loops:'Ustaw rozstaw rur i odsunięcie od ścian, a następnie kliknij Ułóż pętle. Dojścia do rozdzielacza dodasz później w kroku 7.',
+ approaches:'W ustawieniach pętli wyznacz dojścia przez drzwi i korytarz. Po ich zatwierdzeniu w kroku 8 ponownie wygeneruj trasy połączone z rozdzielaczem.',
+ review:'Po zatwierdzeniu dojść kliknij Połącz i przelicz. Sprawdź długości wszystkich pętli i kolizje przed wyceną.'
 };
 function setDrawingStep(id){
  const idx=drawingStepIds.indexOf(id);if(idx<0)return;
  $('drawingStep').value=id;$('drawingPrevStep').disabled=idx===0;$('drawingNextStep').disabled=idx===drawingStepIds.length-1;
  $('drawingStepHelp').textContent=drawingHelp[id];
- $('drawingLoopPreviewControls').hidden=id!=='loops';if(id==='loops')updateDrawingLoopPreview();
+ $('drawingLoopPreviewControls').hidden=id!=='loops';if(id==='loops')updateDrawingLoopPreview();$('drawingGenerateLoops').textContent=id==='loops'?'Ułóż pętle w pomieszczeniach': 'Połącz i przelicz pętle';
  const actions=$('drawingStepActions');
- for(const [button,enabled] of [['drawingRectTool',id==='rooms'],['drawingPolyTool',id==='rooms'],['drawingAddManifold',id==='manifolds'],['drawingGenerateLoops',id==='review'],['drawingOpenLoopSettings',['manifolds','loops','approaches','review'].includes(id)]])$(button).hidden=!enabled;
+ for(const [button,enabled] of [['drawingRectTool',id==='rooms'],['drawingPolyTool',id==='rooms'],['drawingAddManifold',id==='manifolds'],['drawingGenerateLoops',['loops','review'].includes(id)],['drawingOpenLoopSettings',['manifolds','loops','approaches','review'].includes(id)]])$(button).hidden=!enabled;
  if(id==='scale')$('tool').value='scale';
  if(id==='rooms')$('tool').value='rectangleRoom';
  if(id==='confirm')$('tool').value='editRoom';
@@ -245,7 +245,14 @@ $('drawingNextStep').onclick=()=>setDrawingStep(drawingStepIds[Math.min(drawingS
 $('drawingRectTool').onclick=()=>{$('tool').value='rectangleRoom';points=[];draw()};
 $('drawingPolyTool').onclick=()=>{$('tool').value='room';points=[];draw()};
 $('drawingAddManifold').onclick=()=>{if(!loopUI)return;loopUI.refresh();loopUI&&$('pPlace').click()};
-$('drawingGenerateLoops').onclick=()=>{$('pGenerateRoutes').click()};
+$('drawingGenerateLoops').onclick=()=>{
+ const spacing=Number($('drawingLoopSpacing').value),offset=Number($('drawingLoopOffset').value);
+ if(!(spacing>=5&&spacing<=40&&offset>=0&&offset<=100))return alert('Podaj rozstaw 5–40 cm i odsunięcie 0–100 cm.');
+ prepareAssignments(state);
+ for(const room of [...state.rooms,...state.polygons])if(room.heatingType!=='radiators')room.spacing=spacing;
+ for(const a of state.loopPlan.assignments)a.offsetCm=String(offset);
+ $('pGenerateRoutes').click();
+};
 $('drawingOpenLoopSettings').onclick=()=>openTab('loops');
 setDrawingStep('load');
 
