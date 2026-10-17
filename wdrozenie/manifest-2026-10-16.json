@@ -9,8 +9,8 @@
       "host": "github-pages",
       "source": "heatloop-b/app.js",
       "target": "heatloop-b/app.js",
-      "bytes": 48607,
-      "sha256": "42ad12b9a34102db98f68f858f6f688b032874dd131e743d31defed62ad225c6"
+      "bytes": 48798,
+      "sha256": "fa13f92bc1272c9d86d62b834ea55225266480bab238d6a66f6752d0d76fe54c"
     },
     {
       "host": "github-pages",
@@ -79,8 +79,8 @@
       "host": "github-pages",
       "source": "heatloop-b/grzejniki.html",
       "target": "heatloop-b/grzejniki.html",
-      "bytes": 12100,
-      "sha256": "ace73cc363c80c495980210488b13408601b24db80a906ff18414b5322c07a56"
+      "bytes": 12289,
+      "sha256": "b3c1c320d29a19239e1f3a8e8ec88837b9380c55fd0ca3185d1b87cdeb7b2d8d"
     },
     {
       "host": "github-pages",
@@ -93,8 +93,8 @@
       "host": "github-pages",
       "source": "heatloop-b/index.html",
       "target": "heatloop-b/index.html",
-      "bytes": 147049,
-      "sha256": "2e92385f27e17e94b74754015222ed579b76e3b9e2b32cf3cd0907716d24967d"
+      "bytes": 147131,
+      "sha256": "1dc40f883cd305fa4d80c6e8e9c38e5c224e74c96bb2ed5df954b1bb7085e704"
     },
     {
       "host": "github-pages",
@@ -310,8 +310,8 @@
       "host": "heatloop-pl",
       "source": "wdrozenie/strona-glowna/index.html",
       "target": "index.html",
-      "bytes": 40305,
-      "sha256": "eebad44599e05871c6af1e01759ba7d1efebdc03e2fd0dd7927c55bd6ab44e36"
+      "bytes": 40603,
+      "sha256": "4099914b8d3bbd74a6e58928cfbf2f02d6f3933065021af721df3b6a7a885b9a"
     },
     {
       "host": "heatloop-pl",
@@ -326,6 +326,13 @@
       "target": "materialy/HeatLoop_instrukcja_BETA.pdf",
       "bytes": 1769544,
       "sha256": "4dacc3d7ec142a6c6668ef435e2461de03a1075c6743032df0d8d93d4e92bfc1"
+    },
+    {
+      "host": "heatloop-pl",
+      "source": "wdrozenie/strona-glowna/metrics.js",
+      "target": "metrics.js",
+      "bytes": 1613,
+      "sha256": "bef4dc6248ce26e2b748b602146166af5cf4abb33a61a960285add583521d95b"
     },
     {
       "host": "heatloop-pl",

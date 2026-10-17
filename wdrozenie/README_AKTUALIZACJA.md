@@ -38,3 +38,12 @@ Weryfikacja końcowa rozszerzenia: 337 testów pomocy/przygotowania, 12 testów 
 Aktualna etykieta: HeatLoop BETA 0.2. Drobne wydania po publikacji: 0.21, 0.22 itd.; następne duże: 0.3. Polityka i oddzielenie formatu JSON od numeru aplikacji: WERSJONOWANIE.md. Wspólna wersja jest w release.mjs, kopiowanym na oba hostingi.
 
 Dopracowanie pomocy: instrukcje edycji szkicu, tras, progów i linii ścian, położenia R1/R2, CSV, sterowania i powiązania wyceny. Podgląd wyjaśnia 21 znanych rodzajów błędów planu przez anonimowe kody; nie kopiuje nazw pokoi ani surowych komunikatów. Porównanie checklisty 90 pozycji: obsługa 80% → 96%, rysunek 75% → 94% (robocza ocena pokrycia, nie skuteczność detektora ścian). Pełne wyniki i stan sprzed zmian: help/audits/. Wersja publiczna pozostaje 0.2, ponieważ wydanie nadal jest przygotowywane.
+
+
+## Prywatne sumy wykorzystania — 17.10.2026
+
+Licznik działa bez widocznego interfejsu i bez zmiany wersji BETA. Serwer i baza są utrzymywane w repozytorium źródłowym istniejącego Site HeatLoop (manifest projektu `appgprj_6ad12140bd84819183925c701ceb55d7`); same pliki statyczne nie wystarczą do odtworzenia zapisu. Nie zastępować wdrożenia Site archiwum statycznym z tego pakietu. Pakiet zawiera kopię strony i klienta.
+
+Tabela `usage_daily` zawiera tylko dzień Europe/Warsaw, rodzaj zdarzenia i sumę. `landing_view` oznacza widoczne otwarcie strony głównej; `app_click` kliknięcie odnośnika otwierającego BETA; `app_open` pomyślną inicjalizację widocznej strony aplikacji lub modułu grzejników. Przejście do grzejników i odświeżenie liczą się jako kolejne uruchomienia. To zdarzenia, nie unikalne osoby; blokady skryptów, DNT/GPC, brak sieci i ruch automatyczny wpływają na wyniki. Licznik nie zapisuje cookies, identyfikatorów, IP ani danych projektu. Hosting może mieć własne logi techniczne.
+
+Wyniki odczytywać wyłącznie narzędziami administracyjnymi Site: najpierw przegląd bazy, potem wiersze tabeli. Publiczny `/api/metrics` służy wyłącznie do zapisu i nie udostępnia odczytu statystyk. Znajomość adresu lub skryptu nie daje dostępu do wyników. Brak mechanizmu potwierdzania tożsamości nadawcy oznacza, że celowo sfałszowane zdarzenia mogą wpłynąć na sumy; liczb nie traktować jako audytowanych danych o ruchu. Nie dodawać tokenów administracyjnych do klienta.

@@ -151,3 +151,7 @@ $('detectWalls').onclick=async()=>{
 };
 $('acceptWalls').onclick=()=>{const selected=[...$('wallCandidates').querySelectorAll('input:checked')].map(input=>wallCandidates[Number(input.dataset.wallIndex)]).filter(Boolean);if(!selected.length){$('wallStatus').textContent='Zaznacz przynajmniej jedną propozycję.';return;}if(state.wallGuides.length&&!confirm('Zastąpić zatwierdzone linie pomocnicze nowymi?'))return;state.wallGuides=normalizeWallGuides(selected);wallCandidates=[];resetWallList();render();$('wallStatus').textContent='Zatwierdzono '+state.wallGuides.length+' linii pomocniczych. Obrysy pomieszczeń wykonaj i sprawdź osobno.';};
 $('clearWalls').onclick=()=>{state.wallGuides=[];wallCandidates=[];resetWallList();render();};
+
+// Mark a successful initialization for the optional, non-blocking daily counter.
+document.documentElement.dataset.heatloopReady='true';
+document.dispatchEvent(new Event('heatloop:ready'));
