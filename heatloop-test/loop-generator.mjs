@@ -65,6 +65,34 @@ function orthogonalRects(points){
  }
  return rects.map(r=>({points:[{x:r.x0,y:r.y0},{x:r.x1,y:r.y0},{x:r.x1,y:r.y1},{x:r.x0,y:r.y1}]}));
 }
+// Automatyczna propozycja dojscia: od rozdzielacza do najblizszej granicy
+// pomieszczenia i punktu wewnatrz. Nie sprawdza scian i drzwi!
+export function suggestApproach(room,manifold){
+ const poly=room?.points;
+ if(!valid(manifold)||!Array.isArray(poly)||poly.length<3||!poly.every(valid))throw Error('Brak obrysu pomieszczenia lub rozdzielacza.');
+ let boundary=null,best=Infinity;
+ for(let i=0;i<poly.length;i++){
+  const a=poly[i],b=poly[(i+1)%poly.length],dx=b.x-a.x,dy=b.y-a.y;
+  const t=Math.max(0,Math.min(1,((manifold.x-a.x)*dx+(manifold.y-a.y)*dy)/(dx*dx+dy*dy||1)));
+  const p={x:a.x+t*dx,y:a.y+t*dy},d=dist(manifold,p);
+  if(d<best){best=d;boundary=p;}
+ }
+ const inside=p=>{let yes=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+  const a=poly[i],b=poly[j];if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)yes=!yes;
+ }return yes;};
+ const candidates=[];
+ const cx=poly.reduce((sum,p)=>sum+p.x,0)/poly.length,cy=poly.reduce((sum,p)=>sum+p.y,0)/poly.length;
+ candidates.push({x:cx,y:cy});
+ for(let i=0;i<poly.length;i++){
+  const a=poly[i],b=poly[(i+1)%poly.length];
+  candidates.push({x:(a.x+b.x+cx)/3,y:(a.y+b.y+cy)/3});
+ }
+ const target=candidates.find(inside);
+ if(!target)throw Error('Nie udało się wyznaczyć wejścia do pomieszczenia. Zaznacz dojście ręcznie.');
+ const t=0.12;
+ const interior={x:boundary.x+(target.x-boundary.x)*t,y:boundary.y+(target.y-boundary.y)*t};
+ return [boundary,inside(interior)?interior:target];
+}
 export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifold,approach=[]}){
  if(!(scale>0)||!Number.isFinite(scale))throw Error('Ustaw prawidłową skalę rzutu.');
  if(!valid(manifold))throw Error('Najpierw wskaż rozdzielacz na rzucie.');
