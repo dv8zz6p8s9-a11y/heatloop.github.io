@@ -95,8 +95,9 @@ function drawingPoint(e){
  const r=canvas.getBoundingClientRect();
  const p={x:Math.max(0,Math.min(canvas.width,(e.clientX-r.left)*canvas.width/r.width)),y:Math.max(0,Math.min(canvas.height,(e.clientY-r.top)*canvas.height/r.height))};
  const last=points[points.length-1];
- // Swobodne punkty. Tylko świadome przytrzymanie Shift ogranicza kierunek.
- if(e.shiftKey&&$('tool').value==='room'&&last){
+ // Obrys pomieszczenia: automatyczne prowadzenie odcinków poziomo lub pionowo.
+ // Skalowanie i rysowanie rur pozostają bez ograniczeń.
+ if($('tool').value==='room'&&last){
   return Math.abs(p.x-last.x)>=Math.abs(p.y-last.y)?{x:p.x,y:last.y}:{x:last.x,y:p.y};
  }
  return p;
