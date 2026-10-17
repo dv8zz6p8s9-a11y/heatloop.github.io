@@ -1,9 +1,9 @@
 import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261016-3';
-import {generateMeander,rectangularInsetArea} from './loop-generator.mjs?v=20261017-irregular-1';
+import {generateMeander,rectangularInsetArea,suggestApproach} from './loop-generator.mjs?v=20261017-autolink-1';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
- let active=null,selected='R1',approachRoomId=null,lastSavedApproachRoomId=null;
+ let active=null,selected='R1',approachRoomId=null,lastSavedApproachRoomId=null,editingLoopId=null,dragRoute=null;
  function status(result){
   $('pStatus').replaceChildren();
   const p=document.createElement('p');p.textContent=result.rows.length+' pętli · '+format(result.totalLength)+' m · '+format(result.power)+' W · '+format(result.flow)+' l/h'+(result.estimated?' · długości częściowo lub w całości szacowane':'');$('pStatus').append(p);
@@ -22,6 +22,7 @@ export function mountLoopPlanner(state,api){
     active=row.id;api.startRoute(m);api.openDrawing();
    };td.append(draw);
    if(row.drawn){const clear=document.createElement('button');clear.type='button';clear.textContent='Usuń trasę';clear.onclick=()=>{if(!confirm('Usunąć trasę i wrócić do szacowanej długości?'))return;state.loopPlan.loops.find(l=>l.id===row.id).route=[];api.render()};td.append(clear)}
+   if(row.drawn){const edit=document.createElement('button');edit.type='button';edit.textContent='Przesuń punkty';edit.onclick=()=>{editingLoopId=row.id;dragRoute=null;api.startRouteEdit();api.openDrawing();alert('Przeciągaj kolorowe punkty trasy tej pętli. Rozdzielacz pozostaje nieruchomy. Po korekcie sprawdź przejścia przez ściany i długość pętli.');};td.append(edit)}
    tr.append(td);$('pLoops').append(tr);
   }
  }
@@ -78,13 +79,15 @@ export function mountLoopPlanner(state,api){
   if(state.loopPlan.loops.length&&!confirm('Zastąpić obecne pętle i wszystkie narysowane trasy automatycznym meandrem?'))return;
   const errors=settingsErrors(state);if(errors.length){alert(errors.join('\n'));return;}
   if(!(state.scale>0)){alert('Najpierw skalibruj rzut.');return;}
-  const generated=[],sections=new Map(),areas=[],warnings=[];
+  const generated=[],sections=new Map(),areas=[],warnings=[],autoApproaches=[];
   try{
    for(const room of floorRooms(state)){
     const a=state.loopPlan.assignments.find(x=>x.roomId===room.loopRoomId);
     const mid=manifoldId(a.manifoldId),m=manifoldPoint(state.loopPlan,mid);
     let result;
-    try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach:a.approach||[]});}
+    const approach=a.approach?.length?a.approach:suggestApproach(room,m);
+    if(!a.approach?.length){autoApproaches.push({assignment:a,approach});warnings.push(room.name+': dojście automatyczne jest tylko propozycją; zaznacz drzwi i popraw przebieg przez korytarz.');}
+    try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach});}
     catch(error){throw Error(room.name+': '+error.message)}
     if(result.approximate)warnings.push(room.name+': podział wielokąta na '+result.parts+' prostokątne obszary jest orientacyjny; sprawdź pokrycie rurami i przebieg dojść.');
     areas.push(room.name+': '+format(result.heatedArea)+' m² grzewcze / '+format(room.area)+' m² pomieszczenia');
@@ -100,7 +103,8 @@ export function mountLoopPlanner(state,api){
    }
    if(generated.length>100)throw Error('Generator przekracza limit 100 pętli.');
   }catch(err){alert('Nie wygenerowano tras. '+err.message+'\nDotychczasowy projekt pozostaje bez zmian.');return;}
-  state.loopPlan.loops=generated;state.loopPlan.signature=sourceSignature(state);active=null;
+  for(const entry of autoApproaches)entry.assignment.approach=entry.approach;
+  state.loopPlan.loops=generated;state.loopPlan.signature=sourceSignature(state);active=null;editingLoopId=null;
   api.render();alert('Wygenerowano '+generated.length+' tras meandrowych.\n'+areas.join('\n')+(warnings.length?'\nUWAGI:\n'+warnings.join('\n'):'')+'\nTo wersja testowa. Sprawdź ręcznie ściany, dojścia i długości przed realizacją.');
  };
  $('pLinked').onchange=()=>{
@@ -110,6 +114,18 @@ export function mountLoopPlanner(state,api){
  $('pExport').onclick=()=>{const r=analyzeLoops(state);if(r.errors.length)return;api.exportCsv([['Sekcja','Pomieszczenie','Strefa','Rura','Powierzchnia m2','Dlugosc m z dojsciami','Moc W','Przeplyw l/h','Przeplyw l/min','Zrodlo dlugosci'],...r.rows.map(l=>[loopLabel(l),l.room,l.zone,state.loopPlan.pipe,l.area,l.length,l.power,l.flow,l.flow/60,l.drawn?'Narysowana':'Szacunek'])])};
  refresh();
  return {refresh,active:()=>active,
+  beginRouteDrag(pos){
+   const loop=state.loopPlan.loops.find(l=>l.id===editingLoopId);if(!loop?.route?.length)return false;
+   let index=-1,best=18;
+   for(let i=1;i<loop.route.length-1;i++){const p=loop.route[i],d=Math.hypot(p.x-pos.x,p.y-pos.y);if(d<best){best=d;index=i}}
+   if(index<0)return false;dragRoute={id:loop.id,index,original:loop.route.map(p=>({...p}))};return true;
+  },
+  moveRouteDrag(pos){if(!dragRoute)return false;const loop=state.loopPlan.loops.find(l=>l.id===dragRoute.id);if(!loop)return false;loop.route[dragRoute.index]={x:Math.max(0,Math.min(1000,pos.x)),y:Math.max(0,Math.min(700,pos.y))};return true;},
+  endRouteDrag(){if(!dragRoute)return;const loop=state.loopPlan.loops.find(l=>l.id===dragRoute.id),original=dragRoute.original;dragRoute=null;
+   if(!loop)return;const meters=routeLength(loop.route,state.scale),max=Number(state.loopPlan.maxLength);
+   if(!Number.isFinite(meters)||meters>max+1e-7){loop.route=original;alert('Korekta przekroczyłaby limit '+max+' m ('+format(meters)+' m). Przywrócono poprzedni punkt.');}
+   api.render();
+  },
   reopenLastApproachForUndo(){const a=state.loopPlan.assignments.find(a=>a.roomId===lastSavedApproachRoomId);if(!a?.approach?.length)return null;approachRoomId=a.roomId;return a.approach.slice(0,-1).map(p=>({...p}));},
   finishApproach(points){const a=state.loopPlan.assignments.find(a=>a.roomId===approachRoomId);if(!a)throw Error('Wybierz pomieszczenie w zakładce Pętle i rozdzielacz.');if(points.length<1||points.length>100)throw Error('Wskaż 1–100 punktów dojścia.');const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId);if(!room?.points)throw Error('Dojście wymaga pomieszczenia obrysowanego na rzucie.');a.approach=points.map(p=>({...p}));lastSavedApproachRoomId=a.roomId;approachRoomId=null;},
   setManifold(pos){if(state.loopPlan.loops.length&&!confirm('Zmiana '+selected+' wymaga ponownego podziału pętli i narysowania tras. Kontynuować?'))return;if(selected==='R1')state.loopPlan.manifold={...pos};else state.loopPlan.manifolds.find(m=>m.id===selected).position={...pos};active=null;api.render()},
@@ -127,7 +143,7 @@ export function mountLoopPlanner(state,api){
     ctx.beginPath();ctx.moveTo(m.x,m.y);for(const p of a.approach)ctx.lineTo(p.x,p.y);
     ctx.save();ctx.setLineDash([7,5]);ctx.strokeStyle='#cf7200';ctx.lineWidth=3;ctx.stroke();ctx.restore();
    }
-   for(const l of state.loopPlan.loops){if(!l.route.length)continue;ctx.beginPath();ctx.moveTo(l.route[0].x,l.route[0].y);for(const p of l.route.slice(1))ctx.lineTo(p.x,p.y);ctx.strokeStyle='hsl('+((l.section*61)%360)+' 65% 40%)';ctx.lineWidth=2;ctx.stroke();const p=l.route[Math.floor(l.route.length/2)];ctx.fillStyle='#10263a';ctx.font='bold 13px sans-serif';ctx.fillText(loopLabel(l),p.x+5,p.y-5)}
+   state.loopPlan.loops.forEach((l,i)=>{if(!l.route.length)return;const color='hsl('+((i*137.508+20)%360)+' 85% 38%)';ctx.beginPath();ctx.moveTo(l.route[0].x,l.route[0].y);for(const p of l.route.slice(1))ctx.lineTo(p.x,p.y);ctx.strokeStyle=color;ctx.lineWidth=l.id===editingLoopId?4:2.5;ctx.stroke();const p=l.route[Math.floor(l.route.length/2)];ctx.fillStyle=color;ctx.font='bold 13px sans-serif';ctx.fillText(loopLabel(l),p.x+5,p.y-5);if(l.id===editingLoopId){l.route.slice(1,-1).forEach(pt=>{ctx.beginPath();ctx.arc(pt.x,pt.y,6,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=color;ctx.stroke()})}});
    for(const manifold of state.loopPlan.manifolds){const m=manifoldPoint(state.loopPlan,manifold.id);if(m){ctx.fillStyle='#10263a';ctx.fillRect(m.x-15,m.y-10,30,20);ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.fillText(manifold.id,m.x-8,m.y+4)}}
   }
  };
