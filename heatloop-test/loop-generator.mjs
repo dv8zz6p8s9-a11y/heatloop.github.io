@@ -252,7 +252,12 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){
    const spiral=coil(d+i*W/nx,d+j*H/ny,W/nx,H/ny);
    if(!spiral)return null;
-   const route=[manifold,...approach,...spiral,...[...approach].reverse(),manifold];
+   // Oddzielne ortogonalne dojście do początku i końca spirali.
+   // Trasa automatyczna pozostaje NIEZWERYFIKOWANA pod kątem ścian i drzwi.
+   const base=rightAnglePath([manifold,...approach]);
+   const entry=rightAnglePath([base[base.length-1],spiral[0]]);
+   const exit=rightAnglePath([spiral[spiral.length-1],base[base.length-1]]);
+   const route=[...base,...entry.slice(1),...spiral.slice(1),...exit.slice(1),...[...base].reverse().slice(1)];
    if(length(route,scale)>maxMeters+1e-6)return null;
    routes.push({route,stripes:1});
   }
