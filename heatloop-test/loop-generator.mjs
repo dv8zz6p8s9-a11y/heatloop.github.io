@@ -224,25 +224,30 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
  };
  // Zwoje co dwa rozstawy, a powrót pomiędzy nimi. Bez ukośnych łączników.
  function coil(x,y,w,h){
-  // Dwutorowy ślimak prostokątny: wejście i powrót w osobnych korytarzach.
-  const turns=Math.floor(Math.min(w,h)/(4*s));
-  if(turns<1)return null;
-  const raw=[];
-  for(let k=0;k<turns;k++){
+  // Ciągły prostokątny ślimak: wejście po obwodach co 2s,
+  // powrót w połowie rozstawu między obwodami.
+  const n=Math.floor((Math.min(w,h)-2*s)/(4*s));
+  if(n<1)return null;
+  const p=[];
+  const add=(X,Y)=>{const last=p[p.length-1];if(!last||Math.hypot(last.x-X,last.y-Y)>1e-7)p.push({x:X,y:Y});};
+  // Zewnętrzne U i kolejne wewnętrzne U.
+  for(let k=0;k<n;k++){
    const L=x+2*k*s,T=y+2*k*s,R=x+w-2*k*s,B=y+h-2*k*s;
-   raw.push({x:L,y:T},{x:R,y:T},{x:R,y:B},{x:L+s,y:B});
+   if(k===0)add(L,T);else add(L,T);
+   add(R,T);add(R,B);add(L,B);
+   if(k<n-1)add(L,T+2*s);
   }
-  for(let k=turns-1;k>=0;k--){
-   const L=x+(2*k+1)*s,T=y+(2*k+1)*s,R=x+w-(2*k+1)*s,B=y+h-(2*k+1)*s;
-   raw.push({x:L+s,y:B},{x:L,y:B},{x:L,y:T},{x:R,y:T});
+  // Przejście na wewnętrzny tor powrotny, następnie odwrotny obieg.
+  const k=n-1,L=x+(2*k+1)*s,T=y+(2*k+1)*s,R=x+w-(2*k+1)*s,B=y+h-(2*k+1)*s;
+  add(L,B);
+  for(let j=n-1;j>=0;j--){
+   const l=x+(2*j+1)*s,t=y+(2*j+1)*s,r=x+w-(2*j+1)*s,b=y+h-(2*j+1)*s;
+   if(j<n-1)add(l,b);
+   add(r,b);add(r,t);add(l,t);
+   if(j>0)add(l,y+(2*j-1)*s);
   }
-  const pts=[raw[0]];
-  for(const next of raw.slice(1)){
-   const prev=pts[pts.length-1];
-   if(Math.abs(prev.x-next.x)>1e-6&&Math.abs(prev.y-next.y)>1e-6)pts.push({x:next.x,y:prev.y});
-   if(Math.hypot(pts[pts.length-1].x-next.x,pts[pts.length-1].y-next.y)>1e-6)pts.push(next);
-  }
-  const world=pts.map(p=>xy(p.x,p.y));
+  for(let i=1;i<p.length;i++)if(Math.abs(p[i].x-p[i-1].x)>1e-6&&Math.abs(p[i].y-p[i-1].y)>1e-6)return null;
+  const world=p.map(q=>xy(q.x,q.y));
   return validate(world)?world:null;
  }
  const approachLength=length([manifold,...approach],scale);
