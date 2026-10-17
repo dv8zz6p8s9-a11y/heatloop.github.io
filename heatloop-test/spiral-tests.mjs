@@ -1,4 +1,4 @@
-import {generateSpiral} from './loop-generator.mjs?v=20261017-recovery-1';
+import {generateSpiral} from './loop-generator.mjs?v=20261017-orthogonal-1';
 const out=document.querySelector('#results');
 const cases=[
  ['Pokój 4 × 3 m',400,300,15],
