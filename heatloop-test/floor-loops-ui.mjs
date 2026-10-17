@@ -78,12 +78,15 @@ export function mountLoopPlanner(state,api){
   if(state.loopPlan.loops.length&&!confirm('Zastąpić obecne pętle i wszystkie narysowane trasy automatycznym meandrem?'))return;
   const errors=settingsErrors(state);if(errors.length){alert(errors.join('\n'));return;}
   if(!(state.scale>0)){alert('Najpierw skalibruj rzut.');return;}
-  const generated=[],sections=new Map(),areas=[];
+  const generated=[],sections=new Map(),areas=[],warnings=[];
   try{
    for(const room of floorRooms(state)){
     const a=state.loopPlan.assignments.find(x=>x.roomId===room.loopRoomId);
     const mid=manifoldId(a.manifoldId),m=manifoldPoint(state.loopPlan,mid);
-    const result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach:a.approach||[]});
+    let result;
+    try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach:a.approach||[]});}
+    catch(error){throw Error(room.name+': '+error.message)}
+    if(result.approximate)warnings.push(room.name+': podział wielokąta na '+result.parts+' prostokątne obszary jest orientacyjny; sprawdź pokrycie rurami i przebieg dojść.');
     areas.push(room.name+': '+format(result.heatedArea)+' m² grzewcze / '+format(room.area)+' m² pomieszczenia');
     const stripesTotal=result.routes.reduce((sum,x)=>sum+x.stripes,0);
     let areaAssigned=0;
@@ -98,7 +101,7 @@ export function mountLoopPlanner(state,api){
    if(generated.length>100)throw Error('Generator przekracza limit 100 pętli.');
   }catch(err){alert('Nie wygenerowano tras. '+err.message+'\nDotychczasowy projekt pozostaje bez zmian.');return;}
   state.loopPlan.loops=generated;state.loopPlan.signature=sourceSignature(state);active=null;
-  api.render();alert('Wygenerowano '+generated.length+' tras meandrowych.\n'+areas.join('\n')+'\nSprawdź przebieg i długości na rzucie przed realizacją.');
+  api.render();alert('Wygenerowano '+generated.length+' tras meandrowych.\n'+areas.join('\n')+(warnings.length?'\nUWAGI:\n'+warnings.join('\n'):'')+'\nTo wersja testowa. Sprawdź ręcznie ściany, dojścia i długości przed realizacją.');
  };
  $('pLinked').onchange=()=>{
   const result=analyzeLoops(state);if($('pLinked').checked&&result.errors.length){$('pLinked').checked=false;return alert('Popraw plan pętli przed powiązaniem z wyceną.');}
