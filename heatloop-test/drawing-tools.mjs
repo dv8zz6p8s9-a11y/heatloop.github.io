@@ -1,7 +1,19 @@
 import {sourceSignature} from './floor-loops.mjs?v=20261016-3';
 export const rotationValue=x=>[0,90,180,270].includes(x)?x:0;
 export const rotationFit=(angle,w=1000,h=700)=>angle%180?Math.min(w/h,h/w):1;
-export function drawRaster(ctx,image,angle=0,w=1000,h=700){ctx.save();ctx.translate(w/2,h/2);ctx.rotate(rotationValue(angle)*Math.PI/180);const k=rotationFit(angle,w,h);ctx.scale(k,k);ctx.drawImage(image,-w/2,-h/2,w,h);ctx.restore();}
+export function rasterBounds(image,w=1000,h=700){
+ const iw=image?.naturalWidth||image?.width,ih=image?.naturalHeight||image?.height;
+ if(!(iw>0&&ih>0))return null;
+ const k=Math.min(w/iw,h/ih),width=iw*k,height=ih*k;
+ return {x:(w-width)/2,y:(h-height)/2,width,height};
+}
+export function drawRaster(ctx,image,angle=0,w=1000,h=700){
+ const bounds=rasterBounds(image,w,h);if(!bounds)return;
+ ctx.save();ctx.translate(w/2,h/2);ctx.rotate(rotationValue(angle)*Math.PI/180);
+ const k=rotationFit(angle,w,h);ctx.scale(k,k);
+ ctx.drawImage(image,bounds.x-w/2,bounds.y-h/2,bounds.width,bounds.height);
+ ctx.restore();
+}
 export function normalizeWallGuides(raw){return Array.isArray(raw)?raw.slice(0,200).filter(x=>Array.isArray(x?.points)&&x.points.length===2&&x.points.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=1000&&p.y>=0&&p.y<=700)).map(x=>({points:x.points.map(p=>({x:p.x,y:p.y})),thickness:Number.isFinite(x.thickness)&&x.thickness>0&&x.thickness<=100?x.thickness:3})):[];}
 export function rotateDrawing(state,turn,{points=[]}={}){
  if(!state.background)throw Error('Najpierw wczytaj rzut.');if(![90,-90].includes(turn))throw Error('Obrót musi wynosić 90° w lewo lub w prawo.');
