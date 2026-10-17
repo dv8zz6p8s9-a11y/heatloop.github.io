@@ -76,12 +76,16 @@ export function mountLoopPlanner(state,api){
  };
  $('pGenerateRoutes').onclick=()=>{
   prepareAssignments(state);
-  if(state.loopPlan.loops.length&&!confirm('Zastąpić obecne pętle i wszystkie narysowane trasy automatycznym ślimakiem?'))return;
+  const selectedStart=window.__heatloopSpiralStart;
+  if(!selectedStart?.roomId)return alert('Oznacz początek ślimaka w wybranym pomieszczeniu.');
+  if(state.loopPlan.loops.some(l=>l.roomId===selectedStart.roomId)&&!confirm('Zastąpić pętle tylko w wybranym pomieszczeniu?'))return;
   const errors=settingsErrors(state);if(errors.length){alert(errors.join('\n'));return;}
   if(!(state.scale>0)){alert('Najpierw skalibruj rzut.');return;}
+  const retained=state.loopPlan.loops.filter(l=>l.roomId!==selectedStart.roomId);
   const generated=[],sections=new Map(),areas=[],warnings=[];
+  for(const l of retained)sections.set(manifoldId(l.manifoldId),Math.max(sections.get(manifoldId(l.manifoldId))||0,l.section));
   try{
-   for(const room of floorRooms(state)){
+   for(const room of floorRooms(state).filter(r=>r.loopRoomId===selectedStart.roomId)){
     const a=state.loopPlan.assignments.find(x=>x.roomId===room.loopRoomId);
     const mid=manifoldId(a.manifoldId),m=manifoldPoint(state.loopPlan,mid);
     let result;
@@ -112,7 +116,7 @@ export function mountLoopPlanner(state,api){
    }
    if(generated.length>100)throw Error('Generator przekracza limit 100 pętli.');
   }catch(err){alert('Nie wygenerowano tras. '+err.message+'\nDotychczasowy projekt pozostaje bez zmian.');return;}
-  state.loopPlan.loops=generated;state.loopPlan.signature=sourceSignature(state);state.loopPlan.linked=false;active=null;editingLoopId=null;
+  state.loopPlan.loops=[...retained,...generated];state.loopPlan.signature=sourceSignature(state);state.loopPlan.linked=false;active=null;editingLoopId=null;
   api.render();alert('Wygenerowano '+generated.length+' tras spiralnych.\n'+areas.join('\n')+(warnings.length?'\nUWAGI:\n'+warnings.join('\n'):'')+'\nTo wersja testowa. Sprawdź ręcznie ściany, dojścia i długości przed realizacją.');
  };
  $('pLinked').onchange=()=>{
@@ -163,7 +167,7 @@ export function mountLoopPlanner(state,api){
    state.loopPlan.loops.forEach((l,i)=>{if(!l.route.length)return;const color='hsl('+((i*137.508+20)%360)+' 85% 38%)';ctx.beginPath();ctx.moveTo(l.route[0].x,l.route[0].y);for(const p of l.route.slice(1))ctx.lineTo(p.x,p.y);ctx.strokeStyle=color;ctx.lineWidth=l.id===editingLoopId?4:2.5;ctx.stroke();const p=l.route[Math.floor(l.route.length/2)];ctx.fillStyle=color;ctx.font='bold 13px sans-serif';ctx.fillText(loopLabel(l),p.x+5,p.y-5);if(l.id===editingLoopId){l.route.slice(1,-1).forEach(pt=>{ctx.beginPath();ctx.arc(pt.x,pt.y,6,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=color;ctx.stroke()})}});
    for(const manifold of state.loopPlan.manifolds){const m=manifoldPoint(state.loopPlan,manifold.id);if(m){ctx.fillStyle='#10263a';const width=state.scale>0?0.8/state.scale:40,height=state.scale>0?0.15/state.scale:7.5;
     ctx.fillRect(m.x-width/2,m.y-height/2,width,height);
-    ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(m.x-width/2,m.y-height/2,width,height);
+    ctx.strokeStyle='#ef2424';ctx.lineWidth=3;ctx.strokeRect(m.x-width/2-3,m.y-height/2-3,width+6,height+6);
     ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.fillText(manifold.id,m.x-width/2,m.y-height/2-5)}}
   }
  };
