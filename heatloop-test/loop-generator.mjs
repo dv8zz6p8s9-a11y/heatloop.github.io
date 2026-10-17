@@ -224,30 +224,34 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
  };
  // Zwoje co dwa rozstawy, a powrót pomiędzy nimi. Bez ukośnych łączników.
  function coil(x,y,w,h){
-  const turns=Math.floor(Math.min(w,h)/(4*s));
+  // Prostokątna spirala dwutorowa. Zasilanie schodzi do środka co 2s,
+  // powrót wychodzi pomiędzy zwojami. Wszystkie odcinki są ortogonalne.
+  const turns=Math.floor((Math.min(w,h)-2*s)/(4*s));
   if(turns<1)return null;
-  const inward=[];
+  const points=[];
+  const push=(px,py)=>{
+   const last=points[points.length-1];
+   if(!last||Math.hypot(last.x-px,last.y-py)>1e-7)points.push({x:px,y:py});
+  };
+  // Początek na górnej krawędzi, zewnętrzna ścieżka do środka.
+  push(x,y);
   for(let k=0;k<turns;k++){
    const L=x+2*k*s,T=y+2*k*s,R=x+w-2*k*s,B=y+h-2*k*s;
-   if(k===0)inward.push({x:L,y:T});
-   else inward.push({x:L,y:T});
-   inward.push({x:R,y:T},{x:R,y:B},{x:L+s,y:B});
+   if(k>0)push(L,T);
+   push(R,T);push(R,B);push(L,B);push(L,T+2*s);
   }
-  // Ścieżka powrotna rozpoczyna się przy ostatnim zwoju i wychodzi
-  // po torze przesuniętym o jeden rozstaw.
-  const back=[];
+  // Łącznik środkowy i powrót: ścieżka przesunięta o s.
   for(let k=turns-1;k>=0;k--){
    const L=x+(2*k+1)*s,T=y+(2*k+1)*s,R=x+w-(2*k+1)*s,B=y+h-(2*k+1)*s;
-   back.push({x:L+s,y:B},{x:L,y:B},{x:L,y:T},{x:R,y:T});
+   push(L,B);push(R,B);push(R,T);push(L,T);
+   if(k>0)push(L,y+(2*k-1)*s);
   }
-  const raw=[...inward,...back],pts=[raw[0]];
-  // Łączniki prowadzone po osiach; skrzyżowania odrzuca walidator.
-  for(const next of raw.slice(1)){
-   const prev=pts[pts.length-1];
-   if(Math.abs(prev.x-next.x)>1e-6&&Math.abs(prev.y-next.y)>1e-6)pts.push({x:next.x,y:prev.y});
-   if(Math.hypot(pts[pts.length-1].x-next.x,pts[pts.length-1].y-next.y)>1e-6)pts.push(next);
+  // Nie naprawiamy geometrii automatycznym skosem: odrzucamy złą trasę.
+  for(let i=1;i<points.length;i++){
+   const a=points[i-1],b=points[i];
+   if(Math.abs(a.x-b.x)>1e-6&&Math.abs(a.y-b.y)>1e-6)return null;
   }
-  const world=pts.map(p=>xy(p.x,p.y));
+  const world=points.map(p=>xy(p.x,p.y));
   return validate(world)?world:null;
  }
  const approachLength=length([manifold,...approach],scale);
