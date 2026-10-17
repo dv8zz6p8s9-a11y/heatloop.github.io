@@ -1,5 +1,5 @@
-import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261016-3';
-import {generateMeander,rectangularInsetArea,suggestApproach,rightAnglePath} from './loop-generator.mjs?v=20261017-corners-2';
+import {prepareAssignments,sourceSignature,proposeLoops,analyzeLoops,routeLength,manifoldId,manifoldPoint,loopLabel,settingsErrors,newId,floorRooms} from './floor-loops.mjs?v=20261017-confirm-1';
+import {generateMeander,rectangularInsetArea,rightAnglePath} from './loop-generator.mjs?v=20261017-corners-2';
 
 export function mountLoopPlanner(state,api){
  const $=id=>document.getElementById(id),format=n=>Number.isFinite(n)?n.toLocaleString('pl-PL',{maximumFractionDigits:2}):'—';
@@ -40,8 +40,8 @@ export function mountLoopPlanner(state,api){
   for(const a of state.loopPlan.assignments){
    const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId),tr=document.createElement('tr'),td=document.createElement('td');td.textContent=room?.name||'Usunięte';
    if(room){
-    const approachButton=document.createElement('button');approachButton.type='button';approachButton.textContent=a.approach?.length?'Edytuj dojście ('+a.approach.length+' punktów)':'Wskaż dojście od rozdzielacza';
-    approachButton.onclick=()=>{if(!(state.scale>0)||!manifoldPoint(state.loopPlan,manifoldId(a.manifoldId)))return alert('Najpierw skalibruj rzut i wskaż rozdzielacz.');approachRoomId=a.roomId;api.startApproach(a.approach||[]);api.openDrawing();alert('Klikaj kolejne punkty od rozdzielacza, przez korytarz i drzwi, aż do wnętrza pomieszczenia '+room.name+'. Następnie kliknij „Zakończ obrys / trasę”.');};
+    const approachButton=document.createElement('button');approachButton.type='button';approachButton.textContent=a.approachConfirmed&&a.approach?.length?'Edytuj zatwierdzone dojście ('+a.approach.length+' punktów)':'Wskaż i zatwierdź przejście przez drzwi';
+    approachButton.onclick=()=>{if(!(state.scale>0)||!manifoldPoint(state.loopPlan,manifoldId(a.manifoldId)))return alert('Najpierw skalibruj rzut i wskaż rozdzielacz.');approachRoomId=a.roomId;api.startApproach(a.approach||[]);api.openDrawing();alert('Wskaż punkty trasy od rozdzielacza przez korytarz i drzwi do środka pomieszczenia '+room.name+'. Ostatni punkt musi być WEWNĄTRZ pomieszczenia. Następnie kliknij „Zakończ obrys / trasę”. Generator nie wykrywa ścian automatycznie.');};
     td.append(document.createElement('br'),approachButton);
     for(const [label,value,callback] of [
     ['Odsunięcie od ścian (cm)',a.offsetCm??'10',v=>{a.offsetCm=v;}],
@@ -79,14 +79,14 @@ export function mountLoopPlanner(state,api){
   if(state.loopPlan.loops.length&&!confirm('Zastąpić obecne pętle i wszystkie narysowane trasy automatycznym meandrem?'))return;
   const errors=settingsErrors(state);if(errors.length){alert(errors.join('\n'));return;}
   if(!(state.scale>0)){alert('Najpierw skalibruj rzut.');return;}
-  const generated=[],sections=new Map(),areas=[],warnings=[],autoApproaches=[];
+  const generated=[],sections=new Map(),areas=[],warnings=[];
   try{
    for(const room of floorRooms(state)){
     const a=state.loopPlan.assignments.find(x=>x.roomId===room.loopRoomId);
     const mid=manifoldId(a.manifoldId),m=manifoldPoint(state.loopPlan,mid);
     let result;
-    const approach=a.approach?.length?a.approach:suggestApproach(room,m);
-    if(!a.approach?.length){autoApproaches.push({assignment:a,approach});warnings.push(room.name+': dojście automatyczne jest tylko propozycją; zaznacz drzwi i popraw przebieg przez korytarz.');}
+    if(!a.approachConfirmed||!a.approach?.length)throw Error(room.name+': najpierw wskaż i zatwierdź trasę przez drzwi lub korytarz przy tym pomieszczeniu. Automatyczne skróty przez ściany zostały wyłączone.');
+    const approach=a.approach;
     try{result=generateMeander(room,{scale:state.scale,offsetCm:Number(a.offsetCm??'10'),spacingCm:room.spacing,maxMeters:Number(state.loopPlan.maxLength),manifold:m,approach});}
     catch(error){throw Error(room.name+': '+error.message)}
     if(result.approximate)warnings.push(room.name+': podział wielokąta na '+result.parts+' prostokątne obszary jest orientacyjny; sprawdź pokrycie rurami i przebieg dojść.');
@@ -103,7 +103,6 @@ export function mountLoopPlanner(state,api){
    }
    if(generated.length>100)throw Error('Generator przekracza limit 100 pętli.');
   }catch(err){alert('Nie wygenerowano tras. '+err.message+'\nDotychczasowy projekt pozostaje bez zmian.');return;}
-  for(const entry of autoApproaches)entry.assignment.approach=entry.approach;
   state.loopPlan.loops=generated;state.loopPlan.signature=sourceSignature(state);active=null;editingLoopId=null;
   api.render();alert('Wygenerowano '+generated.length+' tras meandrowych.\n'+areas.join('\n')+(warnings.length?'\nUWAGI:\n'+warnings.join('\n'):'')+'\nTo wersja testowa. Sprawdź ręcznie ściany, dojścia i długości przed realizacją.');
  };
@@ -127,8 +126,10 @@ export function mountLoopPlanner(state,api){
    api.render();
   },
   reopenLastApproachForUndo(){const a=state.loopPlan.assignments.find(a=>a.roomId===lastSavedApproachRoomId);if(!a?.approach?.length)return null;approachRoomId=a.roomId;return a.approach.slice(0,-1).map(p=>({...p}));},
-  finishApproach(points){const a=state.loopPlan.assignments.find(a=>a.roomId===approachRoomId);if(!a)throw Error('Wybierz pomieszczenie w zakładce Pętle i rozdzielacz.');if(points.length<1||points.length>100)throw Error('Wskaż 1–100 punktów dojścia.');const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId);if(!room?.points)throw Error('Dojście wymaga pomieszczenia obrysowanego na rzucie.');a.approach=points.map(p=>({...p}));lastSavedApproachRoomId=a.roomId;approachRoomId=null;},
-  setManifold(pos){if(state.loopPlan.loops.length&&!confirm('Zmiana '+selected+' wymaga ponownego podziału pętli i narysowania tras. Kontynuować?'))return;if(selected==='R1')state.loopPlan.manifold={...pos};else state.loopPlan.manifolds.find(m=>m.id===selected).position={...pos};active=null;api.render()},
+  finishApproach(points){const a=state.loopPlan.assignments.find(a=>a.roomId===approachRoomId);if(!a)throw Error('Wybierz pomieszczenie w zakładce Pętle i rozdzielacz.');if(points.length<1||points.length>100)throw Error('Wskaż 1–100 punktów dojścia.');const room=[...state.rooms,...state.polygons].find(r=>r.loopRoomId===a.roomId);if(!room?.points)throw Error('Dojście wymaga pomieszczenia obrysowanego na rzucie.');const poly=room.points;const last=points[points.length-1];let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const p=poly[i],q=poly[j];if((p.y>last.y)!==(q.y>last.y)&&last.x<(q.x-p.x)*(last.y-p.y)/(q.y-p.y)+p.x)inside=!inside;}
+   if(!inside)throw Error('Ostatni punkt dojścia musi leżeć wewnątrz pomieszczenia. Wskaż przejście przez drzwi i punkt wewnątrz.');
+   a.approach=points.map(p=>({...p}));a.approachConfirmed=true;lastSavedApproachRoomId=a.roomId;approachRoomId=null;},
+  setManifold(pos){if(state.loopPlan.loops.length&&!confirm('Zmiana '+selected+' wymaga ponownego podziału pętli i narysowania tras. Kontynuować?'))return;if(selected==='R1')state.loopPlan.manifold={...pos};else state.loopPlan.manifolds.find(m=>m.id===selected).position={...pos};for(const a of state.loopPlan.assignments)if(manifoldId(a.manifoldId)===selected)a.approachConfirmed=false;active=null;api.render()},
   finishRoute(points){
    const loop=state.loopPlan.loops.find(l=>l.id===active),m=loop&&manifoldPoint(state.loopPlan,loop.manifoldId);
    if(!loop||!m)throw Error('Wybierz pętlę przyciskiem „Rysuj” w zakładce Pętle i rozdzielacz.');
@@ -138,7 +139,7 @@ export function mountLoopPlanner(state,api){
   },
   overlay(ctx){
    for(const a of state.loopPlan.assignments){
-    if(!a.approach?.length)continue;
+    if(!a.approachConfirmed||!a.approach?.length)continue;
     const m=manifoldPoint(state.loopPlan,manifoldId(a.manifoldId));if(!m)continue;
     // Po wygenerowaniu nie nakladaj drugiej pomaranczowej linii na kolorowe petle.
     if(state.loopPlan.loops.some(l=>l.roomId===a.roomId&&l.route?.length))continue;
