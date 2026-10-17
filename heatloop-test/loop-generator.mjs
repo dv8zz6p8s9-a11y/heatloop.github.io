@@ -201,35 +201,52 @@ export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifol
  return {routes,heatedArea:Math.max(0,g.w-2*inset)*Math.max(0,g.h-2*inset)*scale*scale,offsetCm,spacingCm};
 }
 
-export function generateSpiral(room,options){
- const {scale,offsetCm,spacingCm,maxMeters,manifold,approach=[]}=options;
- if(!(scale>0)||!(spacingCm>=5&&spacingCm<=40)||!(offsetCm>=0&&offsetCm<=100)||!(maxMeters>=10)||!valid(manifold)||!approach.length||!approach.every(valid))throw Error('Nieprawidłowe parametry spirali lub dojścia.');
+
+export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold,approach=[]}){
+ if(!(scale>0)||!(spacingCm>=5&&spacingCm<=40)||!(offsetCm>=0&&offsetCm<=100)||!(maxMeters>=10)||!valid(manifold)||!approach.length||!approach.every(valid))throw Error('Nieprawidłowe parametry ślimaka lub dojścia.');
  const g=rectangle(room?.points);
- if(!g)throw Error('Ślimak jest obecnie obsługiwany dla prostokątnych pomieszczeń. Popraw obrys albo użyj meandra.');
- const d=offsetCm/100/scale,step=spacingCm/100/scale;
- if(g.w<2*d+2*step||g.h<2*d+2*step)throw Error('Pomieszczenie jest za wąskie na ślimak przy tym rozstawie.');
+ if(!g)throw Error('Ślimak w tej wersji wymaga prostokątnego pomieszczenia.');
+ const d=offsetCm/100/scale,s=spacingCm/100/scale;
+ const width=g.w-2*d,height=g.h-2*d;
+ if(width<4*s||height<4*s)throw Error('Pomieszczenie jest za wąskie na spiralę przy tym rozstawie.');
  const xy=(x,y)=>({x:g.a.x+g.ux*x+g.vx*y,y:g.a.y+g.uy*x+g.vy*y});
- // Jedna ciągła spirala prostokątna: zasilanie co dwa rozstawy,
- // powrót przesunięty o jeden rozstaw, bez przecinania sąsiednich odcinków.
- const supply=[],returnPath=[];
- let l=d,t=d,r=g.w-d,b=g.h-d;
- while(r-l>2*step&&b-t>2*step&&supply.length<4000){
-  supply.push(xy(l,t),xy(r,t),xy(r,b),xy(l,b-step));
-  l+=2*step;t+=2*step;r-=2*step;b-=2*step;
+ const approachLen=length([manifold,...approach],scale);
+ const budget=maxMeters-2*approachLen;
+ if(budget<=0)throw Error('Dojście przekracza limit długości pętli.');
+ function coil(x0,y0,w,h){
+  const pts=[],turns=Math.floor(Math.min(w,h)/(4*s));
+  if(turns<1)return null;
+  // Zasilanie: prostokątna spirala do wewnątrz co 2s.
+  for(let k=0;k<turns;k++){
+   const l=x0+2*k*s,t=y0+2*k*s,r=x0+w-2*k*s,b=y0+h-2*k*s;
+   if(k===0)pts.push(xy(l,t));
+   else pts.push(xy(l,t));
+   pts.push(xy(r,t),xy(r,b),xy(l+s,b));
+  }
+  // Łącznik w środku do toru powrotnego.
+  for(let k=turns-1;k>=0;k--){
+   const l=x0+(2*k+1)*s,t=y0+(2*k+1)*s,r=x0+w-(2*k+1)*s,b=y0+h-(2*k+1)*s;
+   pts.push(xy(l+s,b),xy(r,b),xy(r,t),xy(l,t));
+  }
+  return pts;
  }
- // Powrót od środka do zewnątrz, ścieżka offsetowa pomiędzy zwojami.
- l=d+step;t=d+step;r=g.w-d-step;b=g.h-d-step;
- while(r-l>step&&b-t>step&&returnPath.length<4000){
-  returnPath.push(xy(l,t),xy(r,t),xy(r,b),xy(l,b-step));
-  l+=2*step;t+=2*step;r-=2*step;b-=2*step;
+ function build(n){
+  const routes=[];
+  const nx=Math.ceil(Math.sqrt(n*width/height)),ny=Math.ceil(n/nx);
+  const cells=[];
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)if(cells.length<n)cells.push({x:d+i*width/nx,y:d+j*height/ny,w:width/nx,h:height/ny});
+  for(const cell of cells){
+   const spiral=coil(cell.x,cell.y,cell.w,cell.h);
+   if(!spiral)return null;
+   const route=[manifold,...approach,...spiral,...[...approach].reverse(),manifold];
+   if(length(route,scale)>maxMeters+1e-6)return null;
+   routes.push({route,stripes:1});
+  }
+  return routes;
  }
- if(supply.length<4||returnPath.length<4)throw Error('Za mało miejsca na ślimak.');
- const path=[...supply,...returnPath.reverse()];
- const approachDistance=length([manifold,...approach],scale);
- const maxHeating=maxMeters-2*approachDistance;
- if(maxHeating<=0)throw Error('Dojście do rozdzielacza jest za długie.');
- const total=length(path,scale);
- if(total+2*approachDistance>maxMeters)throw Error('Ten ślimak przekracza limit długości. Wymagany jest podział obszaru na mniejsze spirale.');
- const route=[manifold,...approach,...path,...[...approach].reverse(),manifold];
- return {routes:[{route,stripes:1}],heatedArea:(g.w-2*d)*(g.h-2*d)*scale*scale,offsetCm,spacingCm};
+ for(let n=1;n<=Math.min(40,Math.ceil(width*height/(4*s*s)));n++){
+  const routes=build(n);
+  if(routes)return {routes,heatedArea:width*height*scale*scale,offsetCm,spacingCm,spiral:true};
+ }
+ throw Error('Nie udało się podzielić pomieszczenia na spirale mieszczące się w limicie. Zmień rozstaw lub położenie rozdzielacza.');
 }
