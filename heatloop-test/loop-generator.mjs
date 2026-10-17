@@ -1,4 +1,4 @@
-// Wersja testowa: automatyczny meander tylko dla pomieszczen prostokatnych.
+// Wersja testowa: meander dla prostokatow i wielokatow ortogonalnych (L, T).
 // Wyniki wymagaja sprawdzenia przez instalatora; nie sa projektem hydraulicznym.
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const length=(points,scale)=>points.slice(1).reduce((sum,p,i)=>sum+dist(points[i],p),0)*scale;
@@ -17,6 +17,54 @@ function rectangle(points){
  if(Math.abs(ux*vx+uy*vy)>0.015||dist(c,{x:b.x+d.x-a.x,y:b.y+d.y-a.y})>Math.max(2,Math.min(w,h)*0.015))return null;
  return {a,w,h,ux,uy,vx,vy};
 }
+
+// Podzial prostych wielokatow ortogonalnych (np. L, T) na prostokaty.
+// Dla wielokatow o scianach ukosnych nie generujemy pozornej geometrii.
+function orthogonalRects(points){
+ if(!Array.isArray(points)||points.length<4||points.length>100||!points.every(valid))return null;
+ const eps=1.5;
+ const polygon=points.map(p=>({...p}));
+ for(let i=0;i<polygon.length;i++){
+  const a=polygon[i],b=polygon[(i+1)%polygon.length];
+  if(Math.min(Math.abs(a.x-b.x),Math.abs(a.y-b.y))>eps)return null;
+ }
+ const xs=[...new Set(polygon.map(p=>p.x))].sort((a,b)=>a-b);
+ const ys=[...new Set(polygon.map(p=>p.y))].sort((a,b)=>a-b);
+ if(xs.length*ys.length>1500)return null;
+ const inside=(x,y)=>{
+  let flag=false;
+  for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+   const a=polygon[i],b=polygon[j];
+   if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)flag=!flag;
+  }
+  return flag;
+ };
+ const cells=[];
+ for(let i=0;i<xs.length-1;i++)for(let j=0;j<ys.length-1;j++){
+  if(xs[i+1]-xs[i]<1||ys[j+1]-ys[j]<1)continue;
+  if(inside((xs[i]+xs[i+1])/2,(ys[j]+ys[j+1])/2))
+   cells.push({x0:xs[i],x1:xs[i+1],y0:ys[j],y1:ys[j+1]});
+ }
+ if(!cells.length)return null;
+ // Scalaj komorki w pasy poziome, nastepnie pasy o identycznym zakresie X.
+ const strips=[];
+ for(const y0 of ys.slice(0,-1)){
+  const row=cells.filter(c=>c.y0===y0).sort((a,b)=>a.x0-b.x0);
+  let current=null;
+  for(const c of row){
+   if(current&&Math.abs(current.x1-c.x0)<1e-6)current.x1=c.x1;
+   else{if(current)strips.push(current);current={...c};}
+  }
+  if(current)strips.push(current);
+ }
+ const rects=[];
+ for(const strip of strips){
+  const existing=rects.find(r=>Math.abs(r.x0-strip.x0)<1e-6&&Math.abs(r.x1-strip.x1)<1e-6&&Math.abs(r.y1-strip.y0)<1e-6);
+  if(existing)existing.y1=strip.y1;
+  else rects.push({...strip});
+ }
+ return rects.map(r=>({points:[{x:r.x0,y:r.y0},{x:r.x1,y:r.y0},{x:r.x1,y:r.y1},{x:r.x0,y:r.y1}]}));
+}
 export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifold,approach=[]}){
  if(!(scale>0)||!Number.isFinite(scale))throw Error('Ustaw prawidłową skalę rzutu.');
  if(!valid(manifold))throw Error('Najpierw wskaż rozdzielacz na rzucie.');
@@ -26,7 +74,21 @@ export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifol
  if(!(spacingCm>=5&&spacingCm<=40&&Number.isFinite(spacingCm)))throw Error('Rozstaw rur musi wynosić 5–40 cm.');
  if(!(maxMeters>=10&&maxMeters<=300&&Number.isFinite(maxMeters)))throw Error('Nieprawidłowy limit długości pętli.');
  const g=rectangle(room?.points);
- if(!g)throw Error('Automatyczny meander obsługuje na razie pomieszczenia prostokątne (cztery narożniki i kąty proste).');
+ if(!g){
+  const subrooms=orthogonalRects(room?.points);
+  if(!subrooms)throw Error('Ten obrys nie jest prostokątem ani wielokątem z prostymi ścianami (np. L). Sprawdź narożniki i odcinki ukośne.');
+  const routes=[];let heatedArea=0,used=0;
+  for(const subroom of subrooms){
+   // Pomijamy drobne uskoki, ktore nie mieszcza dwoch odsuniec od scian.
+   const sub=rectangle(subroom.points),inset=offsetCm/100/scale;
+   if(!sub||sub.w<=2*inset+1||sub.h<=2*inset+1)continue;
+   const result=generateMeander(subroom,{scale,offsetCm,spacingCm,maxMeters,manifold,approach});
+   routes.push(...result.routes);heatedArea+=result.heatedArea;used++;
+   if(routes.length>100)throw Error('Projekt przekracza limit 100 pętli.');
+  }
+  if(!routes.length)throw Error('Wielokąt ma zbyt wąskie części dla podanego odsunięcia od ścian.');
+  return {routes,heatedArea,offsetCm,spacingCm,parts:used,approximate:true};
+ }
  const inset=offsetCm/100/scale,step=spacingCm/100/scale;
  if(g.w<=2*inset+1||g.h<=2*inset+1)throw Error('Odsunięcie jest za duże względem wymiarów pomieszczenia.');
  // Przebieg wzdłuż dłuższego boku ogranicza liczbę nawrotów.
