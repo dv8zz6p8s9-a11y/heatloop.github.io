@@ -5,17 +5,22 @@ const cases=[
  ['Pokój 5 × 4 m',500,400,15],
  ['Pokój 6 × 3 m',600,300,20],
  ['Mały pokój 2,5 × 2,5 m',250,250,10],
- ['Wąski pokój 6 × 2 m',600,200,15]
+ ['Wąski pokój 6 × 2 m',600,200,15],
+ ['Rzeczywisty pokój 4,17 × 2,58 m',417,258,15],
+ ['Rzeczywisty pokój 4,17 × 2,58 m — START prawy dół',417,258,15,2],
+ ['Rzeczywisty pokój 4,17 × 2,58 m — START prawy góra',417,258,15,1],
+ ['Rzeczywisty pokój 4,17 × 2,58 m — START lewy dół',417,258,15,3]
 ];
 let passed=0;
 function segmentCross(a,b,c,d){
  const o=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
  return o(a,b,c)*o(a,b,d)<-1e-8&&o(c,d,a)*o(c,d,b)<-1e-8;
 }
-for(const [name,w,h,spacingCm] of cases){
+for(const [name,w,h,spacingCm,rotation=0] of cases){
  let issues=[];
  try{
-  const room={points:[{x:100,y:100},{x:100+w/2,y:100},{x:100+w/2,y:100+h/2},{x:100,y:100+h/2}]};
+  const corners=[{x:100,y:100},{x:100+w/2,y:100},{x:100+w/2,y:100+h/2},{x:100,y:100+h/2}];
+  const room={points:[...corners.slice(rotation),...corners.slice(0,rotation)]};
   const result=generateSpiral(room,{scale:0.02,offsetCm:10,spacingCm,maxMeters:100,manifold:{x:500,y:500},approach:[{x:110,y:110}]});
   if(!result.routes.length)issues.push('Brak pętli');
   for(const {route} of result.routes){
