@@ -240,9 +240,13 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
    const L=x+(2*k+1)*s,T=y+(2*k+1)*s,R=x+w-(2*k+1)*s,B=y+h-(2*k+1)*s;
    back.push({x:L+s,y:B},{x:L,y:B},{x:L,y:T},{x:R,y:T});
   }
-  const pts=[...inward,...back];
-  // Nie dopuszczamy skosów i skrzyżowań; błędnej spirali nie rysujemy.
-  for(let i=1;i<pts.length;i++)if(Math.abs(pts[i].x-pts[i-1].x)>1e-6&&Math.abs(pts[i].y-pts[i-1].y)>1e-6)return null;
+  const raw=[...inward,...back],pts=[raw[0]];
+  // Łączniki prowadzone po osiach; skrzyżowania odrzuca walidator.
+  for(const next of raw.slice(1)){
+   const prev=pts[pts.length-1];
+   if(Math.abs(prev.x-next.x)>1e-6&&Math.abs(prev.y-next.y)>1e-6)pts.push({x:next.x,y:prev.y});
+   if(Math.hypot(pts[pts.length-1].x-next.x,pts[pts.length-1].y-next.y)>1e-6)pts.push(next);
+  }
   const world=pts.map(p=>xy(p.x,p.y));
   return validate(world)?world:null;
  }
