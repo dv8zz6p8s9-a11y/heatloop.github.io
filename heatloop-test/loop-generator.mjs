@@ -179,8 +179,10 @@ export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifol
  const back=[...approach].reverse();
  const completeRoute=stripes=>{
   if(!stripes.length)return [];
-  const supply=rightAnglePath([{...manifold},...approach.map(p=>({...p})),stripes[0]]);
-  const ret=rightAnglePath([stripes[stripes.length-1],...back.map(p=>({...p})),{...manifold}]);
+  // Trasa użytkownika ma pierwszeństwo: nie dodawaj automatycznych zakrętów
+  // pomiędzy punktami, bo mogą przechodzić przez ściany.
+  const supply=[{...manifold},...approach.map(p=>({...p})),stripes[0]];
+  const ret=[stripes[stripes.length-1],...back.map(p=>({...p})),{...manifold}];
   return [...supply,...stripes.slice(1),...ret.slice(1)];
  };
  const complete=()=>{if(!current.length)return;routes.push({route:completeRoute(current),stripes:stripesInCurrent});current=[];stripesInCurrent=0;};
