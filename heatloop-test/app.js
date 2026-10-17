@@ -116,7 +116,22 @@ function drawPointGuides(){
  ctx.restore();
 }
 function rectanglePoints(a,b){const x1=Math.min(a.x,b.x),x2=Math.max(a.x,b.x),y1=Math.min(a.y,b.y),y2=Math.max(a.y,b.y);return [{x:x1,y:y1},{x:x2,y:y1},{x:x2,y:y2},{x:x1,y:y2}];}
-function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f4f6f8';ctx.fillRect(0,0,canvas.width,canvas.height);if(image)drawRaster(ctx,image,state.drawingRotation,canvas.width,canvas.height);drawTechnicalGrid();function path(pts,color,close=false,fill=false){if(!pts.length)return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));if(close)ctx.closePath();if(fill){ctx.fillStyle='rgba(15,130,200,.18)';ctx.fill()}ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill()})}state.polygons.forEach((p,i)=>path(i===editRoomIndex&&editActive()?editPoints:p.points,i===editRoomIndex&&editActive()?'#e48a28':'#1476c1',true,true));if(editActive()&&editPoints){editPoints.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,i===editVertex?10:7,0,Math.PI*2);ctx.fillStyle=i===editVertex?'#e48a28':'#fff';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#ad6419';ctx.stroke()})}state.pipes.forEach(p=>path(p.points,'#d43636'));state.radiators.forEach(r=>{ctx.fillStyle='#bc3030';ctx.fillRect(r.x-11,r.y-6,22,12);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(r.x-11,r.y-6,22,12)});for(const wall of state.wallGuides||[])path(wall.points,'#d47812');ctx.setLineDash([6,4]);for(const wall of wallCandidates)path(wall.points,'#b217a6');ctx.setLineDash([]);if(loopUI)loopUI.overlay(ctx);if(rectangleDraft)path(rectanglePoints(rectangleDraft.start,rectangleDraft.end),'#e48a28',true,true);path(points,$('tool').value==='pipe'?'#e44':'#14a46c');drawPointGuides();document.dispatchEvent(new Event('heatloop:drawing-changed'))}
+function updateDrawingLoopPreview(){
+ const el=$('drawingLoopPreview');if(!el)return;
+ const polygon=rectangleDraft?rectanglePoints(rectangleDraft.start,rectangleDraft.end):points;
+ const spacing=Number($('drawingLoopSpacing')?.value),offset=Number($('drawingLoopOffset')?.value);
+ if(!(state.scale>0)){el.textContent='Najpierw skalibruj rzut.';return}
+ if(polygon.length<3){el.textContent='Zaznacz co najmniej trzy narożniki obszaru na rzucie.';return}
+ if(!(spacing>=5&&spacing<=40&&offset>=0&&offset<=100)){el.textContent='Rozstaw 5–40 cm, odsunięcie 0–100 cm.';return}
+ const squareMeters=area(polygon)*state.scale**2;
+ const perimeter=distance([...polygon,polygon[0]])*state.scale;
+ const usable=Math.max(0,squareMeters-perimeter*offset/100+4*(offset/100)**2);
+ const meters=usable/(spacing/100);
+ el.textContent='Zaznaczony obszar: '+fmt(squareMeters)+' m² · powierzchnia po odsunięciu (szacunek): '+fmt(usable)+' m² · rura w obszarze: około '+fmt(meters)+' m (bez dojść do rozdzielacza).';
+}
+$('drawingLoopSpacing').addEventListener('input',updateDrawingLoopPreview);
+$('drawingLoopOffset').addEventListener('input',updateDrawingLoopPreview);
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f4f6f8';ctx.fillRect(0,0,canvas.width,canvas.height);if(image)drawRaster(ctx,image,state.drawingRotation,canvas.width,canvas.height);drawTechnicalGrid();function path(pts,color,close=false,fill=false){if(!pts.length)return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));if(close)ctx.closePath();if(fill){ctx.fillStyle='rgba(15,130,200,.18)';ctx.fill()}ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill()})}state.polygons.forEach((p,i)=>path(i===editRoomIndex&&editActive()?editPoints:p.points,i===editRoomIndex&&editActive()?'#e48a28':'#1476c1',true,true));if(editActive()&&editPoints){editPoints.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,i===editVertex?10:7,0,Math.PI*2);ctx.fillStyle=i===editVertex?'#e48a28':'#fff';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#ad6419';ctx.stroke()})}state.pipes.forEach(p=>path(p.points,'#d43636'));state.radiators.forEach(r=>{ctx.fillStyle='#bc3030';ctx.fillRect(r.x-11,r.y-6,22,12);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(r.x-11,r.y-6,22,12)});for(const wall of state.wallGuides||[])path(wall.points,'#d47812');ctx.setLineDash([6,4]);for(const wall of wallCandidates)path(wall.points,'#b217a6');ctx.setLineDash([]);if(loopUI)loopUI.overlay(ctx);if(rectangleDraft)path(rectanglePoints(rectangleDraft.start,rectangleDraft.end),'#e48a28',true,true);path(points,$('tool').value==='pipe'?'#e44':'#14a46c');updateDrawingLoopPreview();drawPointGuides();document.dispatchEvent(new Event('heatloop:drawing-changed'))}
 
 /* Edycja geometrii istniejącego pomieszczenia — zmiany pozostają robocze aż do zapisu. */
 let editRoomIndex=-1,editPoints=null,editVertex=-1,editDragging=-1,editPointer=null;
@@ -216,6 +231,7 @@ function setDrawingStep(id){
  const idx=drawingStepIds.indexOf(id);if(idx<0)return;
  $('drawingStep').value=id;$('drawingPrevStep').disabled=idx===0;$('drawingNextStep').disabled=idx===drawingStepIds.length-1;
  $('drawingStepHelp').textContent=drawingHelp[id];
+ $('drawingLoopPreviewControls').hidden=id!=='loops';if(id==='loops')updateDrawingLoopPreview();
  const actions=$('drawingStepActions');
  for(const [button,enabled] of [['drawingRectTool',id==='rooms'],['drawingPolyTool',id==='rooms'],['drawingAddManifold',id==='manifolds'],['drawingGenerateLoops',id==='review'],['drawingOpenLoopSettings',['manifolds','loops','approaches','review'].includes(id)]])$(button).hidden=!enabled;
  if(id==='scale')$('tool').value='scale';
