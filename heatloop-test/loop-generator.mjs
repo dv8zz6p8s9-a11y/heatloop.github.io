@@ -200,3 +200,36 @@ export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifol
  if(routes.length>100)throw Error('Projekt przekracza limit 100 pętli.');
  return {routes,heatedArea:Math.max(0,g.w-2*inset)*Math.max(0,g.h-2*inset)*scale*scale,offsetCm,spacingCm};
 }
+
+export function generateSpiral(room,options){
+ const {scale,offsetCm,spacingCm,maxMeters,manifold,approach=[]}=options;
+ if(!(scale>0)||!(spacingCm>=5&&spacingCm<=40)||!(offsetCm>=0&&offsetCm<=100)||!(maxMeters>=10)||!valid(manifold)||!approach.length||!approach.every(valid))throw Error('Nieprawidłowe parametry spirali lub dojścia.');
+ const g=rectangle(room?.points);
+ if(!g)throw Error('Ślimak jest obecnie obsługiwany dla prostokątnych pomieszczeń. Popraw obrys albo użyj meandra.');
+ const d=offsetCm/100/scale,step=spacingCm/100/scale;
+ if(g.w<2*d+2*step||g.h<2*d+2*step)throw Error('Pomieszczenie jest za wąskie na ślimak przy tym rozstawie.');
+ const xy=(x,y)=>({x:g.a.x+g.ux*x+g.vx*y,y:g.a.y+g.uy*x+g.vy*y});
+ // Jedna ciągła spirala prostokątna: zasilanie co dwa rozstawy,
+ // powrót przesunięty o jeden rozstaw, bez przecinania sąsiednich odcinków.
+ const supply=[],returnPath=[];
+ let l=d,t=d,r=g.w-d,b=g.h-d;
+ while(r-l>2*step&&b-t>2*step&&supply.length<4000){
+  supply.push(xy(l,t),xy(r,t),xy(r,b),xy(l,b-step));
+  l+=2*step;t+=2*step;r-=2*step;b-=2*step;
+ }
+ // Powrót od środka do zewnątrz, ścieżka offsetowa pomiędzy zwojami.
+ l=d+step;t=d+step;r=g.w-d-step;b=g.h-d-step;
+ while(r-l>step&&b-t>step&&returnPath.length<4000){
+  returnPath.push(xy(l,t),xy(r,t),xy(r,b),xy(l,b-step));
+  l+=2*step;t+=2*step;r-=2*step;b-=2*step;
+ }
+ if(supply.length<4||returnPath.length<4)throw Error('Za mało miejsca na ślimak.');
+ const path=[...supply,...returnPath.reverse()];
+ const approachDistance=length([manifold,...approach],scale);
+ const maxHeating=maxMeters-2*approachDistance;
+ if(maxHeating<=0)throw Error('Dojście do rozdzielacza jest za długie.');
+ const total=length(path,scale);
+ if(total+2*approachDistance>maxMeters)throw Error('Ten ślimak przekracza limit długości. Wymagany jest podział obszaru na mniejsze spirale.');
+ const route=[manifold,...approach,...path,...[...approach].reverse(),manifold];
+ return {routes:[{route,stripes:1}],heatedArea:(g.w-2*d)*(g.h-2*d)*scale*scale,offsetCm,spacingCm};
+}
