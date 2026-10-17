@@ -20,14 +20,46 @@ function rectangle(points){
 
 // Podzial prostych wielokatow ortogonalnych (np. L, T) na prostokaty.
 // Dla wielokatow o scianach ukosnych nie generujemy pozornej geometrii.
+// Tolerancja klikniec: koryguj jedynie lekko krzywe odcinki poziome/pionowe.
+// Oryginalne punkty pokoju nie sa modyfikowane. Ukosne sciany pozostaja ukosne.
+function normalizeOrthogonalPolygon(points){
+ if(!Array.isArray(points)||points.length<4||points.length>100||!points.every(valid))return null;
+ const source=points.map(p=>({...p}));
+ if(source.length>4&&dist(source[0],source[source.length-1])<1)source.pop();
+ const maxError=10,relative=0.08;
+ let vertices=source;
+ for(let attempt=0;attempt<vertices.length;attempt++){
+  const types=[];
+  for(let i=0;i<vertices.length;i++){
+   const a=vertices[i],b=vertices[(i+1)%vertices.length],dx=Math.abs(a.x-b.x),dy=Math.abs(a.y-b.y);
+   if(Math.min(dx,dy)>maxError||Math.min(dx,dy)>Math.max(dx,dy)*relative)return null;
+   types.push(dx>=dy?'h':'v');
+  }
+  const remove=types.findIndex((t,i)=>t===types[(i+1)%types.length]);
+  if(remove<0){
+   const normalized=vertices.map((p,i)=>{
+    const prev=(i+vertices.length-1)%vertices.length;
+    const h=types[i]==='h'?i:prev;
+    const v=types[i]==='v'?i:prev;
+    const hp=vertices[h],hn=vertices[(h+1)%vertices.length];
+    const vp=vertices[v],vn=vertices[(v+1)%vertices.length];
+    return {x:(vp.x+vn.x)/2,y:(hp.y+hn.y)/2};
+   });
+   if(normalized.some((p,i)=>dist(p,vertices[i])>maxError+0.01||!valid(p)))return null;
+   const area=poly=>Math.abs(poly.reduce((a,p,i)=>a+p.x*poly[(i+1)%poly.length].y-poly[(i+1)%poly.length].x*p.y,0))/2;
+   if(area(source)<1||Math.abs(area(normalized)-area(source))/area(source)>0.05)return null;
+   return normalized;
+  }
+  if(vertices.length<=4)return null;
+  // Usun punkt pomiedzy dwiema niemal wspolliniowymi krawedziami.
+  vertices=vertices.filter((_,i)=>i!==(remove+1)%vertices.length);
+ }
+ return null;
+}
 function orthogonalRects(points){
  if(!Array.isArray(points)||points.length<4||points.length>100||!points.every(valid))return null;
- const eps=1.5;
- const polygon=points.map(p=>({...p}));
- for(let i=0;i<polygon.length;i++){
-  const a=polygon[i],b=polygon[(i+1)%polygon.length];
-  if(Math.min(Math.abs(a.x-b.x),Math.abs(a.y-b.y))>eps)return null;
- }
+ const polygon=normalizeOrthogonalPolygon(points);
+ if(!polygon)return null;
  const xs=[...new Set(polygon.map(p=>p.x))].sort((a,b)=>a-b);
  const ys=[...new Set(polygon.map(p=>p.y))].sort((a,b)=>a-b);
  if(xs.length*ys.length>1500)return null;
@@ -116,7 +148,7 @@ export function generateMeander(room,{scale,offsetCm,spacingCm,maxMeters,manifol
  const g=rectangle(room?.points);
  if(!g){
   const subrooms=orthogonalRects(room?.points);
-  if(!subrooms)throw Error('Ten obrys nie jest prostokątem ani wielokątem z prostymi ścianami (np. L). Sprawdź narożniki i odcinki ukośne.');
+  if(!subrooms)throw Error('Obrys zawiera wyraźnie ukośne ściany lub nieprawidłowe narożniki. Drobne odchylenia są już korygowane automatycznie. Sprawdź obrys lub popraw narożniki.');
   const routes=[];let heatedArea=0,used=0;
   for(const subroom of subrooms){
    // Pomijamy drobne uskoki, ktore nie mieszcza dwoch odsuniec od scian.
