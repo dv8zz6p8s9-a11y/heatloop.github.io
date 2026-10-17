@@ -1,0 +1,21 @@
+/* Keep controls on one baseline even when adjacent labels wrap to different lengths. */
+.quote-grid > label:not(.check),
+.grid > label:not(.check) {
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+main input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+main select {
+  min-height: 44px;
+  font: inherit;
+  line-height: 1.35;
+}
+
+/* The manual form wraps naturally while keeping its button aligned with the fields. */
+#roomForm > label {
+  flex: 1 1 170px;
+  min-width: 0;
+}
+#roomForm > label > input { width: 100%; }
+#roomForm > button { min-height: 44px; }
