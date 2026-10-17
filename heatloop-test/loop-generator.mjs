@@ -257,6 +257,9 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
    const base=rightAnglePath([manifold,...approach]);
    const entry=rightAnglePath([base[base.length-1],spiral[0]]);
    const exit=rightAnglePath([spiral[spiral.length-1],base[base.length-1]]);
+   // Dojścia pozostają osobnymi odcinkami do ręcznej korekty.
+   // Nie przesuwaj ich automatycznie: bez obrysu ścian/drzwi
+   // taki offset mógłby poprowadzić rurę przez przegrodę.
    const route=[...base,...entry.slice(1),...spiral.slice(1),...exit.slice(1),...[...base].reverse().slice(1)];
    if(length(route,scale)>maxMeters+1e-6)return null;
    routes.push({route,stripes:1,coil:spiral,approachIn:[...base,...entry.slice(1)],approachOut:[...exit,...[...base].reverse().slice(1)]});
