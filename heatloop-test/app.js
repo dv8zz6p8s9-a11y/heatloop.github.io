@@ -208,9 +208,9 @@ const drawingHelp={
  rooms:'Prostokąt: przeciągnij po przekątnej. Wielokąt: klikaj narożniki i zakończ obrys.',
  confirm:'Sprawdź powierzchnie i popraw narożniki. Potwierdź każdy obrys przed projektowaniem rur.',
  manifolds:'Wskaż położenie rozdzielacza R1. Kolejne rozdzielacze dodasz w ustawieniach pętli.',
- loops:'Ustaw dla każdego pomieszczenia rozstaw rur i odsunięcie od ścian. Generator ślimakowy jest jeszcze w przygotowaniu.',
+ loops:'Ustaw rozstaw rur i odsunięcie od ścian w ustawieniach pętli. Na tym etapie nie są jeszcze generowane trasy. Następnie zatwierdź dojścia w kroku 7.',
  approaches:'Generator proponuje dojścia do rozdzielacza. Następnie przesuń punkty każdej pętli, prowadząc ją przez drzwi i korytarz; nie przecinaj ścian.',
- review:'Uruchom generator po wskazaniu rozdzielacza, następnie skoryguj kolorowe trasy i sprawdź ich długości.'
+ review:'Po zatwierdzeniu dojść uruchom generator. Sprawdź długości, przebieg rur i ewentualne kolizje ze ścianami.'
 };
 function setDrawingStep(id){
  const idx=drawingStepIds.indexOf(id);if(idx<0)return;
