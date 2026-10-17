@@ -1,33 +1,23 @@
-# heatloop - Projektuj Ogrzewanie
-Właściciel: Rafał Sroczyński
+# HeatLoop
 
-## Naprawa czarnego loadera (screenshot 08:35)
+Aktualna aplikacja BETA: **[heatloop-b/](https://dv8zz6p8s9-a11y.github.io/heatloop.github.io/heatloop-b/)**. Strona produktu: **https://heatloop.pl** (osobny Site i repozytorium źródłowe).
 
-Poprzednia wersja na 6p8s9-a11y.github.io miała infinite czarny loader bo:
-- używała /mnt/data/... ścieżek (404 na GitHub)
-- ładowała cdn.tailwindcss.com blokowany w Meta AI browser
-- brak try/catch
+- `heatloop-b/`: główna aplikacja, moduł grzejników, formularz zgłoszeń, moduły obliczeń i rysunku. Szczegóły w `heatloop-b/README.md`.
+- `help/`: lokalny asystent pomocy; `aiEndpoint=null`. `help/server/` jest opcjonalnym, niewdrożonym serwerem dopasowania tematów, nie częścią uruchamianej BETA.
+- `instrukcja.html`, `pomoc.html`, `materialy/`: pomoc i instrukcja PDF.
+- `wdrozenie/`: kontrolowany pakiet aktualizacji dla obu hostów i kopia strony produktu. Nie zastępuje serwerowego wdrożenia Site ani bazy dziennych sum.
+- główny `index.html`: zachowana wcześniejsza, osobna aplikacja React. Nie jest źródłem BETA ani stroną heatloop.pl. Dołączony skompilowany React i CSS są potrzebne tej wersji; ich krótkie nazwy zmiennych nie oznaczają złośliwego kodu. Nie usuwać ich ręcznie z pakietu.
+- `sw.js`, `manifest.json`, `icon-*.png`: PWA wcześniejszej aplikacji. Tryb offline nie zastępuje BETA starą aplikacją.
+- `heatloop-test/`: historyczny, osobny prototyp do porównań. GitHub Pages udostępnia także ten katalog, jeżeli znajduje się on w publikowanym drzewie.
+- `heatloop-b/backend/`: niewdrożony szablon alternatywnego zapisu zgłoszeń. Aktualny formularz korzysta z FormSubmit; szablon nie obsługuje jego załączników i nie jest gotowym przełącznikiem backendu.
 
-Teraz FIX:
-- własny CSS bez CDN
-- loader znika ZAWSZE po 600ms + window.onerror
-- grafiki w assets/ z fallbackiem
-- buttony dają visible feedback (data-active, toast, hash, SVG)
+## Sprawdzenie
 
-Walidacja: IMAGE_AUDIT 0, INTERACTION 0 no_response, VISUAL 100/100
+```sh
+npm ci --prefix heatloop-b
+npm test --prefix heatloop-b
+node wdrozenie/prepare-update.mjs --manifest
+node --test help/tests/*.test.mjs wdrozenie/tests/*.test.mjs
+```
 
-## Deploy na 6p8s9-a11y.github.io
-
-1. Skopiuj całą zawartość tego folderu do repo 6p8s9-a11y.github.io
-2. Settings -> Pages -> Source: main / root -> Save
-3. Otwórz https://6p8s9-a11y.github.io - działa od razu, onboarding z grafiką HEATLOOP z rur
-
-Struktura:
-- index.html (single file działa nawet bez assets)
-- assets/hero-banner.jpg (granatowy banner)
-- assets/onboarding.jpg (HEATLOOP z rur biała)
-- assets/icon-infinity.jpg (infinity)
-- icons/icon-72x72.png ... icon-512x512.png
-- manifest.json, sw.js, .nojekyll
-
-Funkcje: 3 tryby Podłogówka/Grzejniki/Mieszany, PN-EN 12831/442, baza 60+ grzejników, wizualizacje SVG, wycena, formularz Zgłoś błąd + ⭐ Oceń aplikację + screenshot, PWA offline.
+Raport przeglądu: [AUDYT_KODU_2026-10-17.md](AUDYT_KODU_2026-10-17.md). Usunięte resztki eksportu pozostają odzyskiwalne w historii Git. Nie ma potrzeby utrzymywania ich jako publicznych plików.

@@ -1,4 +1,4 @@
-const CACHE = 'heatloop-v3';
+const CACHE = 'heatloop-v4';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {
@@ -16,7 +16,14 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
   if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).catch(() => caches.match('./index.html')));
+    event.respondWith(fetch(event.request).catch(async () => {
+      const cached = await caches.match(event.request);
+      if (cached) return cached;
+      const url = new URL(event.request.url);
+      const home = new URL('./', self.location.href);
+      if (url.pathname === home.pathname || url.pathname === home.pathname + 'index.html') return caches.match('./index.html');
+      return new Response('Brak połączenia. Ta strona nie jest dostępna offline.', {status:503, headers:{'Content-Type':'text/plain; charset=utf-8'}});
+    }));
     return;
   }
   event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
