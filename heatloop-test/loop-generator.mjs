@@ -232,9 +232,16 @@ export function generateSpiral(room,{scale,offsetCm,spacingCm,maxMeters,manifold
  }
  function build(n){
   const routes=[];
-  const nx=Math.ceil(Math.sqrt(n*width/height)),ny=Math.ceil(n/nx);
+  // Każda komórka musi zostać pokryta: nigdy nie pomijaj ostatnich pól siatki.
+  // Wybieramy pełną siatkę o możliwie najmniejszej liczbie stref.
+  let nx=1,ny=n,best=Infinity;
+  for(let x=1;x<=n;x++){
+   const y=Math.ceil(n/x),ratio=Math.abs(Math.log((width/x)/(height/y)));
+   const score=x*y*100+ratio;
+   if(score<best){best=score;nx=x;ny=y;}
+  }
   const cells=[];
-  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)if(cells.length<n)cells.push({x:d+i*width/nx,y:d+j*height/ny,w:width/nx,h:height/ny});
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)cells.push({x:d+i*width/nx,y:d+j*height/ny,w:width/nx,h:height/ny});
   for(const cell of cells){
    const spiral=coil(cell.x,cell.y,cell.w,cell.h);
    if(!spiral)return null;
