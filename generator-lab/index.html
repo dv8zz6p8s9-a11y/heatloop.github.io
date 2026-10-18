@@ -85,7 +85,7 @@ function spiralIrregular(){
  for(let i=0;i<inward.length-1;i++){
   const a=inward[i],b=inward[i+1],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);
   if(len<1e-6)return [];
-  const sign=signedArea(poly)>0?1:-1;
+  const sign=signedArea(poly)>0?-1:1;
   const nx=-dy/len*s*sign,ny=dx/len*s*sign;
   segs.push({a:[a[0]+nx,a[1]+ny],b:[b[0]+nx,b[1]+ny],v:[dx,dy]});
  }
