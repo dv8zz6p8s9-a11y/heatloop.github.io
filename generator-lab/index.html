@@ -27,7 +27,7 @@ function spiral(){
  // the other arm at exactly one nominal pitch.
  const turns=Math.floor(extent/(2*s)),maxTheta=2*Math.PI*turns;
  if(turns<1)return [];
- const step=Math.PI/96,route=[];
+ const step=Math.PI/24,route=[];
  const point=(theta,phase)=>{
   const radius=(extent/maxTheta)*theta,angle=theta+phase;
   const co=Math.cos(angle),si=Math.sin(angle),den=Math.max(Math.abs(co),Math.abs(si));
