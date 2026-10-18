@@ -55,6 +55,48 @@ function spiral(){
  }
  return route;
 }
+function spiralIrregular(){
+ const s=Number($('spacing').value),off=Number($('offset').value);
+ const diameter=Number($('pipe').value.match(/\d+/)?.[0]||16);
+ if(poly.length!==6||!Number.isFinite(s)||s<8||!Number.isFinite(off)||off<5)return [];
+ const clearance=off+diameter/20,rings=[];
+ for(let k=0;k<40;k++){
+  const d=clearance+k*s,r=offsetPolygon(poly,d);
+  if(!validRing(r,d))break;
+  rings.push(r);
+ }
+ if(rings.length<2)return [];
+ // True two-arm ordering: supply uses every second contour (2*s),
+ // return fills the intervening contours at spacing s.
+ const levels=[];
+ for(let k=0;k<rings.length;k+=2)levels.push(k);
+ for(let k=rings.length-1;k>=1;k--)if(k%2===1)levels.push(k);
+ let best=null,score=Infinity;
+ for(let start=0;start<6;start++)for(let parity=0;parity<2;parity++){
+  const route=[];
+  for(let i=0;i<levels.length;i++){
+   const ring=rings[levels[i]],seq=Array.from({length:6},(_,j)=>ring[(start+j)%6]);
+   if((i+parity)%2)seq.reverse();
+   route.push(...seq);
+  }
+  let valid=true;
+  for(let i=1;i<route.length&&valid;i++){
+   const p=route[i-1],q=route[i];
+   for(let t=0;t<=16;t++){
+    const m=[p[0]+(q[0]-p[0])*t/16,p[1]+(q[1]-p[1])*t/16];
+    if(!safe(m,Math.max(1,clearance-1))){valid=false;break}
+   }
+   for(let j=1;j<i-1&&valid;j++)if(segmentsCross(p,q,route[j-1],route[j]))valid=false;
+  }
+  if(!valid)continue;
+  const first=route[0],last=route[route.length-1];
+  const endpointDistance=Math.hypot(first[0]-last[0],first[1]-last[1]);
+  // Prefer endpoints close together, then a start along the long outer wall.
+  const rank=endpointDistance+(start===0?0:0.01);
+  if(rank<score){score=rank;best=route}
+ }
+ return best||[];
+}
 function cross2(a,b,c){return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])}
 function segmentsCross(a,b,c,d){const x=cross2(a,b,c),y=cross2(a,b,d),z=cross2(c,d,a),w=cross2(c,d,b);return x*y< -0.0001&&z*w< -0.0001}
 
