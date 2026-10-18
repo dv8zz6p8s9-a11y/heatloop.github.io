@@ -2,6 +2,7 @@
  * Units: metres. No automatic split until layoutLoops().
  * This is a planning engine, NOT a certified hydraulic design.
  */
+import {validatePolygon} from './spiral-overlay.mjs';
 const EPS=1e-9;
 export const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 export const pathLength=p=>p.slice(1).reduce((s,q,i)=>s+dist(p[i],q),0);
@@ -21,7 +22,7 @@ export function pointInPolygon(p,poly){
  }return inside;
 }
 export function configureRoom(room,{spacing=0.15,wallOffset=0.1}={}){
- if(!room?.id||!Array.isArray(room.polygon)||room.polygon.length<3||!(spacing>0)||!(wallOffset>=0))throw Error('Niepoprawne pomieszczenie lub rozstaw');
+ if(!room?.id||!validatePolygon(room.polygon)||!Number.isFinite(spacing)||spacing<=0||!Number.isFinite(wallOffset)||wallOffset<0)throw Error('Niepoprawne pomieszczenie lub rozstaw');
  return {...room,spacing,wallOffset,area:polygonArea(room.polygon),layout:null};
 }
 function bounds(poly){return {minX:Math.min(...poly.map(p=>p.x)),maxX:Math.max(...poly.map(p=>p.x)),minY:Math.min(...poly.map(p=>p.y)),maxY:Math.max(...poly.map(p=>p.y))}}
