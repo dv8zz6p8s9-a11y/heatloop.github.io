@@ -72,3 +72,26 @@ def generate_layout(width_m,height_m,spacing_m=0.15,offset_m=0.15,bend_radius_m=
     return {"type":"meander-experimental","points":smooth,
             "length_m":length_m(smooth),"crossings":self_crossings(smooth),
             "supply":smooth[0],"return":smooth[-1]}
+
+def spiral_inward_tracks(width_m,height_m,spacing_m=0.15,offset_m=0.15):
+    """Experimental inward track of a two-arm spiral, 2*spacing pitch.
+
+    This is NOT a finished heating circuit: the interleaved outward arm and
+    centre U-turn must be generated and validated before use in the UI.
+    """
+    vals=(width_m,height_m,spacing_m,offset_m)
+    if any(not isinstance(v,(int,float)) or not 0<v<float("inf") for v in vals):
+        raise ValueError("Invalid dimensions")
+    left,top=offset_m,offset_m
+    right,bottom=width_m-offset_m,height_m-offset_m
+    if min(right-left,bottom-top)<4*spacing_m:
+        raise ValueError("Room too small for spiral")
+    route=[(right,top),(right,bottom),(left,bottom),(left,top)]
+    for k in range(1,100):
+        x0=left+2*k*spacing_m
+        x1=right-2*k*spacing_m
+        y0=top+2*k*spacing_m
+        y1=bottom-2*k*spacing_m
+        if min(x1-x0,y1-y0)<2*spacing_m: break
+        route.extend([(x1,y0),(x1,y1),(x0,y1),(x0,y0)])
+    return route
