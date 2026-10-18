@@ -65,31 +65,33 @@ function spiralIrregular(){
  const diameter=Number($('pipe').value.match(/\d+/)?.[0]||16);
  if(poly.length!==6||!Number.isFinite(s)||s<8||!Number.isFinite(off)||off<5)return [];
  const clearance=off+diameter/20;
- // Connected concentric L insets. Alternate direction at every level,
- // joining matching vertices through the free corridor.
- // This fills both arms; it is NOT yet a double-arm counterflow spiral.
+ // Follow successive L contours toward the centre. Every connector is
+ // checked before being appended; invalid inner turns are omitted.
  const rings=[];
  for(let k=0;k<40;k++){
   const d=clearance+k*s,ring=offsetPolygon(poly,d);
   if(!validRing(ring,d))break;
   rings.push(ring);
  }
- if(rings.length<2)return [];
  const route=[];
+ const validAppend=(pts)=>{
+  const candidate=route.concat(pts);
+  for(let i=Math.max(1,route.length);i<candidate.length;i++){
+   const p=candidate[i-1],q=candidate[i];
+   for(let t=0;t<=16;t++){
+    const m=[p[0]+(q[0]-p[0])*t/16,p[1]+(q[1]-p[1])*t/16];
+    if(!safe(m,Math.max(1,clearance-1)))return false;
+   }
+   for(let j=1;j<i-1;j++)if(segmentsCross(p,q,candidate[j-1],candidate[j]))return false;
+  }
+  return true;
+ };
  for(let k=0;k<rings.length;k++){
   const ring=k%2===0?rings[k]:rings[k].slice().reverse();
+  if(!validAppend(ring))break;
   route.push(...ring);
  }
- // Reject any bridge crossing a wall or another section of pipe.
- for(let i=1;i<route.length;i++){
-  const p=route[i-1],q=route[i];
-  for(let t=0;t<=12;t++){
-   const m=[p[0]+(q[0]-p[0])*t/12,p[1]+(q[1]-p[1])*t/12];
-   if(!safe(m,Math.max(1,clearance-1)))return [];
-  }
-  for(let j=1;j<i-1;j++)if(segmentsCross(p,q,route[j-1],route[j]))return [];
- }
- return route;
+ return route.length>=6?route:[];
 }
 function cross2(a,b,c){return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])}
 function segmentsCross(a,b,c,d){const x=cross2(a,b,c),y=cross2(a,b,d),z=cross2(c,d,a),w=cross2(c,d,b);return x*y< -0.0001&&z*w< -0.0001}
