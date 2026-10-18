@@ -1,0 +1,94 @@
+<!doctype html><html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HeatLoop LAB — test scalania</title><style>body{font:16px system-ui;max-width:1050px;margin:20px auto;padding:0 14px;color:#17364a;background:#f3f8fc}svg{width:100%;max-height:550px;background:white;border:1px solid #bfd2dd;border-radius:10px}pre{white-space:pre-wrap;background:white;padding:18px;border-radius:10px}button,select,input{padding:9px;margin:6px}aside{background:#fff4d8;padding:12px;border-left:4px solid #d18b17}</style><h1>HeatLoop LAB — test scalania ślimaków L</h1><p><a href="../">Generator LAB</a> · <a href="nepath-cfs-test.html">Kod NEPath CFS</a></p><aside>To uruchamialny eksperyment JavaScript oparty na istniejącym generatorze HeatLoop. Nie jest to jeszcze port oryginalnego algorytmu NEPath CFS. Wynik wymaga walidacji instalacyjnej.</aside><label>Tryb <select id="mode"><option value="merge">Dwa ślimaki — próba scalenia</option><option value="single">Jeden ślimak L</option></select></label><label>Rozstaw (cm) <input id="spacing" type="number" min="8" max="30" value="15"></label><input id="offset" type="hidden" value="12"><input id="pipe" type="hidden" value="PEX 16"><button id="run">Przelicz</button><svg id="view" viewBox="270 145 360 360"></svg><pre id="report"></pre><script>const svg=document.getElementById('view'),report=document.getElementById('report');
+const full=[[300,175],[600,175],[600,325],[450,325],[450,475],[300,475]];
+let poly=full;
+const $=id=>document.getElementById(id);
+function inside(x,y,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){let a=p[i],b=p[j];if((a[1]>y)!=(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+function distSegment(p,a,b){let dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)}
+function safe(p,margin){if(!inside(p[0],p[1],poly))return false;for(let i=0;i<poly.length;i++)if(distSegment(p,poly[i],poly[(i+1)%poly.length])<margin)return false;return true}
+function signedArea(p){let a=0;for(let i=0;i<p.length;i++){let q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1]}return a/2}
+function offsetPolygon(p,d){const ccw=signedArea(p)>0,lines=[];for(let i=0;i<p.length;i++){let a=p[i],b=p[(i+1)%p.length],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);if(len<1)return null;let nx=(ccw?-dy:dy)/len,ny=(ccw?dx:-dx)/len;lines.push({a:[a[0]+nx*d,a[1]+ny*d],v:[dx,dy]})}let out=[];for(let i=0;i<p.length;i++){let u=lines[(i+p.length-1)%p.length],v=lines[i],cross=u.v[0]*v.v[1]-u.v[1]*v.v[0];if(Math.abs(cross)<1e-8)return null;let w=[v.a[0]-u.a[0],v.a[1]-u.a[1]],t=(w[0]*v.v[1]-w[1]*v.v[0])/cross;out.push([u.a[0]+u.v[0]*t,u.a[1]+u.v[1]*t])}return out}
+function validRing(r,margin){if(!r||r.length<3||Math.abs(signedArea(r))<100)return false;for(let i=0;i<r.length;i++){let a=r[i],b=r[(i+1)%r.length];for(let k=0;k<=20;k++){let t=k/20,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];if(!safe(p,Math.max(1,margin-2)))return false}}for(let i=0;i<r.length;i++)for(let j=i+1;j<r.length;j++){if(j===i+1||(i===0&&j===r.length-1))continue;let a=r[i],b=r[(i+1)%r.length],v=r[j],w=r[(j+1)%r.length];let orient=(x,y,z)=>(y[0]-x[0])*(z[1]-x[1])-(y[1]-x[1])*(z[0]-x[0]);if(orient(a,b,v)*orient(a,b,w)<0&&orient(v,w,a)*orient(v,w,b)<0)return false}return true}
+function spiral(){
+ const s=Number($('spacing').value),off=Number($('offset').value);
+ if(!Number.isFinite(s)||s<8||!Number.isFinite(off)||off<5||poly.length!==4)return [];
+ const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);
+ const L=Math.min(...xs),R=Math.max(...xs),T=Math.min(...ys),B=Math.max(...ys);
+ if(!poly.every(p=>(Math.abs(p[0]-L)<.01||Math.abs(p[0]-R)<.01)&&(Math.abs(p[1]-T)<.01||Math.abs(p[1]-B)<.01)))return [];
+ const pipeRadius=Number($('pipe').value.match(/\d+/)?.[0]||16)/20; const axisOffset=off+pipeRadius;
+ const x0=L+axisOffset,y0=T+axisOffset,x1=R-axisOffset,y1=B-axisOffset;
+ if(Math.min(x1-x0,y1-y0)<5*s)return [];
+ // Clockwise inward arm: successive parallel tracks are separated by 2 pitches.
+ const inward=[[x0,y0]];let left=x0,right=x1,top=y0,bottom=y1;
+ for(let i=0;i<200;i++){
+  const d=i%4,last=inward[inward.length-1];let q;
+  if(d===0){q=[right,last[1]];top+=2*s}
+  else if(d===1){q=[last[0],bottom];right-=2*s}
+  else if(d===2){q=[left,last[1]];bottom-=2*s}
+  else{q=[last[0],top];left+=2*s}
+  if(Math.hypot(q[0]-last[0],q[1]-last[1])<2.5*s)break;
+  inward.push(q);
+ }
+ if(inward.length<5)return [];
+ // Parallel return arm at one pitch on the inside (right side) of inward travel.
+ const shifted=[];
+ for(let i=0;i<inward.length-1;i++){
+  const a=inward[i],b=inward[i+1],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);
+  const nx=-dy/len*s,ny=dx/len*s;
+  shifted.push({a:[a[0]+nx,a[1]+ny],b:[b[0]+nx,b[1]+ny],v:[dx,dy]});
+ }
+ const outward=[shifted[0].a];
+ for(let i=1;i<shifted.length;i++){
+  const u=shifted[i-1],v=shifted[i],det=u.v[0]*v.v[1]-u.v[1]*v.v[0];
+  if(Math.abs(det)<1e-9)return [];
+  const w=[v.a[0]-u.a[0],v.a[1]-u.a[1]];
+  const t=(w[0]*v.v[1]-w[1]*v.v[0])/det;
+  outward.push([u.a[0]+t*u.v[0],u.a[1]+t*u.v[1]]);
+ }
+ outward.push(shifted[shifted.length-1].b);
+ // The centre connector links the two arms; return runs outward in reverse order.
+ const route=inward.concat(outward.reverse());
+ // Reject any path with geometric crossings or a departure from the room.
+ for(let i=1;i<route.length;i++){
+  const a=route[i-1],b=route[i],mid=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  if(!safe(mid,Math.max(1,axisOffset-1)))return [];
+  for(let j=1;j<i-1;j++)if(segmentsCross(a,b,route[j-1],route[j]))return [];
+ }
+ return route;
+}
+function cross2(a,b,c){return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])}
+function segmentsCross(a,b,c,d){const x=cross2(a,b,c),y=cross2(a,b,d),z=cross2(c,d,a),w=cross2(c,d,b);return x*y< -0.0001&&z*w< -0.0001}
+
+function length(p){return p.reduce((v,x,i)=>v+(i?Math.hypot(x[0]-p[i-1][0],x[1]-p[i-1][1])/100:0),0)}
+function metrics(route,spacing){
+ let crossings=0,wall=0,minSpacing=Infinity;
+ for(let i=1;i<route.length;i++){
+  const a=route[i-1],b=route[i];
+  for(let t=0;t<=20;t++){const p=[a[0]+(b[0]-a[0])*t/20,a[1]+(b[1]-a[1])*t/20];if(!safe(p,Number($('offset').value)+.8-.05))wall++}
+  for(let j=1;j<i-1;j++){
+   if(segmentsCross(a,b,route[j-1],route[j]))crossings++;
+   const c=route[j-1],d=route[j];
+   const gap=Math.min(distSegment(a,c,d),distSegment(b,c,d),distSegment(c,a,b),distSegment(d,a,b));
+   minSpacing=Math.min(minSpacing,gap);
+  }
+ }
+ return {length:length(route),crossings,wall,minSpacing:Number.isFinite(minSpacing)?minSpacing:null};
+}
+function line(points,color,width=3){if(!points.length)return '';return '<polyline points="'+points.map(p=>p.join(',')).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="'+width+'" stroke-linecap="round" stroke-linejoin="round"/>'}
+function run(){
+ const spacing=Number($('spacing').value);poly=full;
+ const single=spiralIrregular();
+ const big=[[300,175],[450,175],[450,475],[300,475]],small=[[450,175],[600,175],[600,325],[450,325]];
+ poly=big;const A=spiral();poly=small;const B=spiral();poly=full;
+ let attempts=[];
+ if(A.length&&B.length)for(const ra of [false,true])for(const rb of [false,true]){
+  const x=ra?[...A].reverse():A,y=rb?[...B].reverse():B,merged=x.concat(y),m=metrics(merged,spacing);
+  attempts.push({ra,rb,x,y,merged,m,bridge:Math.hypot(x.at(-1)[0]-y[0][0],x.at(-1)[1]-y[0][1])/100});
+ }
+ attempts.sort((a,b)=>(a.m.crossings+a.m.wall)*1000+a.bridge-(b.m.crossings+b.m.wall)*1000-b.bridge);
+ const best=attempts[0],mode=$('mode').value;
+ let route=mode==='single'?single:best?.merged||[],m=route.length?metrics(route,spacing):null;
+ svg.innerHTML='<polygon points="'+full.map(p=>p.join(',')).join(' ')+'" fill="#e5f3f9" stroke="#244c64" stroke-width="3"/>'+ (mode==='single'?line(single,'#087eaa'):best?line(best.x,'#087eaa')+line(best.y,'#c16b19')+line([best.x.at(-1),best.y[0]],'#c82945',3):'');
+ const status=mode==='merge'?'Eksperyment scalania dwóch prostokątnych ślimaków (nie jest to port NEPath CFS).':'Oryginalny algorytm L';
+ report.textContent=status+'\nRozstaw: '+spacing+' cm\nDługość: '+(m?m.length.toFixed(2)+' m':'brak trasy')+'\nPrzecięcia: '+(m?m.crossings:'—')+'\nPróbki naruszające odstęp od ściany: '+(m?m.wall:'—')+'\nMinimalny odstęp niesąsiednich odcinków: '+(m&&m.minSpacing!==null?m.minSpacing.toFixed(1)+' cm':'—')+'\n'+(best&&mode==='merge'?'Przejście między polami: '+best.bridge.toFixed(2)+' m\nPróby kierunków: '+attempts.length:'')+'\nUWAGA: nie zweryfikowano promieni gięcia ani prawidłowego rozstawu na całej powierzchni. Wynik nie jest projektem wykonawczym.';
+}
+$('run').onclick=run;$('mode').onchange=run;run();</script></html>
