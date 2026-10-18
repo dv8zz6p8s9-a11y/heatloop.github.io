@@ -62,52 +62,19 @@ function spiral(){
 }
 function spiralIrregular(){
  const s=Number($('spacing').value),off=Number($('offset').value);
- const pipeRadius=Number($('pipe').value.match(/\d+/)?.[0]||16)/20;
+ const diameter=Number($('pipe').value.match(/\d+/)?.[0]||16);
  if(poly.length!==6||!Number.isFinite(s)||s<8||!Number.isFinite(off)||off<5)return [];
- const clearance=off+pipeRadius;
- // Orthogonal polygon contours, spaced 2 pitches apart for two counterflow arms.
- const rings=[];
- for(let k=0;k<80;k++){
-  const ring=offsetPolygon(poly,clearance+2*k*s);
-  if(!validRing(ring,clearance+2*k*s))break;
-  if(ring.some((p,i)=>Math.hypot(p[0]-ring[(i+1)%ring.length][0],p[1]-ring[(i+1)%ring.length][1])<2.5*s))break;
-  rings.push(ring);
- }
- if(!rings.length)return [];
- // Open each successive contour at the same vertex; connect across the
- // free corridor at the concave end instead of closing separate loops.
- const inward=[];
- for(const ring of rings)for(const p of ring)inward.push(p);
- if(inward.length<6)return [];
- // Offset the inward polyline by one pitch, intersecting adjacent
- // parallel lines at corners to form the counterflow return arm.
- const segs=[];
- for(let i=0;i<inward.length-1;i++){
-  const a=inward[i],b=inward[i+1],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);
-  if(len<1e-6)return [];
-  const sign=signedArea(poly)>0?-1:1;
-  const nx=-dy/len*s*sign,ny=dx/len*s*sign;
-  segs.push({a:[a[0]+nx,a[1]+ny],b:[b[0]+nx,b[1]+ny],v:[dx,dy]});
- }
- const out=[segs[0].a];
- for(let i=1;i<segs.length;i++){
-  const u=segs[i-1],v=segs[i],det=u.v[0]*v.v[1]-u.v[1]*v.v[0];
-  if(Math.abs(det)<1e-7){
-   out.push(v.a);continue;
-  }
-  const w=[v.a[0]-u.a[0],v.a[1]-u.a[1]];
-  const t=(w[0]*v.v[1]-w[1]*v.v[0])/det;
-  const q=[u.a[0]+t*u.v[0],u.a[1]+t*u.v[1]];
-  if(Math.hypot(q[0]-v.a[0],q[1]-v.a[1])>4*s)return [];
-  out.push(q);
- }
- out.push(segs[segs.length-1].b);
- const route=inward.concat(out.reverse());
- // Reject intersections and routes that leave the usable room.
+ const clearance=off+diameter/20;
+ // Two nested, open L contours: supply along outer contour, return along
+ // inner contour. This is a safe first two-arm L circuit, not full coverage.
+ const outer=offsetPolygon(poly,clearance);
+ const inner=offsetPolygon(poly,clearance+s);
+ if(!validRing(outer,clearance)||!validRing(inner,clearance+s))return [];
+ const route=outer.concat(inner.slice().reverse());
  for(let i=1;i<route.length;i++){
   const p=route[i-1],q=route[i];
-  for(let t=0;t<=4;t++){
-   const m=[p[0]+(q[0]-p[0])*t/4,p[1]+(q[1]-p[1])*t/4];
+  for(let t=0;t<=10;t++){
+   const m=[p[0]+(q[0]-p[0])*t/10,p[1]+(q[1]-p[1])*t/10];
    if(!safe(m,Math.max(1,clearance-1)))return [];
   }
   for(let j=1;j<i-1;j++)if(segmentsCross(p,q,route[j-1],route[j]))return [];
@@ -194,7 +161,7 @@ if($('gridVisible').checked&&Number.isFinite(pitch)&&pitch>=8){
  const x0=Math.min(...poly.map(p=>p[0]))+offset,y0=Math.min(...poly.map(p=>p[1]))+offset;
  for(let k=Math.ceil(-x0/pitch);x0+k*pitch<=900;k++)el('line',{x1:x0+k*pitch,y1:0,x2:x0+k*pitch,y2:650,stroke:'#d6e6ee','stroke-width':0.65,'stroke-dasharray':'3 5'});
  for(let k=Math.ceil(-y0/pitch);y0+k*pitch<=650;k++)el('line',{x1:0,y1:y0+k*pitch,x2:900,y2:y0+k*pitch,stroke:'#d6e6ee','stroke-width':0.65,'stroke-dasharray':'3 5'});
-}else{for(let x=0;x<900;x+=50)el('line',{x1:x,y1:0,x2:x,y2:650,stroke:'#e0eaf0'});for(let y=0;y<650;y+=50)el('line',{x1:0,y1:y,x2:900,y2:y,stroke:'#e0eaf0'});}el('polygon',{points:poly.map(p=>p.join(',')).join(' '),fill:'#e2f4fa',stroke:'#176a86','stroke-width':4});let route=generated?(poly.length===6?spiralIrregular():spiral()):[];if(generated&&!route.length){$('modeText').textContent='Brak bezkolizyjnej trasy dla tych wymiarów. Zmień rozstaw lub geometrię pomieszczenia. Wybierz Prostokąt i Generuj pętle.';}if(flipped)route.reverse();let bendRadius=Math.min(8,Number($('spacing').value)/2);let bendWarnings=route.length?bendDiagnostics(route,bendRadius):0;route=roundedRoute(route,bendRadius);paths=[];let max=Number($('limit').value);if(route.length){if(splitMode&&max>0){let current=[route[0]],l=0;for(let i=1;i<route.length;i++){let seg=Math.hypot(route[i][0]-route[i-1][0],route[i][1]-route[i-1][1])/100;if(l+seg>max&&current.length>1){paths.push(current);current=[route[i-1]];l=0}current.push(route[i]);l+=seg}if(current.length>1)paths.push(current)}else paths=[route];paths.forEach((p,i)=>{el('polyline',{points:p.map(a=>a.join(',')).join(' '),fill:'none',stroke:['#007aa4','#bd6e2b','#387b53','#865bb5'][i%4],'stroke-width':3.2,'stroke-linejoin':'round','stroke-linecap':'round'});let idx=Math.min(p.length-1,Math.round(startFraction*(p.length-1)));let pt=p[0];el('circle',{cx:pt[0],cy:pt[1],r:6,fill:'#e34e38',stroke:'#fff','stroke-width':2});let endPt=p[p.length-1];el('circle',{cx:endPt[0],cy:endPt[1],r:6,fill:'#2eaa65',stroke:'#fff','stroke-width':2})})}poly.forEach((p,i)=>el('circle',{cx:p[0],cy:p[1],r:8,fill:'#d8873b',stroke:'#fff','stroke-width':2,'data-i':i}));let total=paths.reduce((s,p)=>s+length(p),0);let validation=route.length?validateBrowserRoute(route,offset):null;let status=validation?(validation.valid?'Przeszła kontrolę podstawową':'Wykryto naruszenia geometrii'):'Brak trasy';$('stats').innerHTML='Kontrola geometrii: <b>'+status+'</b><br>Przecięcia trasy: <b>'+(validation?validation.crossings:'—')+'</b><br>Przecięcia ścian / wyjścia poza obrys: <b>'+(validation?validation.wallViolations:'—')+'</b><br>Najmniejszy odstęp osi od ściany: <b>'+(validation&&validation.minimumWallDistance!==null?(validation.minimumWallDistance/100).toFixed(3)+' m':'—')+'</b><br>Wymagany odstęp osi od ściany: <b>'+(validation?(validation.required/100).toFixed(3)+' m':'—')+'</b><br>Rozstaw między sąsiednimi rurami: <b>nie zweryfikowano</b><br>Potencjalnie ciasne narożniki: <b>'+bendWarnings+'</b><br>Długość narysowanej trasy: <b>'+total.toFixed(1)+' m</b><br>Obiegi na rysunku: <b>'+paths.length+'</b><br>Limit: '+max+' m<br>'+(paths.some(p=>length(p)>max)?'<span class="warn">Przekroczono limit długości obiegu.</span>':'')+(poly.length===6?'<br><span class="warn">Kształt L: algorytm eksperymentalny, może nie pokrywać całej powierzchni.</span>':'');}
+}else{for(let x=0;x<900;x+=50)el('line',{x1:x,y1:0,x2:x,y2:650,stroke:'#e0eaf0'});for(let y=0;y<650;y+=50)el('line',{x1:0,y1:y,x2:900,y2:y,stroke:'#e0eaf0'});}el('polygon',{points:poly.map(p=>p.join(',')).join(' '),fill:'#e2f4fa',stroke:'#176a86','stroke-width':4});let route=generated?(poly.length===6?spiralIrregular():spiral()):[];if(generated&&!route.length){$('modeText').textContent='Brak bezkolizyjnej trasy dla tych wymiarów. Zmień rozstaw lub geometrię pomieszczenia. Sprawdź ustawienia i spróbuj ponownie.';}if(flipped)route.reverse();let bendRadius=Math.min(8,Number($('spacing').value)/2);let bendWarnings=route.length?bendDiagnostics(route,bendRadius):0;route=roundedRoute(route,bendRadius);paths=[];let max=Number($('limit').value);if(route.length){if(splitMode&&max>0){let current=[route[0]],l=0;for(let i=1;i<route.length;i++){let seg=Math.hypot(route[i][0]-route[i-1][0],route[i][1]-route[i-1][1])/100;if(l+seg>max&&current.length>1){paths.push(current);current=[route[i-1]];l=0}current.push(route[i]);l+=seg}if(current.length>1)paths.push(current)}else paths=[route];paths.forEach((p,i)=>{el('polyline',{points:p.map(a=>a.join(',')).join(' '),fill:'none',stroke:['#007aa4','#bd6e2b','#387b53','#865bb5'][i%4],'stroke-width':3.2,'stroke-linejoin':'round','stroke-linecap':'round'});let idx=Math.min(p.length-1,Math.round(startFraction*(p.length-1)));let pt=p[0];el('circle',{cx:pt[0],cy:pt[1],r:6,fill:'#e34e38',stroke:'#fff','stroke-width':2});let endPt=p[p.length-1];el('circle',{cx:endPt[0],cy:endPt[1],r:6,fill:'#2eaa65',stroke:'#fff','stroke-width':2})})}poly.forEach((p,i)=>el('circle',{cx:p[0],cy:p[1],r:8,fill:'#d8873b',stroke:'#fff','stroke-width':2,'data-i':i}));let total=paths.reduce((s,p)=>s+length(p),0);let validation=route.length?validateBrowserRoute(route,offset):null;let status=validation?(validation.valid?'Przeszła kontrolę podstawową':'Wykryto naruszenia geometrii'):'Brak trasy';$('stats').innerHTML='Kontrola geometrii: <b>'+status+'</b><br>Przecięcia trasy: <b>'+(validation?validation.crossings:'—')+'</b><br>Przecięcia ścian / wyjścia poza obrys: <b>'+(validation?validation.wallViolations:'—')+'</b><br>Najmniejszy odstęp osi od ściany: <b>'+(validation&&validation.minimumWallDistance!==null?(validation.minimumWallDistance/100).toFixed(3)+' m':'—')+'</b><br>Wymagany odstęp osi od ściany: <b>'+(validation?(validation.required/100).toFixed(3)+' m':'—')+'</b><br>Rozstaw między sąsiednimi rurami: <b>nie zweryfikowano</b><br>Potencjalnie ciasne narożniki: <b>'+bendWarnings+'</b><br>Długość narysowanej trasy: <b>'+total.toFixed(1)+' m</b><br>Obiegi na rysunku: <b>'+paths.length+'</b><br>Limit: '+max+' m<br>'+(paths.some(p=>length(p)>max)?'<span class="warn">Przekroczono limit długości obiegu.</span>':'')+(poly.length===6?'<br><span class="warn">Kształt L: wstępna trasa obwodowa, nie pokrywa całej powierzchni. Nie jest projektem wykonawczym.</span>':'');}
 function setMode(m){mode=m;$('modeText').textContent=m==='start'?'Kliknij ścianę, aby zmienić stronę przyłączeń. Ślimak dwuramienny LAB — strona przyłączy jest obecnie stała.':'Przeciągaj pomarańczowe narożniki. Trasa przeliczy się automatycznie.';$('edit').classList.toggle('active',m==='edit');$('start').classList.toggle('active',m==='start')}
 function pos(e){let pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;let p=pt.matrixTransform(svg.getScreenCTM().inverse());return [p.x,p.y]}
 svg.addEventListener('pointerdown',e=>{let p=pos(e);if(mode==='edit'){let d=25;selected=-1;poly.forEach((v,i)=>{let x=Math.hypot(v[0]-p[0],v[1]-p[1]);if(x<d){d=x;selected=i}});if(selected>=0)svg.setPointerCapture(e.pointerId)}else if(mode==='start'&&paths.length){connectionPoint=p;refresh()}});
