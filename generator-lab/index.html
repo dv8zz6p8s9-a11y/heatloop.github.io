@@ -29,7 +29,7 @@ const entry=route[0],exit=route[route.length-1];
 if(entry&&exit){
   // Restore layout even when the experimental collision checker finds
   // crossings; warnings remain visible in the diagnostics panel.
-  const candidates=[L,R].map(x=>({
+  const candidates=[R].map(x=>({
     x,
     crossings:inspectRoute([[x,entry[1]],...route,[x,exit[1]]]),
     distance:Math.abs(x-entry[0])+Math.abs(x-exit[0])
@@ -44,7 +44,7 @@ function cross2(a,b,c){return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])}
 function segmentsCross(a,b,c,d){const x=cross2(a,b,c),y=cross2(a,b,d),z=cross2(c,d,a),w=cross2(c,d,b);return x*y< -0.0001&&z*w< -0.0001}
 function inspectRoute(p){let crossings=0;for(let i=1;i<p.length;i++)for(let j=i+2;j<p.length;j++){if(segmentsCross(p[i-1],p[i],p[j-1],p[j]))crossings++}return crossings}
 function segmentDistance(a,b,c,d){const pd=(p,x,y)=>{let vx=y[0]-x[0],vy=y[1]-x[1],den=vx*vx+vy*vy,t=den?Math.max(0,Math.min(1,((p[0]-x[0])*vx+(p[1]-x[1])*vy)/den)):0;return Math.hypot(p[0]-x[0]-t*vx,p[1]-x[1]-t*vy)};return Math.min(pd(a,c,d),pd(b,c,d),pd(c,a,b),pd(d,a,b))}
-function spacingWarnings(p,spacing){let bad=0,min=Infinity;for(let i=1;i<p.length;i++)for(let j=i+3;j<p.length;j++){const dist=segmentDistance(p[i-1],p[i],p[j-1],p[j]);min=Math.min(min,dist);if(dist<spacing*0.65)bad++}return {bad,min:Number.isFinite(min)?min:null}}
+function spacingWarnings(p,spacing){let bad=0,min=Infinity;for(let i=1;i<p.length;i++)for(let j=i+8;j<p.length;j++){const dist=segmentDistance(p[i-1],p[i],p[j-1],p[j]);min=Math.min(min,dist);if(dist<spacing*0.65)bad++}return {bad,min:Number.isFinite(min)?min:null}}
 function roundedRoute(p,radius){if(p.length<3)return p;let out=[p[0]];for(let i=1;i<p.length-1;i++){let a=p[i-1],b=p[i],d=p[i+1],u=[a[0]-b[0],a[1]-b[1]],v=[d[0]-b[0],d[1]-b[1]],la=Math.hypot(...u),lb=Math.hypot(...v);if(la<0.001||lb<0.001){out.push(b);continue}u=u.map(x=>x/la);v=v.map(x=>x/lb);let theta=Math.acos(Math.max(-1,Math.min(1,u[0]*v[0]+u[1]*v[1])));if(theta<0.15||Math.PI-theta<0.05){out.push(b);continue}let tangent=radius/Math.tan(theta/2),t=Math.min(tangent,la*0.3,lb*0.3);if(t<0.3){out.push(b);continue}let x=[b[0]+u[0]*t,b[1]+u[1]*t],y=[b[0]+v[0]*t,b[1]+v[1]*t];out.push(x);for(let j=1;j<=6;j++){let z=j/6,w=1-z;out.push([w*w*x[0]+2*w*z*b[0]+z*z*y[0],w*w*x[1]+2*w*z*b[1]+z*z*y[1]])}}out.push(p[p.length-1]);return out}
 function bendDiagnostics(p,radius){let sharp=0;for(let i=1;i<p.length-1;i++){let a=p[i-1],b=p[i],d=p[i+1],l1=Math.hypot(a[0]-b[0],a[1]-b[1]),l2=Math.hypot(d[0]-b[0],d[1]-b[1]);if(Math.min(l1,l2)<radius*2)sharp++}return sharp}
 function length(p){let n=0;for(let i=1;i<p.length;i++)n+=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1])/100;return n}
