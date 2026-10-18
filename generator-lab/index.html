@@ -15,33 +15,34 @@ function offsetPolygon(p,d){const ccw=signedArea(p)>0,lines=[];for(let i=0;i<p.l
 function validRing(r,margin){if(!r||r.length<3||Math.abs(signedArea(r))<100)return false;for(let i=0;i<r.length;i++){let a=r[i],b=r[(i+1)%r.length];for(let k=0;k<=20;k++){let t=k/20,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];if(!safe(p,Math.max(1,margin-2)))return false}}for(let i=0;i<r.length;i++)for(let j=i+1;j<r.length;j++){if(j===i+1||(i===0&&j===r.length-1))continue;let a=r[i],b=r[(i+1)%r.length],v=r[j],w=r[(j+1)%r.length];let orient=(x,y,z)=>(y[0]-x[0])*(z[1]-x[1])-(y[1]-x[1])*(z[0]-x[0]);if(orient(a,b,v)*orient(a,b,w)<0&&orient(v,w,a)*orient(v,w,b)<0)return false}return true}
 function spiral(){
  const s=Number($('spacing').value),off=Number($('offset').value);
- if(!Number.isFinite(s)||s<8||!Number.isFinite(off)||off<5)return [];
- if(poly.length!==4)return spiralIrregular();
+ if(!Number.isFinite(s)||s<8||!Number.isFinite(off)||off<5||poly.length!==4)return [];
  const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);
  const L=Math.min(...xs),R=Math.max(...xs),T=Math.min(...ys),B=Math.max(...ys);
  if(!poly.every(p=>(Math.abs(p[0]-L)<.01||Math.abs(p[0]-R)<.01)&&(Math.abs(p[1]-T)<.01||Math.abs(p[1]-B)<.01)))return [];
- const cx=(L+R)/2,cy=(T+B)/2,extent=Math.min(R-L,B-T)/2-off;
- if(extent<3*s)return [];
- // Two interleaved square spirals, with a continuous central turnaround.
- // Each arm grows by 2 pitches per revolution; phase shift PI interleaves
- // the other arm at exactly one nominal pitch.
- const turns=Math.floor(extent/(2*s)),maxTheta=2*Math.PI*turns;
- if(turns<1)return [];
- const step=Math.PI/24,route=[];
- const point=(theta,phase)=>{
-  const radius=(extent/maxTheta)*theta,angle=theta+phase;
-  const co=Math.cos(angle),si=Math.sin(angle),den=Math.max(Math.abs(co),Math.abs(si));
-  return [cx+radius*co/den,cy+radius*si/den];
- };
- // Supply travels inwards, return travels outwards.
- for(let t=maxTheta;t>0;t-=step)route.push(point(t,0));
- route.push([cx,cy]);
- for(let t=step;t<maxTheta;t+=step)route.push(point(t,Math.PI));
- route.push(point(maxTheta,Math.PI));
- // No straight radial leads: these would cross the outer return lanes.
- // Expose the two ends on the outermost generated track.
- if(inspectRoute(route)>0)return [];
- return route;
+ const x0=L+off,y0=T+off,x1=R-off,y1=B-off;
+ const p=[],add=(x,y)=>{const q=p[p.length-1];if(!q||Math.hypot(q[0]-x,q[1]-y)>1e-5)p.push([x,y])};
+ // A single continuous rectangular meander spiral with exact right angles.
+ // The return occupies the alternate tracks in reverse winding direction.
+ const layers=[];
+ for(let k=0;k<100;k++){let l=x0+k*2*s,r=x1-k*2*s,t=y0+k*2*s,b=y1-k*2*s;if(r-l<2*s||b-t<2*s)break;layers.push({l,r,t,b})}
+ if(!layers.length)return [];
+ // Supply: each complete turn is open at the bottom-right to enter the next.
+ const first=layers[0];add(first.r,first.b);add(first.l,first.b);add(first.l,first.t);
+ for(let k=0;k<layers.length;k++){
+  const q=layers[k];add(q.r,q.t);
+  if(k+1<layers.length){const n=layers[k+1];add(q.r,n.b);add(n.l,n.b);add(n.l,n.t)}
+  else{add(q.r,q.b-s);add(q.l+s,q.b-s)}
+ }
+ // Return follows the alternating intermediate rectangles in reverse.
+ for(let k=layers.length-1;k>=0;k--){
+  const q=layers[k],l=q.l+s,r=q.r-s,t=q.t+s,b=q.b-s;
+  add(l,t);add(r,t);add(r,b);
+  if(k>0){const outer=layers[k-1];add(outer.r-s,outer.b-s)}
+ }
+ // Geometry must be checked before rendering. No unsafe diagonal shortcuts.
+ for(let i=1;i<p.length;i++){let dx=Math.abs(p[i][0]-p[i-1][0]),dy=Math.abs(p[i][1]-p[i-1][1]);if(dx>1e-4&&dy>1e-4)return []}
+ if(inspectRoute(p)>0)return [];
+ return p;
 }
 function spiralIrregular(){
  // Non-rectangular outlines are deliberately rejected until a validated
