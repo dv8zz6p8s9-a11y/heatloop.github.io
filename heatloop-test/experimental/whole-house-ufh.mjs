@@ -39,7 +39,7 @@ export function coverageEstimate(room){
 export function layoutLoops(room,{maxLength=100,allowExtended=false,approvedExtended=false,feedAllowance=0}={}){
  if(!room?.spacing)throw Error('Najpierw skonfiguruj rozstaw (Generuj pętle)');
  if(maxLength>100&&!(allowExtended&&approvedExtended&&maxLength<=120))throw Error('Długość powyżej 100 m wymaga zgody instalatora (maks. 120 m)');
- if(!(maxLength>feedAllowance)||feedAllowance<0)throw Error('Nieprawidłowy limit lub dojścia');
+ if(!Number.isFinite(maxLength)||maxLength<=0||!Number.isFinite(feedAllowance)||feedAllowance<0||!(maxLength>feedAllowance))throw Error('Nieprawidłowy limit lub dojścia');
  const estimate=coverageEstimate(room),capacity=maxLength-feedAllowance;
  const count=Math.max(1,Math.ceil(estimate.estimatedPipeLength/capacity));
  return {...room,layout:{...estimate,count,estimatedLengthPerLoop:estimate.estimatedPipeLength/count,feedAllowance,maximumTotalLength:maxLength,status:'planning-only-no-spiral-geometry'}};
@@ -58,7 +58,7 @@ export function updateRoute(route,operation,index,point,walls=[]){
  return {points:p,length:pathLength(p),wallCollisions:wallHits(p,walls)};
 }
 export function circuitSummary({pipeLength,supply,returnRoute,limit=100}){
- if(!Number.isFinite(pipeLength)||pipeLength<0)throw Error('Niepoprawna dlugosc');
+ if(!Number.isFinite(pipeLength)||pipeLength<0||!Number.isFinite(limit)||limit<=0)throw Error('Niepoprawna dlugosc lub limit');
  const supplyLength=pathLength(supply.points),returnLength=pathLength(returnRoute.points),total=pipeLength+supplyLength+returnLength;
- return {pipeLength,supplyLength,returnLength,total,withinLimit:total<=limit,hasCollisions:!!(supply.wallCollisions.length+returnRoute.wallCollisions.length)};
+ return {pipeLength,supplyLength,returnLength,total,withinLimit:total<=limit,hasCollisions:!!((supply.wallCollisions?.length||0)+(returnRoute.wallCollisions?.length||0))};
 }
