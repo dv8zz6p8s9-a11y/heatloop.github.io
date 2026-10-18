@@ -44,22 +44,30 @@ function roundedPath(points,radius){
 }
 function matrix(l){const t=l.angle*Math.PI/180,c=Math.cos(t),s=Math.sin(t),w=l.w*l.sx*(l.mirror?-1:1),h=l.h*l.sy;return p=>[l.x+p[0]*w*c-p[1]*h*s,l.y+p[0]*w*s+p[1]*h*c]}
 function node(tag,attrs,parent){const el=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,v);parent.appendChild(el);return el}
-function render(){group.replaceChildren();for(const l of loops){const selected=l.id===chosen,tr=matrix(l),[a,b]=shape();for(const [idx,pts] of [a,b].entries()){const d=roundedPath(pts.map(tr),Math.min(l.w*l.sx,l.h*l.sy)*.034);const path=node('path',{d,class:'loop'+(selected?' selectedLoop':''),style:'stroke:'+(idx?'#1477d2':'#df4c42'),'data-id':l.id},group);path.addEventListener('pointerdown',e=>{chosen=l.id;render();});}// Wyraźny, dwugarbny nawrót S w lokalnych współrzędnych nakładki.
- // Dwie krzywe sześcienne tworzą esowaty przebieg zamiast krótkiego haczyka.
+function render(){group.replaceChildren();for(const l of loops){const selected=l.id===chosen,tr=matrix(l),[a,b]=shape();for(const [idx,pts] of [a,b].entries()){const d=roundedPath(pts.map(tr),Math.min(l.w*l.sx,l.h*l.sy)*.034);const path=node('path',{d,class:'loop'+(selected?' selectedLoop':''),style:'stroke:'+(idx?'#1477d2':'#df4c42'),'data-id':l.id},group);path.addEventListener('pointerdown',e=>{chosen=l.id;render();});}// Centralny nawrót S: środek w przecięciu przekątnych lokalnego prostokąta (0,0).
+ // Prototyp wizualny. S nie jest jeszcze wyprowadzona jako ciągła ścieżka dwóch torów.
  const pa=a.at(-1),pb=b.at(-1);
  if(pa&&pb){
-  const mid=[Math.max(pa[0],pb[0])+.17,(pa[1]+pb[1])/2];
-  const p1=[pa[0]-.17,pa[1]-.005];
-  const p2=[mid[0]-.13,mid[1]-.14];
-  const p3=[mid[0]+.13,mid[1]+.14];
-  const p4=[pb[0]-.17,pb[1]+.005];
-  const q=[pa,p1,p2,mid,p3,p4,pb].map(tr);
-  const fmt=p=>p.map(n=>n.toFixed(2)).join(' ');
-  const d='M'+fmt(q[0])+' C'+fmt(q[1])+' '+fmt(q[2])+' '+fmt(q[3])+' C'+fmt(q[4])+' '+fmt(q[5])+' '+fmt(q[6]);
+  const center=[0,0],half=.105;
+  // Dwie przeciwne krzywizny z punktem przegięcia dokładnie w środku.
+  const s0=[-half,-.075],s1=[half,.075];
+  const controls=[
+   s0,[-half,.045],[-.045,.015],center,
+   [.045,-.015],[half,-.045],s1
+  ];
+  const q=controls.map(tr),fmt=p=>p.map(n=>n.toFixed(2)).join(' ');
+  const d='M'+fmt(q[0])+' C'+fmt(q[1])+' '+fmt(q[2])+' '+fmt(q[3])+
+          ' C'+fmt(q[4])+' '+fmt(q[5])+' '+fmt(q[6]);
   node('path',{d,fill:'none',stroke:'#7651b4','stroke-width':selected?3.1:2.4,'stroke-linecap':'round','pointer-events':'none'},group);
+  // Linie pomocnicze pokazują położenie środka S względem przekątnych nakładki.
+  if(selected){
+   const diag=[[-.5,-.5],[.5,.5],[.5,-.5],[-.5,.5]].map(tr);
+   for(const [u,v] of [[0,1],[2,3]])node('path',{d:'M'+fmt(diag[u])+' L'+fmt(diag[v]),fill:'none',stroke:'#77a5b7','stroke-width':.8,'stroke-dasharray':'3 5','pointer-events':'none'},group);
+   const cp=tr(center);node('circle',{cx:cp[0],cy:cp[1],r:3.5,fill:'#7651b4','pointer-events':'none'},group);
+  }
  }
   if(selected){const corners=[[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].map(tr);node('path',{d:corners.map((p,i)=>(i?'L':'M')+p.join(' ')).join(' ')+' Z',class:'bounds'},group);corners.forEach(p=>node('circle',{cx:p[0],cy:p[1],r:4.7,class:'handle'},group));const ends=[ [0,-.48],[.48,0],[0,.48],[-.48,0] ],p=tr(ends[l.side]);node('circle',{cx:p[0],cy:p[1],r:9,fill:'#0877e6'},group);const text=node('text',{x:p[0],y:p[1]+3.5,'text-anchor':'middle',fill:'#fff','font-size':10,'font-weight':700},group);text.textContent='P'}}updatePanel()}
-function updatePanel(){const l=current();$('title').textContent=l?'Pętla '+l.id+' — edycja':'Brak wybranej pętli';for(const key of ['angle','width','height'])$(key).disabled=!l;if(!l){$('info').textContent='Dodaj pętlę, aby rozpocząć.';return}$('angle').value=l.angle;$('width').value=Math.round(l.sx*100);$('height').value=Math.round(l.sy*100);$('angleV').textContent=Math.round(l.angle)+'°';$('widthV').textContent=Math.round(l.sx*100)+'%';$('heightV').textContent=Math.round(l.sy*100)+'%';$('info').textContent='Pozycja: '+Math.round(l.x)+', '+Math.round(l.y)+' • Odbicie: '+(l.mirror?'tak':'nie')+' • Początek: '+['góra','prawo','dół','lewo'][l.side]+'. Wskazanie początku jest na razie wizualne. Środek S: krzywa demonstracyjna.'}
+function updatePanel(){const l=current();$('title').textContent=l?'Pętla '+l.id+' — edycja':'Brak wybranej pętli';for(const key of ['angle','width','height'])$(key).disabled=!l;if(!l){$('info').textContent='Dodaj pętlę, aby rozpocząć.';return}$('angle').value=l.angle;$('width').value=Math.round(l.sx*100);$('height').value=Math.round(l.sy*100);$('angleV').textContent=Math.round(l.angle)+'°';$('widthV').textContent=Math.round(l.sx*100)+'%';$('heightV').textContent=Math.round(l.sy*100)+'%';$('info').textContent='Pozycja: '+Math.round(l.x)+', '+Math.round(l.y)+' • Odbicie: '+(l.mirror?'tak':'nie')+' • Początek: '+['góra','prawo','dół','lewo'][l.side]+'. Wskazanie początku jest na razie wizualne. Środek S: przecięcie przekątnych nakładki. Połączenie z torami nadal do opracowania.'}
 function coord(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
 function gestureStart(){const l=current(),ps=[...pointers.values()];if(!l||!ps.length)return;if(ps.length===1)gesture={kind:1,p:ps[0],x:l.x,y:l.y};else{const [a,b]=ps;gesture={kind:2,dist:Math.hypot(a.x-b.x,a.y-b.y),angle:Math.atan2(b.y-a.y,b.x-a.x),sx:l.sx,sy:l.sy,rot:l.angle,x:l.x,y:l.y,mid:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}}}
 svg.addEventListener('pointerdown',e=>{const p=coord(e),l=current();if(mode==='start'&&l){const dx=p.x-l.x,dy=p.y-l.y;l.side=Math.abs(dx/l.w)>Math.abs(dy/l.h)?(dx>0?1:3):(dy>0?2:0);mode='';$('start').classList.remove('selected');render();return}if(e.target.dataset.id){chosen=Number(e.target.dataset.id);render()}svg.setPointerCapture(e.pointerId);pointers.set(e.pointerId,p);gestureStart()});
