@@ -61,7 +61,20 @@ function cross2(a,b,c){return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])}
 function segmentsCross(a,b,c,d){const x=cross2(a,b,c),y=cross2(a,b,d),z=cross2(c,d,a),w=cross2(c,d,b);return x*y< -0.0001&&z*w< -0.0001}
 function inspectRoute(p){let crossings=0;for(let i=1;i<p.length;i++)for(let j=i+2;j<p.length;j++){if(segmentsCross(p[i-1],p[i],p[j-1],p[j]))crossings++}return crossings}
 function segmentDistance(a,b,c,d){const pd=(p,x,y)=>{let vx=y[0]-x[0],vy=y[1]-x[1],den=vx*vx+vy*vy,t=den?Math.max(0,Math.min(1,((p[0]-x[0])*vx+(p[1]-x[1])*vy)/den)):0;return Math.hypot(p[0]-x[0]-t*vx,p[1]-x[1]-t*vy)};return Math.min(pd(a,c,d),pd(b,c,d),pd(c,a,b),pd(d,a,b))}
-function spacingWarnings(p,spacing){let bad=0,min=Infinity;for(let i=1;i<p.length;i++)for(let j=i+8;j<p.length;j++){const dist=segmentDistance(p[i-1],p[i],p[j-1],p[j]);min=Math.min(min,dist);if(dist<spacing*0.65)bad++}return {bad,min:Number.isFinite(min)?min:null}}
+function spacingWarnings(p,spacing){
+ // Count distinct violating track pairs, not every pair of arc tessellation fragments.
+ let bad=0,min=Infinity;const violations=new Set();
+ for(let i=1;i<p.length;i++)for(let j=i+2;j<p.length;j++){
+  const a=p[i-1],b=p[i],c=p[j-1],d=p[j];
+  if(Math.hypot(a[0]-d[0],a[1]-d[1])<0.01)continue;
+  const dist=segmentDistance(a,b,c,d);min=Math.min(min,dist);
+  if(dist<spacing*0.65){
+   const key=Math.floor(i/12)+':'+Math.floor(j/12);
+   violations.add(key);
+  }
+ }
+ bad=violations.size;return {bad,min:Number.isFinite(min)?min:null}
+}
 // Exact circular fillets for orthogonal turns; preserve a shared tangent radius.
 function roundedRoute(p,radius){
  if(p.length<3)return p.slice();
@@ -85,7 +98,7 @@ function roundedRoute(p,radius){
   let a0=Math.atan2(entry[1]-center[1],entry[0]-center[0]);
   let a1=Math.atan2(exit[1]-center[1],exit[0]-center[0]);
   const cross=u[0]*v[1]-u[1]*v[0];
-  if(cross<0){while(a1<a0)a1+=2*Math.PI}else{while(a1>a0)a1-=2*Math.PI}
+  if(cross>0){while(a1<a0)a1+=2*Math.PI}else{while(a1>a0)a1-=2*Math.PI}
   result.push(entry);
   const count=Math.max(3,Math.ceil(Math.abs(a1-a0)/(Math.PI/36)));
   for(let j=1;j<count;j++){
