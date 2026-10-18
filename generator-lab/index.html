@@ -22,6 +22,9 @@ const traverse=(r,reverse,index)=>{const gap=Math.min((index+1)*s*0.48,(r.b-r.t)
 let innerEven=2*Math.floor((rings.length-1)/2);
 for(let i=0;i<=innerEven;i+=2)traverse(rings[i],false,i);
 let innerOdd=innerEven-1;if(innerOdd>=1){traverse(rings[innerOdd],true,innerOdd);for(let i=innerOdd-2;i>=1;i-=2)traverse(rings[i],true,i)}
+// ISKO-style L-shaped lead-in: horizontal entry from the right, then turn down along the wall.
+const entry=route[0],exit=route[route.length-1],lead=Math.min(s*0.55,(R-rings[0].r)*0.65);
+if(entry&&exit&&lead>0){route.unshift([entry[0]+lead,entry[1]]);route.push([exit[0]+lead,exit[1]])}
 return route}
 // Nonrectangular rooms retain experimental offset-based geometry.
 const rings=[];for(let d=off;d<400;d+=s){const r=offsetPolygon(poly,d);if(!validRing(r,d))break;rings.push(r)}if(rings.length<3)return [];if(rings.length%2===0)rings.pop();const lastEven=2*Math.floor((rings.length-1)/2),N=rings[0].length;const interpolate=(r,t)=>{let i=Math.floor(t),f=t-i,a=r[((i%N)+N)%N],b=r[((i+1)%N+N)%N];return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]};const route=[],put=p=>{let q=route[route.length-1];if(!q||Math.hypot(q[0]-p[0],q[1]-p[1])>0.001)route.push(p)};const forward=(r,from,to)=>{put(interpolate(r,from));for(let j=Math.ceil(from);j<to;j++)put(r[j%N]);put(interpolate(r,to))};const backward=(r,from,to)=>{put(interpolate(r,from));for(let j=Math.floor(from);j>to;j--)put(r[((j%N)+N)%N]);put(interpolate(r,to))};const gap=0.16;for(let k=0;k<=lastEven;k+=2){forward(rings[k],gap,N-gap);if(k+2<=lastEven)put(interpolate(rings[k+2],gap))}const lastOdd=lastEven-1;if(lastOdd>=1){put(interpolate(rings[lastOdd],N-gap));for(let k=lastOdd;k>=1;k-=2){backward(rings[k],N-gap,gap);if(k-2>=1)put(interpolate(rings[k-2],N-gap))}}return route}
