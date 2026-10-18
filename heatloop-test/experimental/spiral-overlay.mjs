@@ -4,9 +4,22 @@
  * Visual geometry only: validate pipe spacing and walls before installation.
  */
 export const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const orient=(a,b,c)=>(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+const onSeg=(a,b,p)=>Math.abs(orient(a,b,p))<1e-8&&p.x>=Math.min(a.x,b.x)-1e-8&&p.x<=Math.max(a.x,b.x)+1e-8&&p.y>=Math.min(a.y,b.y)-1e-8&&p.y<=Math.max(a.y,b.y)+1e-8;
+const segmentsIntersect=(a,b,c,d)=>{const x=orient(a,b,c),y=orient(a,b,d),z=orient(c,d,a),w=orient(c,d,b);return (x*y<0&&z*w<0)||(Math.abs(x)<1e-8&&onSeg(a,b,c))||(Math.abs(y)<1e-8&&onSeg(a,b,d))||(Math.abs(z)<1e-8&&onSeg(c,d,a))||(Math.abs(w)<1e-8&&onSeg(c,d,b))};
+export function validatePolygon(poly){
+ if(!Array.isArray(poly)||poly.length<3||poly.some(p=>!Number.isFinite(p?.x)||!Number.isFinite(p?.y)))return false;
+ for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length];if(distance(a,b)<1e-8)return false;for(let j=i+1;j<poly.length;j++){if(j===i+1||(i===0&&j===poly.length-1))continue;if(segmentsIntersect(a,b,poly[j],poly[(j+1)%poly.length]))return false}}
+ return Math.abs(poly.reduce((s,a,i)=>s+a.x*poly[(i+1)%poly.length].y-poly[(i+1)%poly.length].x*a.y,0))>1e-8;
+}
+const segmentDistance=(a,b,c,d)=>{
+ if(segmentsIntersect(a,b,c,d))return 0;
+ const pt=(p,u,v)=>{const dx=v.x-u.x,dy=v.y-u.y,len=dx*dx+dy*dy;if(len<1e-16)return distance(p,u);const t=Math.max(0,Math.min(1,((p.x-u.x)*dx+(p.y-u.y)*dy)/len));return distance(p,{x:u.x+t*dx,y:u.y+t*dy})};
+ return Math.min(pt(a,c,d),pt(b,c,d),pt(c,a,b),pt(d,a,b));
+};
 const signedArea=p=>p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a.x*b.y-b.x*a.y},0)/2;
 export function makeOverlay(roomPolygon,{turns=4,margin=.08}={}){
- if(!Array.isArray(roomPolygon)||roomPolygon.length<3||!Number.isInteger(turns)||turns<1||!(margin>=0&&margin<.5))throw Error('Invalid overlay parameters');
+ if(!validatePolygon(roomPolygon)||!Number.isInteger(turns)||turns<1||!Number.isFinite(margin)||!(margin>=0&&margin<.5))throw Error('Invalid overlay parameters');
  const b={minX:Math.min(...roomPolygon.map(p=>p.x)),maxX:Math.max(...roomPolygon.map(p=>p.x)),minY:Math.min(...roomPolygon.map(p=>p.y)),maxY:Math.max(...roomPolygon.map(p=>p.y))};
  if((b.maxX-b.minX)*(b.maxY-b.minY)<1e-8)throw Error('Degenerate room');
  const p=[];
@@ -43,12 +56,16 @@ export function rotate(overlay,angle,center){
 export function reverseDirection(overlay){return {...overlay,points:[...overlay.points].reverse(),mirror:!overlay.mirror}}
 export function pipeLength(overlay){return overlay.points.slice(1).reduce((s,p,i)=>s+distance(p,overlay.points[i]),0)}
 export function checkSpacing(overlay,desired,tolerance=.2){
- if(!(desired>0))throw Error('Invalid spacing');
- // Non-neighbour segments only; checks near parallel sections at vertices.
- const p=overlay.points,problems=[];
- for(let i=0;i<p.length;i++)for(let j=i+3;j<p.length;j++){
-  const d=distance(p[i],p[j]);
-  if(d<desired*(1-tolerance))problems.push({i,j,distance:d});
+ if(!Number.isFinite(desired)||desired<=0||!Number.isFinite(tolerance)||tolerance<0||tolerance>=1)throw Error('Invalid spacing');
+ const p=overlay?.points;
+ if(!Array.isArray(p)||p.length<2||p.some(q=>!Number.isFinite(q?.x)||!Number.isFinite(q?.y)))throw Error('Invalid path');
+ const problems=[],threshold=desired*(1-tolerance);
+ for(let i=0;i<p.length-1;i++){
+  if(distance(p[i],p[i+1])<1e-8)problems.push({i,j:i,distance:0,reason:'zero-length'});
+  for(let j=i+2;j<p.length-1;j++){
+   const d=segmentDistance(p[i],p[i+1],p[j],p[j+1]);
+   if(d<threshold)problems.push({i,j,distance:d,reason:'segment-clearance'});
+  }
  }
- return {ok:problems.length===0,problems,method:'vertex-proximity-only'};
+ return {ok:problems.length===0,problems,method:'segment-segment-distance'};
 }
