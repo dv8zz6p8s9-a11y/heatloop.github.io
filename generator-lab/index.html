@@ -2,7 +2,7 @@
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HeatLoop — Generator ślimaka LAB</title>
 <style>
 :root{font-family:system-ui,Arial;background:#0b1825;color:#e8f4fb}*{box-sizing:border-box}body{margin:0}header{padding:16px 24px;background:#102b40;border-bottom:1px solid #28526a}h1{margin:0;font-size:22px;color:#74d4e8}header small{color:#a4bcca}main{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;padding:16px}.panel,.view{background:#132a3a;border:1px solid #315168;border-radius:14px;padding:16px}label{display:block;margin:12px 0 4px;font-size:13px;color:#b9d3df}input,select,button{font:inherit;border-radius:8px;padding:9px;border:1px solid #41647a;background:#0c1d2c;color:white}input{width:100%}button{cursor:pointer;background:#185c75;margin:5px 4px 5px 0}button:hover{background:#247c99}button.active{background:#bd763b}button:disabled{opacity:.45}svg{width:100%;height:auto;background:#f5f9fc;border-radius:10px;touch-action:none}p{line-height:1.45;color:#bdd0da;font-size:13px}.stats{padding:12px;background:#0c2030;border-radius:8px;line-height:1.7}.warn{color:#ffd08a}.toolbar{display:flex;flex-wrap:wrap;gap:4px}.note{font-size:12px;color:#9fbac8}@media(max-width:850px){main{grid-template-columns:1fr}.view{padding:8px}}
-</style></head><body><header><h1>HeatLoop / Generator ślimaka LAB</h1><small>Prototyp niezależny • inspirowany obserwacjami funkcji ISKO • bez ingerencji w BETA</small></header><main><section class="panel"><b>Geometria pomieszczenia</b><div class="toolbar"><button id="rect">Prostokąt</button><button id="shapeL">Kształt L</button><button id="edit" class="active">Przesuwaj narożniki</button></div><label>Rozstaw rur (cm)</label><input id="spacing" type="number" min="8" max="40" step="1" value="15"><label><input id="gridVisible" type="checkbox" checked style="width:auto"> Pokaż siatkę pomocniczą zgodną z rozstawem</label><label>Odsunięcie od ścian (cm)</label><input id="offset" type="number" min="5" max="50" step="1" value="15"><label>Maks. długość obiegu (m)</label><input id="limit" type="number" min="40" max="120" value="90"><label>Średnica rury</label><select id="pipe"><option>PEX 16</option><option>PEX 17</option><option>PEX 20</option></select><div class="toolbar"><button id="generate">Generuj pętle</button><button id="split">Ułóż pętle</button></div><div class="toolbar"><button id="start">Zaznacz początek</button><button id="reverse">Odwróć pętlę</button><button id="undo">Cofnij punkt</button></div><p id="modeText">Przeciągaj pomarańczowe narożniki. Trasa przeliczy się automatycznie.</p><div class="stats" id="stats"></div><p class="note">Wersja eksperymentalna: dwutorowa trasa oparta na odsunięciach obrysu; licznik przecięć odcinków. Dla prostokąta początek i koniec umieszczone są przy prawej ścianie, jak na wzorcu ISKO. Narożniki są wizualnie zaokrąglane; dodano kontrolę zbyt małych odległości między nieprzyległymi odcinkami. To diagnostyka, nie certyfikacja promienia gięcia. Prześwity i poprawność hydrauliczna nadal wymagają walidacji.</p></section><section class="view"><svg id="drawing" viewBox="0 0 900 650" aria-label="Edytor pomieszczenia i ślimaka"></svg><p>Skala: 100 px = 1 m. Domyślny prostokąt: 3 × 3 m = 9 m². Limit obiegu: 90 m. Zmiana obrysu automatycznie aktualizuje układ. „Ułóż pętle” dopiero uruchamia podział na obiegi.</p></section></main><script>
+</style></head><body><header><h1>HeatLoop / Generator ślimaka LAB</h1><small>Prototyp niezależny • inspirowany obserwacjami funkcji ISKO • bez ingerencji w BETA</small></header><main><section class="panel"><b>Geometria pomieszczenia</b><div class="toolbar"><button id="rect">Prostokąt</button><button id="shapeL">Kształt L</button><button id="edit" class="active">Przesuwaj narożniki</button></div><label>Rozstaw rur (cm)</label><input id="spacing" type="number" min="8" max="40" step="1" value="15"><label><input id="gridVisible" type="checkbox" checked style="width:auto"> Pokaż siatkę pomocniczą zgodną z rozstawem</label><label>Odsunięcie od ścian (cm)</label><input id="offset" type="number" min="5" max="50" step="1" value="15"><label>Maks. długość obiegu (m)</label><input id="limit" type="number" min="40" max="120" value="90"><label>Średnica rury</label><select id="pipe"><option>PEX 16</option><option>PEX 17</option><option>PEX 20</option></select><div class="toolbar"><button id="generate">Generuj pętle</button><button id="split">Ułóż pętle</button></div><div class="toolbar"><button id="start">Zaznacz początek</button><button id="reverse">Odwróć pętlę</button><button id="undo">Cofnij punkt</button></div><p id="modeText">Przeciągaj pomarańczowe narożniki. Trasa przeliczy się automatycznie.</p><div class="stats" id="stats"></div><p class="note">Wersja eksperymentalna: naprzemienny tor zasilania i powrotu na siatce. Kształt L oczekuje na bezpieczny algorytm trasowania; licznik przecięć odcinków. Dla prostokąta początek i koniec umieszczone są przy prawej ścianie, jak na wzorcu ISKO. Narożniki są wizualnie zaokrąglane; dodano kontrolę zbyt małych odległości między nieprzyległymi odcinkami. To diagnostyka, nie certyfikacja promienia gięcia. Prześwity i poprawność hydrauliczna nadal wymagają walidacji.</p></section><section class="view"><svg id="drawing" viewBox="0 0 900 650" aria-label="Edytor pomieszczenia i ślimaka"></svg><p>Skala: 100 px = 1 m. Domyślny prostokąt: 3 × 3 m = 9 m². Limit obiegu: 90 m. Zmiana obrysu automatycznie aktualizuje układ. „Ułóż pętle” dopiero uruchamia podział na obiegi.</p></section></main><script>
 const NS='http://www.w3.org/2000/svg',svg=document.getElementById('drawing');let poly=[],paths=[],selected=-1,mode='edit',flipped=false,generated=false,splitMode=false,startFraction=0;const $=id=>document.getElementById(id);
 $('gridVisible').addEventListener('change',refresh);
 function rect(){poly=[[300,175],[600,175],[600,475],[300,475]];refresh()}function shapeL(){poly=[[160,100],[740,100],[740,320],[480,320],[480,550],[160,550]];refresh()}
@@ -13,27 +13,55 @@ function safe(p,margin){if(!inside(p[0],p[1],poly))return false;for(let i=0;i<po
 function signedArea(p){let a=0;for(let i=0;i<p.length;i++){let q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1]}return a/2}
 function offsetPolygon(p,d){const ccw=signedArea(p)>0,lines=[];for(let i=0;i<p.length;i++){let a=p[i],b=p[(i+1)%p.length],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);if(len<1)return null;let nx=(ccw?-dy:dy)/len,ny=(ccw?dx:-dx)/len;lines.push({a:[a[0]+nx*d,a[1]+ny*d],v:[dx,dy]})}let out=[];for(let i=0;i<p.length;i++){let u=lines[(i+p.length-1)%p.length],v=lines[i],cross=u.v[0]*v.v[1]-u.v[1]*v.v[0];if(Math.abs(cross)<1e-8)return null;let w=[v.a[0]-u.a[0],v.a[1]-u.a[1]],t=(w[0]*v.v[1]-w[1]*v.v[0])/cross;out.push([u.a[0]+u.v[0]*t,u.a[1]+u.v[1]*t])}return out}
 function validRing(r,margin){if(!r||r.length<3||Math.abs(signedArea(r))<100)return false;for(let i=0;i<r.length;i++){let a=r[i],b=r[(i+1)%r.length];for(let k=0;k<=20;k++){let t=k/20,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];if(!safe(p,Math.max(1,margin-2)))return false}}for(let i=0;i<r.length;i++)for(let j=i+1;j<r.length;j++){if(j===i+1||(i===0&&j===r.length-1))continue;let a=r[i],b=r[(i+1)%r.length],v=r[j],w=r[(j+1)%r.length];let orient=(x,y,z)=>(y[0]-x[0])*(z[1]-x[1])-(y[1]-x[1])*(z[0]-x[0]);if(orient(a,b,v)*orient(a,b,w)<0&&orient(v,w,a)*orient(v,w,b)<0)return false}return true}
-function spiral(){const s=Number($('spacing').value),off=Number($('offset').value);if(!Number.isFinite(s)||s<8||!Number.isFinite(off)||off<5)return [];
-// Grid-based rectangular spiral: all main tracks lie on an inward grid of pitch s.
-if(poly.length===4){const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);const L=Math.min(...xs),R=Math.max(...xs),T=Math.min(...ys),B=Math.max(...ys),cx=(L+R)/2,cy=(T+B)/2;
-if(!poly.every(p=>(Math.abs(p[0]-L)<0.01||Math.abs(p[0]-R)<0.01)&&(Math.abs(p[1]-T)<0.01||Math.abs(p[1]-B)<0.01)))return [];
-// Track coordinates follow the same wall-anchored pitch grid drawn on screen.
-// Continuous orthogonal inward spiral on a physical pitch grid.
-const route=[],add=(x,y)=>{const q=route[route.length-1];if(!q||Math.hypot(q[0]-x,q[1]-y)>0.001)route.push([x,y])};
-let l=L+off,r=R-off,t=T+off,b=B-off;
-if(r-l<2*s||b-t<2*s)return [];
-// Enter from the boundary; the lead stays horizontal and meets the first track.
-add(R,cy);add(r,cy);add(r,b);add(l,b);add(l,t);
-for(let i=0;i<200;i++){
-  add(r,t);
-  const nextL=l+s,nextR=r-s,nextT=t+s,nextB=b-s;
-  if(nextR-nextL<2*s||nextB-nextT<2*s){add(r,Math.min(b-s,cy));break}
-  add(r,nextB);add(nextL,nextB);add(nextL,nextT);
-  l=nextL;r=nextR;t=nextT;b=nextB;
+function spiral(){
+ const s=Number($('spacing').value),off=Number($('offset').value);
+ if(!Number.isFinite(s)||s<8||!Number.isFinite(off)||off<5)return [];
+ if(poly.length!==4)return spiralIrregular();
+ const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);
+ const L=Math.min(...xs),R=Math.max(...xs),T=Math.min(...ys),B=Math.max(...ys);
+ if(!poly.every(p=>(Math.abs(p[0]-L)<.01||Math.abs(p[0]-R)<.01)&&(Math.abs(p[1]-T)<.01||Math.abs(p[1]-B)<.01)))return [];
+ const x0=L+off,y0=T+off,x1=R-off,y1=B-off,cy=(y0+y1)/2;
+ if(x1-x0<4*s||y1-y0<4*s)return [];
+ // Spiral supply goes inward on every second grid track. Return occupies
+ // the alternating tracks, so physical spacing between adjacent pipes is s.
+ const rings=[];
+ for(let k=0;k<100;k++){
+  const l=x0+2*k*s,r=x1-2*k*s,t=y0+2*k*s,b=y1-2*k*s;
+  if(r-l<2*s||b-t<2*s)break;
+  rings.push({l,r,t,b});
+ }
+ if(!rings.length)return [];
+ const p=[],add=(x,y)=>{let q=p[p.length-1];if(!q||Math.hypot(q[0]-x,q[1]-y)>1e-5)p.push([x,y])};
+ // Entrance L: from room boundary along the right wall, then into the
+ // outermost circuit. All bends are orthogonal before filleting.
+ add(R,cy);add(x1,cy);add(x1,y1);add(x0,y1);add(x0,y0);
+ for(let k=0;k<rings.length;k++){
+  const q=rings[k];add(q.r,q.t);
+  if(k+1<rings.length){
+   const n=rings[k+1];
+   add(q.r,n.b);add(n.l,n.b);add(n.l,n.t);
+  }else{
+   // Central U-turn to the return lane, separated by one grid pitch.
+   const il=q.l+s,ir=q.r-s,it=q.t+s,ib=q.b-s;
+   add(q.r,ib);add(il,ib);add(il,it);add(ir,it);
+  }
+ }
+ // Return spirals outward between the supply lanes.
+ for(let k=rings.length-1;k>=0;k--){
+  const q=rings[k],l=q.l+s,r=q.r-s,t=q.t+s,b=q.b-s;
+  if(k===rings.length-1){add(r,b)}else{add(r,t);add(r,b)}
+  add(l,b);add(l,t);
+  if(k>0){const outer=rings[k-1];add(outer.r-s,t)}
+ }
+ // Exit at the same room boundary, one pitch away from the entrance.
+ add(x1-s,cy+s);add(R,cy+s);
+ return p;
 }
-return route}
-// Nonrectangular rooms retain experimental offset-based geometry.
-const rings=[];for(let d=off;d<400;d+=s){const r=offsetPolygon(poly,d);if(!validRing(r,d))break;rings.push(r)}if(rings.length<3)return [];if(rings.length%2===0)rings.pop();const lastEven=2*Math.floor((rings.length-1)/2),N=rings[0].length;const interpolate=(r,t)=>{let i=Math.floor(t),f=t-i,a=r[((i%N)+N)%N],b=r[((i+1)%N+N)%N];return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]};const route=[],put=p=>{let q=route[route.length-1];if(!q||Math.hypot(q[0]-p[0],q[1]-p[1])>0.001)route.push(p)};const forward=(r,from,to)=>{put(interpolate(r,from));for(let j=Math.ceil(from);j<to;j++)put(r[j%N]);put(interpolate(r,to))};const backward=(r,from,to)=>{put(interpolate(r,from));for(let j=Math.floor(from);j>to;j--)put(r[((j%N)+N)%N]);put(interpolate(r,to))};const gap=0.16;for(let k=0;k<=lastEven;k+=2){forward(rings[k],gap,N-gap);if(k+2<=lastEven)put(interpolate(rings[k+2],gap))}const lastOdd=lastEven-1;if(lastOdd>=1){put(interpolate(rings[lastOdd],N-gap));for(let k=lastOdd;k>=1;k-=2){backward(rings[k],N-gap,gap);if(k-2>=1)put(interpolate(rings[k-2],N-gap))}}return route}
+function spiralIrregular(){
+ // Non-rectangular outlines are deliberately rejected until a validated
+ // polygon offset/path planner is available: no misleading unsafe drawing.
+ return [];
+}
 function cross2(a,b,c){return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])}
 function segmentsCross(a,b,c,d){const x=cross2(a,b,c),y=cross2(a,b,d),z=cross2(c,d,a),w=cross2(c,d,b);return x*y< -0.0001&&z*w< -0.0001}
 function inspectRoute(p){let crossings=0;for(let i=1;i<p.length;i++)for(let j=i+2;j<p.length;j++){if(segmentsCross(p[i-1],p[i],p[j-1],p[j]))crossings++}return crossings}
