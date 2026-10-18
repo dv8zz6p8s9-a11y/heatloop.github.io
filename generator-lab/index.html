@@ -18,10 +18,10 @@ if(poly.length===4){const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);const L=Math
 if(!poly.every(p=>(Math.abs(p[0]-L)<0.01||Math.abs(p[0]-R)<0.01)&&(Math.abs(p[1]-T)<0.01||Math.abs(p[1]-B)<0.01)))return [];
 const rings=[];for(let i=0;i<200;i++){let l=L+off+i*s,r=R-off-i*s,t=T+off+i*s,b=B-off-i*s;if(r-l<2.5*s||b-t<2.5*s)break;rings.push({l,r,t,b})}if(rings.length<2)return [];
 const route=[],add=p=>{let q=route[route.length-1];if(!q||Math.hypot(q[0]-p[0],q[1]-p[1])>0.01)route.push(p)};
-const gap=Math.min(s*0.42,(B-T)/12);const traverse=(r,reverse)=>{const down=[[r.r,cy+gap],[r.r,r.b],[r.l,r.b],[r.l,r.t],[r.r,r.t],[r.r,cy-gap]];const points=reverse?down.slice().reverse():down;points.forEach(add)};
+const traverse=(r,reverse,index)=>{const gap=Math.min((index+1)*s*0.48,(r.b-r.t)*0.30);const down=[[r.r,cy+gap],[r.r,r.b],[r.l,r.b],[r.l,r.t],[r.r,r.t],[r.r,cy-gap]];const points=reverse?down.slice().reverse():down;points.forEach(add)};
 let innerEven=2*Math.floor((rings.length-1)/2);
-for(let i=0;i<=innerEven;i+=2)traverse(rings[i],false);
-let innerOdd=innerEven-1;if(innerOdd>=1){traverse(rings[innerOdd],true);for(let i=innerOdd-2;i>=1;i-=2)traverse(rings[i],true)}
+for(let i=0;i<=innerEven;i+=2)traverse(rings[i],false,i);
+let innerOdd=innerEven-1;if(innerOdd>=1){traverse(rings[innerOdd],true,innerOdd);for(let i=innerOdd-2;i>=1;i-=2)traverse(rings[i],true,i)}
 return route}
 // Nonrectangular rooms retain experimental offset-based geometry.
 const rings=[];for(let d=off;d<400;d+=s){const r=offsetPolygon(poly,d);if(!validRing(r,d))break;rings.push(r)}if(rings.length<3)return [];if(rings.length%2===0)rings.pop();const lastEven=2*Math.floor((rings.length-1)/2),N=rings[0].length;const interpolate=(r,t)=>{let i=Math.floor(t),f=t-i,a=r[((i%N)+N)%N],b=r[((i+1)%N+N)%N];return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]};const route=[],put=p=>{let q=route[route.length-1];if(!q||Math.hypot(q[0]-p[0],q[1]-p[1])>0.001)route.push(p)};const forward=(r,from,to)=>{put(interpolate(r,from));for(let j=Math.ceil(from);j<to;j++)put(r[j%N]);put(interpolate(r,to))};const backward=(r,from,to)=>{put(interpolate(r,from));for(let j=Math.floor(from);j>to;j--)put(r[((j%N)+N)%N]);put(interpolate(r,to))};const gap=0.16;for(let k=0;k<=lastEven;k+=2){forward(rings[k],gap,N-gap);if(k+2<=lastEven)put(interpolate(rings[k+2],gap))}const lastOdd=lastEven-1;if(lastOdd>=1){put(interpolate(rings[lastOdd],N-gap));for(let k=lastOdd;k>=1;k-=2){backward(rings[k],N-gap,gap);if(k-2>=1)put(interpolate(rings[k-2],N-gap))}}return route}
