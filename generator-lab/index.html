@@ -26,22 +26,19 @@ let innerOdd=innerEven-1;if(innerOdd>=1){traverse(rings[innerOdd],true,innerOdd)
 // Convert every diagonal transition into two orthogonal legs.
 // Choose the elbow with fewer intersections and greater clearance.
 function orthogonalize(points){
+ // Stair-step transitions follow the original diagonal corridor rather than
+ // extending across neighboring spiral tracks.
  const out=[points[0]];
  for(let i=1;i<points.length;i++){
-  const a=out[out.length-1],b=points[i];
-  if(Math.abs(a[0]-b[0])>0.01&&Math.abs(a[1]-b[1])>0.01){
-   const choices=[[b[0],a[1]],[a[0],b[1]]];
-   const score=q=>{
-    const candidate=[...out,q,b];
-    const crosses=inspectRoute(candidate);
-    let clearance=Infinity;
-    for(let k=1;k<out.length-2;k++)clearance=Math.min(clearance,segmentDistance(out[k-1],out[k],a,q),segmentDistance(out[k-1],out[k],q,b));
-    return crosses*1e6-(Number.isFinite(clearance)?clearance:0);
-   };
-   choices.sort((x,y)=>score(x)-score(y));
-   out.push(choices[0]);
-  }
-  out.push(b);
+  const a=out[out.length-1],b=points[i],dx=b[0]-a[0],dy=b[1]-a[1];
+  if(Math.abs(dx)>0.01&&Math.abs(dy)>0.01){
+   const steps=Math.max(4,Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))/3));
+   for(let j=1;j<=steps;j++){
+    const t=j/steps;
+    out.push([a[0]+dx*t,a[1]+dy*(j-1)/steps]);
+    out.push([a[0]+dx*t,a[1]+dy*t]);
+   }
+  }else out.push(b);
  }
  return out;
 }
