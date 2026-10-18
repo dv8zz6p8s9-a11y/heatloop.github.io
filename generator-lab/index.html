@@ -18,7 +18,7 @@ if(poly.length===4){const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);const L=Math
 if(!poly.every(p=>(Math.abs(p[0]-L)<0.01||Math.abs(p[0]-R)<0.01)&&(Math.abs(p[1]-T)<0.01||Math.abs(p[1]-B)<0.01)))return [];
 const rings=[];for(let i=0;i<200;i++){let l=L+off+i*s,r=R-off-i*s,t=T+off+i*s,b=B-off-i*s;if(r-l<2.5*s||b-t<2.5*s)break;rings.push({l,r,t,b})}if(rings.length<2)return [];
 const route=[],add=p=>{let q=route[route.length-1];if(!q||Math.hypot(q[0]-p[0],q[1]-p[1])>0.01)route.push(p)};
-const traverse=(r,reverse,index)=>{const gap=Math.min((index+1)*s*0.48,(r.b-r.t)*0.30);const down=[[r.r,cy+gap],[r.r,r.b],[r.l,r.b],[r.l,r.t],[r.r,r.t],[r.r,cy-gap]];const points=reverse?down.slice().reverse():down;points.forEach(add)};
+const traverse=(r,reverse,index)=>{const gap=Math.min(s*0.5,(r.b-r.t)*0.25);const down=[[r.r,cy+gap],[r.r,r.b],[r.l,r.b],[r.l,r.t],[r.r,r.t],[r.r,cy-gap]];const points=reverse?down.slice().reverse():down;points.forEach(add)};
 let innerEven=2*Math.floor((rings.length-1)/2);
 for(let i=0;i<=innerEven;i+=2)traverse(rings[i],false,i);
 let innerOdd=innerEven-1;if(innerOdd>=1){traverse(rings[innerOdd],true,innerOdd);for(let i=innerOdd-2;i>=1;i-=2)traverse(rings[i],true,i)}
