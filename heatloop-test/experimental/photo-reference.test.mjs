@@ -1,0 +1,16 @@
+import {test} from 'node:test';
+import {strict as assert} from 'node:assert';
+import {makeOverlay,checkSpacing,validatePolygon} from './spiral-overlay.mjs';
+import {configureRoom} from './whole-house-ufh.mjs';
+import {PHOTO_REFERENCE} from './photo-reference.mjs';
+const room=[{x:0,y:0},{x:6,y:0},{x:6,y:4},{x:0,y:4}];
+test('photo reference has one continuous circuit and exactly two endpoints',()=>{assert.equal(PHOTO_REFERENCE.pipe.continuous,true);assert.equal(PHOTO_REFERENCE.pipe.openEndpoints,2);assert.equal(PHOTO_REFERENCE.pipe.endpointSide,'same')});
+test('photo reference uses nominal 15cm spacing, 10cm offset, 15cm S radius',()=>{assert.equal(PHOTO_REFERENCE.spacingCm,15);assert.equal(PHOTO_REFERENCE.wallOffsetCm,10);assert.equal(PHOTO_REFERENCE.centralReturn.radiusCm,15)});
+test('reject crossing of non-neighbor pipe segments',()=>{const points=[{x:0,y:0},{x:10,y:10},{x:10,y:20},{x:0,y:20},{x:0,y:10},{x:10,y:0}];assert.equal(checkSpacing({points},1).ok,false)});
+test('reject infinite spacing',()=>assert.throws(()=>configureRoom({id:'r',polygon:room},{spacing:Infinity})));
+test('reject self crossing polygon',()=>assert.throws(()=>configureRoom({id:'r',polygon:[{x:0,y:0},{x:2,y:2},{x:0,y:2},{x:2,y:0}]})));
+test('reject nonfinite overlay vertices',()=>assert.throws(()=>makeOverlay([{x:0,y:0},{x:Infinity,y:0},{x:1,y:1}])));
+test('reject nonfinite margin',()=>assert.throws(()=>makeOverlay(room,{margin:NaN})));
+test('accept rectangle',()=>assert.equal(validatePolygon(room),true));
+test('reject overlapping collinear polygon edges',()=>assert.equal(validatePolygon([{x:0,y:0},{x:4,y:0},{x:2,y:0},{x:4,y:4},{x:0,y:4}]),false));
+test('segment clearance detects parallel pipes',()=>assert.equal(checkSpacing({points:[{x:0,y:0},{x:10,y:0},{x:10,y:10},{x:0,y:10},{x:0,y:.2},{x:10,y:.2}]},1).ok,false));
