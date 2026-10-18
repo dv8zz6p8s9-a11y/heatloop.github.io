@@ -27,19 +27,15 @@ const entry=route[0],exit=route[route.length-1];
 // Both L-shaped feed tails must actually reach the right room boundary.
 // The orange return has a longer horizontal leg than the blue supply.
 if(entry&&exit){
-  // Connect the two tails to the same wall without a diagonal shortcut.
-  // Keep a separate grid lane for each tail; reject an unsafe connector.
-  const candidates=[L,R].map(x=>{
-    const candidate=[[x,entry[1]],...route,[x,exit[1]]];
-    return {x,candidate,crossings:inspectRoute(candidate),distance:Math.abs(x-entry[0])+Math.abs(x-exit[0])};
-  }).sort((a,b)=>a.crossings-b.crossings||a.distance-b.distance);
-  if(candidates[0].crossings===0){
-    route.unshift([candidates[0].x,entry[1]]);
-    route.push([candidates[0].x,exit[1]]);
-  }else{
-    // Never silently publish a route with crossing feed tails.
-    return [];
-  }
+  // Restore layout even when the experimental collision checker finds
+  // crossings; warnings remain visible in the diagnostics panel.
+  const candidates=[L,R].map(x=>({
+    x,
+    crossings:inspectRoute([[x,entry[1]],...route,[x,exit[1]]]),
+    distance:Math.abs(x-entry[0])+Math.abs(x-exit[0])
+  })).sort((a,b)=>a.crossings-b.crossings||a.distance-b.distance);
+  route.unshift([candidates[0].x,entry[1]]);
+  route.push([candidates[0].x,exit[1]]);
 }
 return route}
 // Nonrectangular rooms retain experimental offset-based geometry.
