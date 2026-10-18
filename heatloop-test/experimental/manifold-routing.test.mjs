@@ -1,0 +1,16 @@
+import {strict as assert} from 'node:assert';
+import {createRoute,editRoute,loopTotalLength,violations} from './manifold-routing.mjs';
+const a={x:0,y:0},b={x:4,y:0};
+const wall={a:{x:2,y:-1},b:{x:2,y:1}};
+const direct=createRoute(a,b,[wall]);
+assert.equal(direct.length,4);
+assert.equal(direct.violations.length,1);
+const withPoint=editRoute(direct,'insert',1,{x:0,y:2},[wall]);
+assert.equal(withPoint.points.length,3);
+const corrected=editRoute(withPoint,'insert',2,{x:4,y:2},[wall]);
+assert.equal(corrected.violations.length,0);
+assert.ok(corrected.length>4);
+assert.equal(loopTotalLength(50,corrected,corrected),50+2*corrected.length);
+assert.equal(editRoute(corrected,'remove',1,null,[wall]).points.length,3);
+assert.equal(violations([{x:0,y:2},{x:4,y:2}],[wall]).length,0);
+console.log('OK: trasy, korekty, kolizje i dlugosci');
