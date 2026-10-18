@@ -1,35 +1,94 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>HeatLoop — test nakładki</title><style>body{margin:0;background:#0d1726;color:#eaf2fa;font:15px system-ui}header,footer{padding:12px 16px}h2{margin:0 0 5px}small{color:#a8bfd1}canvas{display:block;width:100%;height: min(63vh,590px);background:#f6f8fa;touch-action:none}button{font:inherit;padding:12px;border:1px solid #58758c;border-radius:9px;background:#203b53;color:white}button:active{background:#337ea7}.buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:12px}#metrics{padding:0 14px 14px;line-height:1.6}.on{background:#137b82}input{width:100%}</style></head><body><header><h2>HeatLoop — nakładka ślimaka</h2><small>Rysunek przykładowego domu wczytany automatycznie · test dotykowy</small></header><canvas id="view"></canvas><div class="buttons"><button id="move" class="on">Przesuń</button><button id="start">Początek</button><button id="left">↶ 15°</button><button id="right">↷ 15°</button><button id="mirror">Odbij</button><button id="reset">Reset</button></div><div id="metrics"></div><footer><small>Rysunek techniczny jest już wczytany — niczego nie musisz dodawać. Przeciągnij palcem, aby przesunąć wzór. W trybie „Początek” dotknij obszaru wokół pętli. Początek i koniec pozostają dwoma osobnymi końcówkami. Układ ma charakter demonstracyjny.</small></footer><script>
-const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),metrics=document.querySelector('#metrics');let mode='move',angle=0,mirror=false,dx=0,dy=0,exitAngle=Math.PI,drag=null;
-const W=10,H=7,turns=8;let pts=[];
-function build(){pts=[];const gap=.23;let l=.72,r=6.28,t=.72,b=4.28;for(let i=0;i<turns;i++){if(r<=l||b<=t)break;pts.push([l,t],[r,t],[r,b],[l,b]);l+=gap;r-=gap;t+=gap;b-=gap}}
-// Coordinates of prototype polyline; not yet a true return snail.
-function transform(p){let x=p[0]-3.5,y=p[1]-2.5;if(mirror)x=-x;return [3.5+dx+x*Math.cos(angle)-y*Math.sin(angle),2.5+dy+x*Math.sin(angle)+y*Math.cos(angle)]}
-let scale=1,ox=0,oy=0;
-function screen(p){return [ox+p[0]*scale,oy+p[1]*scale]}
-function world(x,y){return [(x-ox)/scale,(y-oy)/scale]}
-function drawPlan(){
- const line=(a,b,color='#334e61',w=.085)=>{const x=screen(a),y=screen(b);ctx.beginPath();ctx.moveTo(...x);ctx.lineTo(...y);ctx.lineWidth=Math.max(1,w*scale);ctx.strokeStyle=color;ctx.stroke()};
- const label=(name,p)=>{const q=screen(p);ctx.fillStyle='#425a69';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(name,...q)};
- const dim=(name,p)=>{const q=screen(p);ctx.fillStyle='#718596';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(name,...q)};
- // Demo plan: salon 6x4m, hall, kitchen, bathroom, bedroom. Door gaps are intentional.
- line([.4,.4],[9.6,.4]);line([9.6,.4],[9.6,6.6]);line([9.6,6.6],[.4,6.6]);line([.4,6.6],[.4,.4]);
- line([6.6,.4],[6.6,2.1]);line([6.6,2.95],[6.6,4.55]);line([.4,4.55],[3,4.55]);line([3.9,4.55],[6.6,4.55]);
- line([6.6,4.55],[7.4,4.55]);line([8.3,4.55],[9.6,4.55]);
- line([6.6,2.95],[6.6,4.55]);line([6.6,4.55],[6.6,6.6]);
- line([.4,5.55],[2.5,5.55]);line([2.5,5.55],[2.5,6.6]);
- // Door arcs
- const door=(hinge,r,start,end)=>{const p=screen(hinge);ctx.beginPath();ctx.arc(p[0],p[1],r*scale,start,end);ctx.strokeStyle='#77a3b2';ctx.lineWidth=1;ctx.stroke()};
- door([6.6,2.1],.85,0,Math.PI/2);door([3,4.55],.9,0,Math.PI/2);door([7.4,4.55],.9,0,Math.PI/2);
- label('SALON 24 m²',[3.5,4.08]);label('KORYTARZ',[8.1,3.6]);label('SYPIALNIA',[4.7,5.8]);label('KUCHNIA',[8.1,1.1]);label('ŁAZIENKA',[8.1,5.7]);label('ROZDZIELACZ',[8.1,4.16]);
- const m=screen([8.1,3.94]);ctx.fillStyle='#2177a1';ctx.fillRect(m[0]-17,m[1]-5,34,10);
- dim('6,00 m',[3.5,.24]);dim('4,00 m',[.8,2.5]);
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>HeatLoop • Studio pętli</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1420;--panel:#142333;--line:#2a4054;--txt:#e8f2fa;--muted:#96afc1;--accent:#33b7c9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px system-ui,-apple-system,sans-serif}header{padding:13px 16px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}h1{font-size:19px;margin:0;font-weight:700}small,.muted{color:var(--muted)}.pill{font-size:11px;border:1px solid #326275;color:#8fe2e6;padding:5px 8px;border-radius:20px;white-space:nowrap}
+main{max-width:900px;margin:auto}.stage{position:relative;background:#edf2f4;margin:0 9px;border-radius:14px;overflow:hidden;border:1px solid #365063}canvas{display:block;width:100%;height:55dvh;min-height:320px;max-height:620px;touch-action:none}.hint{position:absolute;left:9px;top:9px;background:#ffffffed;color:#35546a;border-radius:8px;padding:7px 9px;font-size:11px;pointer-events:none}.toolbar{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:11px 10px}button{background:#1b3347;border:1px solid #34546b;border-radius:10px;color:var(--txt);font:600 13px system-ui;padding:11px 5px;min-height:44px}button.active{background:#116c7a;border-color:#39bbca}button:active{filter:brightness(1.3)}.controls{margin:0 10px 12px;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:13px}.line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:7px 0}.line label{font-weight:600}.line output{color:#8ee0e6;font-variant-numeric:tabular-nums}input[type=range]{width:100%;accent-color:#3ec4d0;height:30px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 10px 12px}.metric{background:#142333;border:1px solid #294055;padding:10px;border-radius:10px}.metric strong{display:block;font-size:16px;font-variant-numeric:tabular-nums}.metric span{font-size:11px;color:#9db6c9}.notice{margin:0 12px 22px;color:#9cb2c4;font-size:12px;line-height:1.5}.warn{color:#f3bc76}
+</style></head><body><main><header><div><h1>HeatLoop <span style="color:#4ac2cd">/ Studio pętli</span></h1><small>Test dotykowy • rzut demonstracyjny</small></div><span class="pill">WERSJA TESTOWA</span></header>
+<div class="stage"><canvas id="cv"></canvas><div class="hint">1 palec: przesuń • 2 palce: obrót i skala</div></div>
+<div class="toolbar"><button id="selectStart">◎ Początek</button><button id="flip">⇄ Odbij L/P</button><button id="fit">⤢ Dopasuj</button><button id="reset">↺ Reset</button></div>
+<section class="controls"><div class="line"><label for="rot">Obrót — płynny</label><output id="rotVal">0°</output></div><input id="rot" type="range" min="-180" max="180" step="1" value="0">
+<div class="line"><label for="size">Wielkość ślimaka</label><output id="sizeVal">100%</output></div><input id="size" type="range" min="35" max="150" step="1" value="100">
+<div class="line"><label for="space">Rozstaw rury</label><output id="spaceVal">15 cm</output></div><input id="space" type="range" min="10" max="25" step="1" value="15">
+</section><div class="metrics"><div class="metric"><strong id="len">—</strong><span>Długość szkicu</span></div><div class="metric"><strong id="count">—</strong><span>Rozstaw nominalny</span></div><div class="metric"><strong id="status">—</strong><span>Stan geometrii</span></div></div>
+<p class="notice"><span class="warn">Uwaga:</span> Test służy do oceny gestów i układu edycji. Nakładka przedstawia uproszczoną trasę podwójnego ślimaka; nie weryfikuje jeszcze promieni gięcia, kolizji ani hydrauliki. Nie stosować do projektów wykonawczych. Dotknij „Początek”, następnie krawędzi ślimaka, aby wybrać stronę wyjścia obu końców.</p></main>
+<script>
+'use strict';
+const cv=document.getElementById('cv'),g=cv.getContext('2d'),$=id=>document.getElementById(id);
+const room={x:.5,y:.5,w:6,h:4},plan={w:10,h:7};
+const state={x:3.5,y:2.5,angle:0,scale:1,mirror:false,spacing:.15,side:3,choose:false};
+const touches=new Map();let gesture=null,unit=1,offX=0,offY=0;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function spiral(){
+ // Inward rectangular spiral with pitch 2s, then parallel outward return with s offset.
+ // The connecting turn is deliberately schematic; hydraulic validation remains pending.
+ const s=state.spacing, pitch=2*s,w=5.1,h=3.3, left=-w/2,top=-h/2;
+ const inward=[],outward=[];let l=left,t=top,r=-left,b=-top;
+ while(r-l>3*s && b-t>3*s && inward.length<240){
+   inward.push([l,t],[r,t],[r,b],[l,b]);
+   l+=pitch;t+=pitch;r-=pitch;b-=pitch;
+ }
+ // outward path between inward tracks, reversing winding and keeping endpoints adjacent
+ let lo=left+s,to=top+s,ro=-left-s,bo=-top-s;
+ while(ro-lo>2*s && bo-to>2*s && outward.length<240){
+   outward.push([lo,to],[ro,to],[ro,bo],[lo,bo]);
+   lo+=pitch;to+=pitch;ro-=pitch;bo-=pitch;
+ }
+ // This is a visual approximation of a counterflow spiral, not certified routed geometry.
+ const path=[...inward,...outward.reverse()];
+ return path;
 }
-function draw(){const rect=canvas.getBoundingClientRect(),dpr=devicePixelRatio||1;canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);const width=rect.width,height=rect.height;ctx.clearRect(0,0,width,height);scale=Math.min((width-36)/W,(height-36)/H);ox=(width-W*scale)/2;oy=(height-H*scale)/2;
-drawPlan();
-const p=pts.map(transform).map(screen);ctx.beginPath();p.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.strokeStyle='#c74438';ctx.lineWidth=3;ctx.lineJoin='round';ctx.stroke();
-const center=transform([3.5,2.5]);const e=[center[0]+Math.cos(exitAngle)*2.45,center[1]+Math.sin(exitAngle)*1.55];const [ex,ey]=screen(e);ctx.fillStyle='#147e8c';ctx.beginPath();ctx.arc(ex,ey,11,0,Math.PI*2);ctx.fill();ctx.fillStyle='white';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText('P',ex,ey+4);
-const length=pts.slice(1).reduce((s,p,i)=>s+Math.hypot(p[0]-pts[i][0],p[1]-pts[i][1]),0);metrics.textContent='Obrót: '+Math.round(angle*180/Math.PI)+'° · Odbicie: '+(mirror?'tak':'nie')+' · Długość szkicu: '+length.toFixed(2)+' m · Punkt wyjścia: P (symboliczny). Rysunek: przykładowy dom, nie projekt wykonawczy.';}
-function active(){document.querySelector('#move').classList.toggle('on',mode==='move');document.querySelector('#start').classList.toggle('on',mode==='start')}
-document.querySelector('#move').onclick=()=>{mode='move';active()};document.querySelector('#start').onclick=()=>{mode='start';active()};document.querySelector('#left').onclick=()=>{angle-=Math.PI/12;draw()};document.querySelector('#right').onclick=()=>{angle+=Math.PI/12;draw()};document.querySelector('#mirror').onclick=()=>{mirror=!mirror;draw()};document.querySelector('#reset').onclick=()=>{angle=0;mirror=false;dx=dy=0;exitAngle=Math.PI;draw()};
-canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);const r=canvas.getBoundingClientRect();const p=world(e.clientX-r.left,e.clientY-r.top);if(mode==='start'){const c=transform([3.5,2.5]);exitAngle=Math.atan2((p[1]-c[1])/4,(p[0]-c[0])/6);draw()}else drag={id:e.pointerId,p}});canvas.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;const r=canvas.getBoundingClientRect(),p=world(e.clientX-r.left,e.clientY-r.top);dx+=p[0]-drag.p[0];dy+=p[1]-drag.p[1];drag.p=p;draw()});canvas.addEventListener('pointerup',()=>drag=null);canvas.addEventListener('pointercancel',()=>drag=null);addEventListener('resize',draw);build();draw();
+function localToWorld(p){let x=p[0]*state.scale,y=p[1]*state.scale;if(state.mirror)x=-x;const c=Math.cos(state.angle),s=Math.sin(state.angle);return [state.x+x*c-y*s,state.y+x*s+y*c]}
+function worldToLocal(p){let x=p[0]-state.x,y=p[1]-state.y,c=Math.cos(state.angle),s=Math.sin(state.angle);let a=(x*c+y*s)/state.scale,b=(-x*s+y*c)/state.scale;return [state.mirror?-a:a,b]}
+function screen(p){return [offX+p[0]*unit,offY+p[1]*unit]}
+function fromScreen(x,y){return [(x-offX)/unit,(y-offY)/unit]}
+function line(points,color,width=1,dash=[]){if(points.length<2)return;g.beginPath();points.forEach((p,i)=>{const q=screen(p);i?g.lineTo(...q):g.moveTo(...q)});g.strokeStyle=color;g.lineWidth=width;g.setLineDash(dash);g.stroke();g.setLineDash([])}
+function text(str,p,color='#50677b',font='12px system-ui'){const q=screen(p);g.fillStyle=color;g.font=font;g.textAlign='center';g.fillText(str,...q)}
+function drawPlan(){
+ g.fillStyle='#f5f8fa';g.fillRect(0,0,cv.width,cv.height);
+ for(let x=0;x<=10;x+=.5)line([[x,0],[x,7]],'#e6ebef',.65);
+ for(let y=0;y<=7;y+=.5)line([[0,y],[10,y]],'#e6ebef',.65);
+ const wall=(a,b)=>line([a,b],'#364c5c',Math.max(3,.095*unit));
+ wall([.35,.35],[9.65,.35]);wall([9.65,.35],[9.65,6.65]);wall([9.65,6.65],[.35,6.65]);wall([.35,6.65],[.35,.35]);
+ wall([6.5,.35],[6.5,2.05]);wall([6.5,2.95],[6.5,4.5]);wall([.35,4.5],[3.05,4.5]);wall([3.95,4.5],[6.5,4.5]);
+ wall([6.5,4.5],[7.35,4.5]);wall([8.25,4.5],[9.65,4.5]);wall([6.5,4.5],[6.5,6.65]);wall([6.5,2.95],[6.5,4.5]);
+ text('SALON 24 m²',[3.4,4.18]);text('KORYTARZ',[8,3.55]);text('KUCHNIA',[8,1.2]);text('SYPIALNIA',[3.5,5.6]);text('ŁAZIENKA',[8,5.65]);
+ line([[7.55,4.12],[8.55,4.12]],'#227ca7',5);text('ROZDZIELACZ',[8,3.93],'#227ca7','bold 10px system-ui');
+ for(const [x,y] of [[6.5,2.05],[3.05,4.5],[7.35,4.5]]){const p=screen([x,y]);g.beginPath();g.arc(...p,.9*unit,0,Math.PI/2);g.strokeStyle='#86a5b6';g.lineWidth=1;g.stroke()}
+}
+function draw(){
+ const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);g.setTransform(d,0,0,d,0,0);unit=Math.min((r.width-24)/plan.w,(r.height-24)/plan.h);offX=(r.width-plan.w*unit)/2;offY=(r.height-plan.h*unit)/2;
+ drawPlan();
+ const raw=spiral(),p=raw.map(localToWorld);
+ line(p,'#cf4b40',Math.max(2,unit*.055));
+ // Editable selection bounds
+ const corners=[[-2.65,-1.75],[2.65,-1.75],[2.65,1.75],[-2.65,1.75]].map(localToWorld);
+ line([...corners,corners[0]],'#169aab',1.4,[5,4]);
+ for(const c of corners){const q=screen(c);g.fillStyle='#fff';g.strokeStyle='#168fa3';g.lineWidth=2;g.beginPath();g.arc(...q,5.5,0,Math.PI*2);g.fill();g.stroke()}
+ // Exit zone selected on one of four sides, paired endpoints (not connected).
+ const exits=[[0,-1.68],[2.57,0],[0,1.68],[-2.57,0]];
+ const e=localToWorld(exits[state.side]),q=screen(e);
+ g.fillStyle='#117f8e';g.beginPath();g.arc(...q,10,0,Math.PI*2);g.fill();g.fillStyle='#fff';g.font='bold 11px system-ui';g.textAlign='center';g.fillText('P',q[0],q[1]+4);
+ const length=p.slice(1).reduce((sum,v,i)=>sum+Math.hypot(v[0]-p[i][0],v[1]-p[i][1]),0);
+ $('len').textContent=length.toFixed(1)+' m';$('count').textContent=Math.round(state.spacing*100)+' cm';
+ const inRoom=p.every(v=>v[0]>.35&&v[0]<6.5&&v[1]>.35&&v[1]<4.5);
+ $('status').textContent=inRoom?'W obrysie':'Poza obrysem';$('status').style.color=inRoom?'#9be5cf':'#ffba8c';
+ $('rot').value=String(Math.round(state.angle*180/Math.PI));$('rotVal').textContent=Math.round(state.angle*180/Math.PI)+'°';
+ $('size').value=String(Math.round(state.scale*100));$('sizeVal').textContent=Math.round(state.scale*100)+'%';
+ $('space').value=String(Math.round(state.spacing*100));$('spaceVal').textContent=Math.round(state.spacing*100)+' cm';
+ $('selectStart').classList.toggle('active',state.choose);
+}
+function pointer(e){const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
+function startGesture(){const ps=[...touches.values()];if(ps.length===2){const a=ps[0],b=ps[1];gesture={type:'two',dist:Math.hypot(b[0]-a[0],b[1]-a[1]),angle:Math.atan2(b[1]-a[1],b[0]-a[0]),scale:state.scale,rot:state.angle,center:[(a[0]+b[0])/2,(a[1]+b[1])/2],x:state.x,y:state.y}}else if(ps.length===1){gesture={type:'one',p:ps[0],x:state.x,y:state.y}}}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();cv.setPointerCapture(e.pointerId);const p=pointer(e);if(state.choose){const a=worldToLocal(fromScreen(...p));state.side=Math.abs(a[0]/2.55)>Math.abs(a[1]/1.65)?(a[0]>0?1:3):(a[1]>0?2:0);state.choose=false;draw();return}touches.set(e.pointerId,p);startGesture()});
+cv.addEventListener('pointermove',e=>{if(!touches.has(e.pointerId))return;touches.set(e.pointerId,pointer(e));const ps=[...touches.values()];if(ps.length===1&&gesture?.type==='one'){const p=ps[0];state.x=gesture.x+(p[0]-gesture.p[0])/unit;state.y=gesture.y+(p[1]-gesture.p[1])/unit}else if(ps.length===2&&gesture?.type==='two'){const a=ps[0],b=ps[1],mid=[(a[0]+b[0])/2,(a[1]+b[1])/2];state.scale=clamp(gesture.scale*Math.hypot(b[0]-a[0],b[1]-a[1])/Math.max(1,gesture.dist),.35,1.5);state.angle=gesture.rot+Math.atan2(b[1]-a[1],b[0]-a[0])-gesture.angle;state.x=gesture.x+(mid[0]-gesture.center[0])/unit;state.y=gesture.y+(mid[1]-gesture.center[1])/unit}draw()});
+function end(e){touches.delete(e.pointerId);startGesture();draw()}cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+$('selectStart').onclick=()=>{state.choose=!state.choose;draw()};
+$('flip').onclick=()=>{state.mirror=!state.mirror;draw()};
+$('fit').onclick=()=>{state.x=3.4;state.y=2.45;state.scale=1;state.angle=0;draw()};
+$('reset').onclick=()=>{Object.assign(state,{x:3.5,y:2.5,angle:0,scale:1,mirror:false,spacing:.15,side:3,choose:false});draw()};
+$('rot').oninput=e=>{state.angle=Number(e.target.value)*Math.PI/180;draw()};
+$('size').oninput=e=>{state.scale=Number(e.target.value)/100;draw()};
+$('space').oninput=e=>{state.spacing=Number(e.target.value)/100;draw()};
+addEventListener('resize',draw);draw();
 </script></body></html>
