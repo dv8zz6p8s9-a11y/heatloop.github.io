@@ -26,19 +26,17 @@ let innerOdd=innerEven-1;if(innerOdd>=1){traverse(rings[innerOdd],true,innerOdd)
 // Convert every diagonal transition into two orthogonal legs.
 // Choose the elbow with fewer intersections and greater clearance.
 function orthogonalize(points){
- // Stair-step transitions follow the original diagonal corridor rather than
- // extending across neighboring spiral tracks.
- const out=[points[0]];
+ const out=[points[0]],eps=0.01;
  for(let i=1;i<points.length;i++){
-  const a=out[out.length-1],b=points[i],dx=b[0]-a[0],dy=b[1]-a[1];
-  if(Math.abs(dx)>0.01&&Math.abs(dy)>0.01){
-   const steps=Math.max(4,Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))/3));
-   for(let j=1;j<=steps;j++){
-    const t=j/steps;
-    out.push([a[0]+dx*t,a[1]+dy*(j-1)/steps]);
-    out.push([a[0]+dx*t,a[1]+dy*t]);
-   }
-  }else out.push(b);
+  const p=out[out.length-1],q=points[i];
+  if(Math.abs(p[0]-q[0])>eps&&Math.abs(p[1]-q[1])>eps){
+   const elbows=[[q[0],p[1]],[p[0],q[1]]];
+   const score=e=>Math.min(...poly.map((v,k)=>distSegment(e,v,poly[(k+1)%poly.length])));
+   const valid=elbows.filter(e=>inside(e[0],e[1],poly));
+   const chosen=(valid.length?valid:elbows).sort((x,y)=>score(y)-score(x))[0];
+   out.push(chosen);
+  }
+  out.push(q);
  }
  return out;
 }
@@ -64,7 +62,40 @@ function segmentsCross(a,b,c,d){const x=cross2(a,b,c),y=cross2(a,b,d),z=cross2(c
 function inspectRoute(p){let crossings=0;for(let i=1;i<p.length;i++)for(let j=i+2;j<p.length;j++){if(segmentsCross(p[i-1],p[i],p[j-1],p[j]))crossings++}return crossings}
 function segmentDistance(a,b,c,d){const pd=(p,x,y)=>{let vx=y[0]-x[0],vy=y[1]-x[1],den=vx*vx+vy*vy,t=den?Math.max(0,Math.min(1,((p[0]-x[0])*vx+(p[1]-x[1])*vy)/den)):0;return Math.hypot(p[0]-x[0]-t*vx,p[1]-x[1]-t*vy)};return Math.min(pd(a,c,d),pd(b,c,d),pd(c,a,b),pd(d,a,b))}
 function spacingWarnings(p,spacing){let bad=0,min=Infinity;for(let i=1;i<p.length;i++)for(let j=i+8;j<p.length;j++){const dist=segmentDistance(p[i-1],p[i],p[j-1],p[j]);min=Math.min(min,dist);if(dist<spacing*0.65)bad++}return {bad,min:Number.isFinite(min)?min:null}}
-function roundedRoute(p,radius){if(p.length<3)return p;let out=[p[0]];for(let i=1;i<p.length-1;i++){let a=p[i-1],b=p[i],d=p[i+1],u=[a[0]-b[0],a[1]-b[1]],v=[d[0]-b[0],d[1]-b[1]],la=Math.hypot(...u),lb=Math.hypot(...v);if(la<0.001||lb<0.001){out.push(b);continue}u=u.map(x=>x/la);v=v.map(x=>x/lb);let theta=Math.acos(Math.max(-1,Math.min(1,u[0]*v[0]+u[1]*v[1])));if(theta<0.15||Math.PI-theta<0.05){out.push(b);continue}let tangent=radius/Math.tan(theta/2),t=Math.min(tangent,la*0.3,lb*0.3);if(t<0.3){out.push(b);continue}let x=[b[0]+u[0]*t,b[1]+u[1]*t],y=[b[0]+v[0]*t,b[1]+v[1]*t];out.push(x);for(let j=1;j<=6;j++){let z=j/6,w=1-z;out.push([w*w*x[0]+2*w*z*b[0]+z*z*y[0],w*w*x[1]+2*w*z*b[1]+z*z*y[1]])}}out.push(p[p.length-1]);return out}
+// Exact circular fillets for orthogonal turns; preserve a shared tangent radius.
+function roundedRoute(p,radius){
+ if(p.length<3)return p.slice();
+ const result=[p[0]], EPS=1e-7;
+ for(let i=1;i<p.length-1;i++){
+  const a=p[i-1],b=p[i],d=p[i+1];
+  const la=Math.hypot(a[0]-b[0],a[1]-b[1]),lb=Math.hypot(d[0]-b[0],d[1]-b[1]);
+  if(la<EPS||lb<EPS){result.push(b);continue}
+  const u=[(a[0]-b[0])/la,(a[1]-b[1])/la],v=[(d[0]-b[0])/lb,(d[1]-b[1])/lb];
+  const dot=Math.max(-1,Math.min(1,u[0]*v[0]+u[1]*v[1]));
+  const angle=Math.acos(dot);
+  if(angle<0.01||Math.PI-angle<0.01){result.push(b);continue}
+  const tangent=Math.min(radius/Math.tan(angle/2),la/2,lb/2);
+  const actualRadius=tangent*Math.tan(angle/2);
+  if(tangent<EPS||actualRadius<EPS){result.push(b);continue}
+  const entry=[b[0]+u[0]*tangent,b[1]+u[1]*tangent],exit=[b[0]+v[0]*tangent,b[1]+v[1]*tangent];
+  const bis=[u[0]+v[0],u[1]+v[1]],bn=Math.hypot(...bis);
+  if(bn<EPS){result.push(b);continue}
+  const centerDistance=actualRadius/Math.sin(angle/2);
+  const center=[b[0]+bis[0]/bn*centerDistance,b[1]+bis[1]/bn*centerDistance];
+  let a0=Math.atan2(entry[1]-center[1],entry[0]-center[0]);
+  let a1=Math.atan2(exit[1]-center[1],exit[0]-center[0]);
+  const cross=u[0]*v[1]-u[1]*v[0];
+  if(cross<0){while(a1<a0)a1+=2*Math.PI}else{while(a1>a0)a1-=2*Math.PI}
+  result.push(entry);
+  const count=Math.max(3,Math.ceil(Math.abs(a1-a0)/(Math.PI/36)));
+  for(let j=1;j<count;j++){
+   const theta=a0+(a1-a0)*j/count;
+   result.push([center[0]+actualRadius*Math.cos(theta),center[1]+actualRadius*Math.sin(theta)]);
+  }
+  result.push(exit);
+ }
+ result.push(p[p.length-1]);return result
+}
 function bendDiagnostics(p,radius){let sharp=0;for(let i=1;i<p.length-1;i++){let a=p[i-1],b=p[i],d=p[i+1],l1=Math.hypot(a[0]-b[0],a[1]-b[1]),l2=Math.hypot(d[0]-b[0],d[1]-b[1]);if(Math.min(l1,l2)<radius*2)sharp++}return sharp}
 function length(p){let n=0;for(let i=1;i<p.length;i++)n+=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1])/100;return n}
 function refresh(){svg.replaceChildren();el('rect',{x:0,y:0,width:900,height:650,fill:'#f5f9fc'});for(let x=0;x<900;x+=50)el('line',{x1:x,y1:0,x2:x,y2:650,stroke:'#e0eaf0'});for(let y=0;y<650;y+=50)el('line',{x1:0,y1:y,x2:900,y2:y,stroke:'#e0eaf0'});el('polygon',{points:poly.map(p=>p.join(',')).join(' '),fill:'#e2f4fa',stroke:'#176a86','stroke-width':4});let route=generated?spiral():[];if(flipped)route.reverse();let bendWarnings=route.length?bendDiagnostics(route,Number($('pipe').value.match(/\d+/)?.[0]||16)*0.5):0;route=roundedRoute(route,8);paths=[];let max=Number($('limit').value);if(route.length){if(splitMode&&max>0){let current=[route[0]],l=0;for(let i=1;i<route.length;i++){let seg=Math.hypot(route[i][0]-route[i-1][0],route[i][1]-route[i-1][1])/100;if(l+seg>max&&current.length>1){paths.push(current);current=[route[i-1]];l=0}current.push(route[i]);l+=seg}if(current.length>1)paths.push(current)}else paths=[route];paths.forEach((p,i)=>{el('polyline',{points:p.map(a=>a.join(',')).join(' '),fill:'none',stroke:['#007aa4','#bd6e2b','#387b53','#865bb5'][i%4],'stroke-width':3.2,'stroke-linejoin':'round','stroke-linecap':'round'});let idx=Math.min(p.length-1,Math.round(startFraction*(p.length-1)));let pt=p[idx];el('circle',{cx:pt[0],cy:pt[1],r:6,fill:'#e34e38',stroke:'#fff','stroke-width':2})})}poly.forEach((p,i)=>el('circle',{cx:p[0],cy:p[1],r:8,fill:'#d8873b',stroke:'#fff','stroke-width':2,'data-i':i}));let total=paths.reduce((s,p)=>s+length(p),0);let collisions=paths.reduce((s,p)=>s+inspectRoute(p),0);let spacingCheck=paths.reduce((n,p)=>n+spacingWarnings(p,Number($('spacing').value)).bad,0);$('stats').innerHTML='Przecięcia trasy: <b>'+collisions+'</b><br>Podejrzanie małe odstępy: <b>'+spacingCheck+'</b><br>Potencjalnie ciasne narożniki: <b>'+bendWarnings+'</b><br>Długość narysowanej trasy: <b>'+total.toFixed(1)+' m</b><br>Obiegi na rysunku: <b>'+paths.length+'</b><br>Limit: '+max+' m<br>'+(paths.some(p=>length(p)>max)?'<span class="warn">Przekroczono limit długości obiegu.</span>':'')+(poly.length===6?'<br><span class="warn">Kształt L: algorytm eksperymentalny, może nie pokrywać całej powierzchni.</span>':'');}
