@@ -70,7 +70,15 @@ function spiralIrregular(){
  const outer=offsetPolygon(poly,clearance);
  const inner=offsetPolygon(poly,clearance+s);
  if(!validRing(outer,clearance)||!validRing(inner,clearance+s))return [];
- const route=outer.concat(inner.slice().reverse());
+ // Begin with the longest wall of the room; preserve the polygon winding.
+ const longestEdgeIndex=poly.reduce((best,p,i)=>{
+  const q=poly[(i+1)%poly.length],a=poly[best],b=poly[(best+1)%poly.length];
+  return Math.hypot(q[0]-p[0],q[1]-p[1])>Math.hypot(b[0]-a[0],b[1]-a[1])?i:best;
+ },0);
+ const rotate=(ring,start)=>ring.slice(start).concat(ring.slice(0,start));
+ const outerOrdered=rotate(outer,longestEdgeIndex);
+ const innerOrdered=rotate(inner,longestEdgeIndex);
+ const route=outerOrdered.concat(innerOrdered.slice().reverse());
  for(let i=1;i<route.length;i++){
   const p=route[i-1],q=route[i];
   for(let t=0;t<=10;t++){
