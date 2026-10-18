@@ -18,45 +18,20 @@ function spiral(){const s=Number($('spacing').value),off=Number($('offset').valu
 if(poly.length===4){const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);const L=Math.min(...xs),R=Math.max(...xs),T=Math.min(...ys),B=Math.max(...ys),cx=(L+R)/2,cy=(T+B)/2;
 if(!poly.every(p=>(Math.abs(p[0]-L)<0.01||Math.abs(p[0]-R)<0.01)&&(Math.abs(p[1]-T)<0.01||Math.abs(p[1]-B)<0.01)))return [];
 // Track coordinates follow the same wall-anchored pitch grid drawn on screen.
-const rings=[];for(let i=0;i<200;i++){let l=L+off+i*s,r=R-off-i*s,t=T+off+i*s,b=B-off-i*s;if(r-l<2.5*s||b-t<2.5*s)break;rings.push({l,r,t,b})}if(rings.length<2)return [];
-const route=[],add=p=>{let q=route[route.length-1];if(!q||Math.hypot(q[0]-p[0],q[1]-p[1])>0.01)route.push(p)};
-const traverse=(r,reverse,index)=>{const gap=Math.min(s*0.5,(r.b-r.t)*0.25);const down=[[r.r,cy+gap],[r.r,r.b],[r.l,r.b],[r.l,r.t],[r.r,r.t],[r.r,cy-gap]];const points=reverse?down.slice().reverse():down;points.forEach(add)};
-let innerEven=2*Math.floor((rings.length-1)/2);
-for(let i=0;i<=innerEven;i+=2)traverse(rings[i],false,i);
-let innerOdd=innerEven-1;if(innerOdd>=1){traverse(rings[innerOdd],true,innerOdd);for(let i=innerOdd-2;i>=1;i-=2)traverse(rings[i],true,i)}
-// ISKO-style L-shaped lead-in: horizontal entry from the right, then turn down along the wall.
-// Convert every diagonal transition into two orthogonal legs.
-// Choose the elbow with fewer intersections and greater clearance.
-function orthogonalize(points){
- const out=[points[0]],eps=0.01;
- for(let i=1;i<points.length;i++){
-  const p=out[out.length-1],q=points[i];
-  if(Math.abs(p[0]-q[0])>eps&&Math.abs(p[1]-q[1])>eps){
-   const elbows=[[q[0],p[1]],[p[0],q[1]]];
-   const score=e=>Math.min(...poly.map((v,k)=>distSegment(e,v,poly[(k+1)%poly.length])));
-   const valid=elbows.filter(e=>inside(e[0],e[1],poly));
-   const chosen=(valid.length?valid:elbows).sort((x,y)=>score(y)-score(x))[0];
-   out.push(chosen);
-  }
-  out.push(q);
- }
- return out;
+// Continuous orthogonal inward spiral on a physical pitch grid.
+const route=[],add=(x,y)=>{const q=route[route.length-1];if(!q||Math.hypot(q[0]-x,q[1]-y)>0.001)route.push([x,y])};
+let l=L+off,r=R-off,t=T+off,b=B-off;
+if(r-l<2*s||b-t<2*s)return [];
+// Enter from the boundary; the lead stays horizontal and meets the first track.
+add(R,cy);add(r,cy);add(r,b);add(l,b);add(l,t);
+for(let i=0;i<200;i++){
+  add(r,t);
+  const nextL=l+s,nextR=r-s,nextT=t+s,nextB=b-s;
+  if(nextR-nextL<2*s||nextB-nextT<2*s){add(r,Math.min(b-s,cy));break}
+  add(r,nextB);add(nextL,nextB);add(nextL,nextT);
+  l=nextL;r=nextR;t=nextT;b=nextB;
 }
-const entry=route[0],exit=route[route.length-1];
-// Both L-shaped feed tails must actually reach the right room boundary.
-// The orange return has a longer horizontal leg than the blue supply.
-if(entry&&exit){
-  // Restore layout even when the experimental collision checker finds
-  // crossings; warnings remain visible in the diagnostics panel.
-  const candidates=[R].map(x=>({
-    x,
-    crossings:inspectRoute([[x,entry[1]],...route,[x,exit[1]]]),
-    distance:Math.abs(x-entry[0])+Math.abs(x-exit[0])
-  })).sort((a,b)=>a.crossings-b.crossings||a.distance-b.distance);
-  route.unshift([candidates[0].x,entry[1]]);
-  route.push([candidates[0].x,exit[1]]);
-}
-return orthogonalize(route)}
+return route}
 // Nonrectangular rooms retain experimental offset-based geometry.
 const rings=[];for(let d=off;d<400;d+=s){const r=offsetPolygon(poly,d);if(!validRing(r,d))break;rings.push(r)}if(rings.length<3)return [];if(rings.length%2===0)rings.pop();const lastEven=2*Math.floor((rings.length-1)/2),N=rings[0].length;const interpolate=(r,t)=>{let i=Math.floor(t),f=t-i,a=r[((i%N)+N)%N],b=r[((i+1)%N+N)%N];return [a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]};const route=[],put=p=>{let q=route[route.length-1];if(!q||Math.hypot(q[0]-p[0],q[1]-p[1])>0.001)route.push(p)};const forward=(r,from,to)=>{put(interpolate(r,from));for(let j=Math.ceil(from);j<to;j++)put(r[j%N]);put(interpolate(r,to))};const backward=(r,from,to)=>{put(interpolate(r,from));for(let j=Math.floor(from);j>to;j--)put(r[((j%N)+N)%N]);put(interpolate(r,to))};const gap=0.16;for(let k=0;k<=lastEven;k+=2){forward(rings[k],gap,N-gap);if(k+2<=lastEven)put(interpolate(rings[k+2],gap))}const lastOdd=lastEven-1;if(lastOdd>=1){put(interpolate(rings[lastOdd],N-gap));for(let k=lastOdd;k>=1;k-=2){backward(rings[k],N-gap,gap);if(k-2>=1)put(interpolate(rings[k-2],N-gap))}}return route}
 function cross2(a,b,c){return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])}
