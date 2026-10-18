@@ -1,0 +1,18 @@
+import {strict as assert} from 'node:assert';
+import {test} from 'node:test';
+import {makeOverlay,checkSpacing,pipeLength,translate,rotate} from './spiral-overlay.mjs';
+import {configureRoom,polygonArea,pointInPolygon,layoutLoops} from './whole-house-ufh.mjs';
+import {generateSTurn} from './s-turn-geometry.mjs';
+const rect=[{x:0,y:0},{x:6,y:0},{x:6,y:4},{x:0,y:4}];
+const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} vs ${b}`);
+test('rectangle area',()=>near(polygonArea(rect),24));
+test('point inside',()=>assert.equal(pointInPolygon({x:3,y:2},rect),true));
+test('translation length',()=>{const o=makeOverlay(rect);near(pipeLength(o),pipeLength(translate(o,2,3)))});
+test('rotation length',()=>{const o=makeOverlay(rect);near(pipeLength(o),pipeLength(rotate(o,Math.PI/2)))});
+test('layout only on explicit request',()=>{const r=configureRoom({id:'r',polygon:rect});assert.equal(r.layout,null);assert.ok(layoutLoops(r).layout)});
+test('S geometry center',()=>{const s=generateSTurn();near(s.points[48].x,0);near(s.points[48].y,0)});
+test('S arc length',()=>{for(const mode of ['tight','standard','wide']){const s=generateSTurn({mode});near(s.exactLengthCm,2*Math.PI*s.radiusCm)}});
+test('DEFECT: segment crossing missed by vertex-only spacing',()=>{const p=[{x:0,y:0},{x:10,y:10},{x:10,y:20},{x:0,y:20},{x:0,y:10},{x:10,y:0}];assert.equal(checkSpacing({points:p},1).ok,false)});
+test('DEFECT: infinite spacing should be rejected',()=>assert.throws(()=>configureRoom({id:'r',polygon:rect},{spacing:Infinity})));
+test('DEFECT: self-intersecting polygon should be rejected',()=>assert.throws(()=>configureRoom({id:'r',polygon:[{x:0,y:0},{x:2,y:2},{x:0,y:2},{x:2,y:0}]})));
+test('DEFECT: infinite overlay coordinates should be rejected',()=>assert.throws(()=>makeOverlay([{x:0,y:0},{x:Infinity,y:0},{x:1,y:1}])));
