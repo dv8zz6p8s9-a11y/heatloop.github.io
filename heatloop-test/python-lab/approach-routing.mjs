@@ -84,22 +84,49 @@ export function previewOrthogonalRoute(a,b,options){
  return{status:'draft',points:chosen.points,length_m:chosen.length_m,
   reason:'Trasa poglądowa: bez kontroli ścian, drzwi, kolizji innych rur i promieni gięcia.'};
 }
+/** A guide is a technician-drawn CENTER LINE, not two validated parallel pipes.
+ * The preview follows its waypoints and marks any failure instead of crossing
+ * known heating zones. It does not yet reserve space in the Python spiral.
+ */
+export function previewGuidedRoute(a,b,guide,options){
+ if(!Array.isArray(guide)||guide.length>25||guide.some(p=>!finitePoint(p)))
+  return {status:'invalid',reason:'Nieprawidłowe punkty trasy pomocniczej.',points:[],length_m:null};
+ const points=[a,...guide,b];
+ let joined=[],total=0;
+ for(let i=1;i<points.length;i++){
+  const part=previewOrthogonalRoute(points[i-1],points[i],options);
+  if(part.status!=='draft')
+   return {status:'blocked',reason:'Wyznaczony korytarz przecina inne pole grzewcze lub nie da się połączyć punktów.',
+     points:[],length_m:null};
+  joined=joined.concat(i===1?part.points:part.points.slice(1));
+  total+=part.length_m;
+ }
+ return {status:'draft',points:simplify(joined),length_m:total,
+  reason:'Przebieg na podstawie punktów pomocniczych. Brak kontroli przegród i wzajemnego odstępu zasilania/powrotu.'};
+}
 export function generateLoopApproaches(layout,manifold,options){
- const {sx,sy,obstacles=[]}=options||{};
+ const {sx,sy,obstacles=[],guide=[],direction='normal'}=options||{};
  if(!['experimental','schematic'].includes(layout?.status))return{status:'no-loop',reason:'Brak zweryfikowanej geometrii samej pętli.',supply:[],return:[]};
  if(!Array.isArray(layout.supply)||!layout.supply.length||!Array.isArray(layout.return)||!layout.return.length)
   return{status:'no-loop',reason:'Pętla nie ma obu końców.',supply:[],return:[]};
  if(!manifold||!finitePoint(manifold.point))return{status:'no-manifold',reason:'Przypisz i ustaw rozdzielacz na rysunku.',supply:[],return:[]};
  const inlet=layout.supply[0],outlet=layout.return[layout.return.length-1];
- const a=[inlet[0]/sx,inlet[1]/sy],b=[outlet[0]/sx,outlet[1]/sy];
- const from=previewOrthogonalRoute(manifold.point,a,{sx,sy,obstacles});
- const back=previewOrthogonalRoute(b,manifold.point,{sx,sy,obstacles});
+ const origA=[inlet[0]/sx,inlet[1]/sy],origB=[outlet[0]/sx,outlet[1]/sy];
+ const reversed=direction==='reverse';
+ const a=reversed?origB:origA,b=reversed?origA:origB;
+ const from=guide.length?previewGuidedRoute(manifold.point,a,guide,{sx,sy,obstacles}):
+  previewOrthogonalRoute(manifold.point,a,{sx,sy,obstacles});
+ const back=guide.length?previewGuidedRoute(b,manifold.point,[...guide].reverse(),{sx,sy,obstacles}):
+  previewOrthogonalRoute(b,manifold.point,{sx,sy,obstacles});
  if(from.status!=='draft'||back.status!=='draft')return {
   status:'blocked',reason:'Co najmniej jedno dojście nie może ominąć innych pól w prostym trasowaniu.',
   supply:[],return:[],supply_m:null,return_m:null,
  };
  return {
-  status:'draft',reason:'Dojścia poglądowe — wymagają sprawdzenia ścian, przejść i kolizji rur.',
+  status:'draft',reason:guide.length?
+     'Dojścia idą po korytarzu pomocniczym; NIE ma kontroli odstępu między rurami ani automatycznej rezerwacji pasa.':
+     'Dojścia poglądowe — wymagają sprawdzenia ścian, przejść i kolizji rur.',
+  guided:guide.length>0,reversed,
   supply:from.points,return:back.points,
   supply_m:Number(from.length_m.toFixed(3)),return_m:Number(back.length_m.toFixed(3)),
   start_point:a,end_point:b,manifold_id:manifold.id,
