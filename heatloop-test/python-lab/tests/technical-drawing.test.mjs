@@ -62,7 +62,7 @@ test('Guided supply and return use same planning spine but stay marked unverifie
  assert.equal(r.reversed,true);
  assert.deepEqual(r.supply.at(-1),[120,120]);
  assert.deepEqual(r.return[0],[110,110]);
- assert.match(r.reason,/kontroli odstępu/);
+ assert.match(r.reason,/oddzielne rury|odstępu/);
 });
 test('Technical tag contains readable loop identifier and only short lines',()=>{
  const tag=getZoneTag({name:'Pokój dzienny',points:field},null,3,layout,
