@@ -1,0 +1,25 @@
+name: HeatLoop Python LAB drawing geometry checks
+on:
+  push:
+    paths:
+      - 'heatloop-test/python-lab/**'
+      - '.github/workflows/python-lab-calibration.yml'
+  pull_request:
+    paths:
+      - 'heatloop-test/python-lab/**'
+      - '.github/workflows/python-lab-calibration.yml'
+  workflow_dispatch:
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify browser scripts syntax
+        run: |
+          node --check heatloop-test/python-lab/calibration-utils.mjs
+          node --check heatloop-test/python-lab/rysunek-worker.js
+      - name: Test dimensional calibration
+        run: node --test heatloop-test/python-lab/tests/calibration.test.mjs
