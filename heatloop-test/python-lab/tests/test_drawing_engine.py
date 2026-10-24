@@ -195,5 +195,84 @@ class HeatingAreaTests(unittest.TestCase):
         self.assertGreater(zone["full_area_estimate_m"],80)
         self.assertLessEqual(zone["layout"]["total_m"],80)
 
+    def test_generated_start_moves_toward_selected_connection_corner(self):
+        from math import hypot
+        s=dict(SETTINGS,spacing_m=.20)
+        room=[(0,0),(3.2,0),(3.2,3.1),(0,3.1)]
+        targets=[(.11,.11),(3.09,.11),(.11,2.99),(3.09,2.99)]
+        starts=[]
+        for xy in targets:
+            with self.subTest(target=xy):
+                r=analyze_room(room,s,zone_settings=[{
+                    "routing":{"preferred_start_m":xy,
+                               "preferred_end_m":None,
+                               "corridor_width_m":.2}
+                }])
+                layout=r["zone_results"][0]["layout"]
+                self.assertIn(layout["status"],("schematic","experimental"))
+                self.assertTrue(layout["entrance_selected"])
+                self.assertGreater(layout["drawn_m"],0)
+                self.assertEqual(layout["actual_start_m"],list(layout["supply"][0]))
+                self.assertEqual(layout["actual_end_m"],list(layout["return"][-1]))
+                starts.append(tuple(round(v,3) for v in layout["actual_start_m"]))
+        self.assertGreaterEqual(len(set(starts)),3)
+
+    def test_reversing_flow_changes_true_supply_end_not_just_color(self):
+        s=dict(SETTINGS,spacing_m=.20)
+        room=[(0,0),(3.4,0),(3.4,3.0),(0,3.0)]
+        normal=analyze_room(room,s,zone_settings=[{"routing":{
+            "direction":"normal","preferred_start_m":(.11,2.89)}}])
+        backwards=analyze_room(room,s,zone_settings=[{"routing":{
+            "direction":"reverse","preferred_start_m":(.11,2.89)}}])
+        a=normal["zone_results"][0]["layout"]
+        b=backwards["zone_results"][0]["layout"]
+        self.assertIn(a["status"],("experimental","schematic"))
+        self.assertIn(b["status"],("experimental","schematic"))
+        self.assertEqual(b["direction"],"reverse")
+        self.assertEqual(b["actual_start_m"],list(b["supply"][0]))
+        self.assertLessEqual(b["preferred_start_error_m"],1.1)
+        self.assertTrue(b["installation_ready"] is False)
+
+    def test_reserved_corridor_avoids_selected_tubing_layout_or_reports_conflict(self):
+        from shapely.geometry import LineString,Point,Polygon
+        s=dict(SETTINGS,spacing_m=.20)
+        room=[(0,0),(3.2,0),(3.2,3.2),(0,3.2)]
+        route={"manifold_point_m":(-1,1.6),
+               "guide_m":[(.0,1.6),(1.6,1.6)],
+               "corridor_width_m":.20}
+        r=analyze_room(room,s,zone_settings=[{"routing":route}])
+        layout=r["zone_results"][0]["layout"]
+        if layout["status"]=="planned":
+            self.assertIn("koliduje",layout["message"])
+        else:
+            self.assertTrue(layout["corridor_considered"])
+            pipe=LineString(layout["supply"]+layout["cap"][1:]+layout["return"][1:])
+            near=Point(layout["supply"][0]).buffer(.3).union(
+                Point(layout["return"][-1]).buffer(.3))
+            forbidden=LineString([(-1,1.6),(.0,1.6),(1.6,1.6)]).buffer(
+                .20/2+.108/4,cap_style=2,join_style=2)
+            self.assertLessEqual(pipe.intersection(forbidden.difference(near)).length,.0251)
+
+    def test_unrealistic_endpoint_or_corridor_rejected(self):
+        s=dict(SETTINGS,spacing_m=.20)
+        with self.assertRaisesRegex(ValueError,"zbyt daleko"):
+            analyze_room(ROOM,s,zone_settings=[{"routing":{
+                "preferred_start_m":(100,100)}}])
+        with self.assertRaisesRegex(ValueError,"Szerokość pasa"):
+            analyze_room(ROOM,s,zone_settings=[{"routing":{
+                "corridor_width_m":1.7}}])
+        with self.assertRaisesRegex(ValueError,"punkty dojścia"):
+            analyze_room(ROOM,s,zone_settings=[{"routing":{
+                "guide_m":[[float('nan'),1]]}}])
+
+    def test_reproducible_layout_for_identical_preferences(self):
+        s=dict(SETTINGS,spacing_m=.125)
+        room=[(0,0),(3.8,0),(3.8,2.6),(0,2.6)]
+        cfg=[{"routing":{"preferred_start_m":(.12,.12),
+                         "manifold_point_m":(-.5,-.5)}}]
+        a=analyze_room(room,s,zone_settings=cfg)["zone_results"][0]["layout"]
+        b=analyze_room(room,s,zone_settings=cfg)["zone_results"][0]["layout"]
+        self.assertEqual(a,b)
+
 if __name__=="__main__":
     unittest.main()
