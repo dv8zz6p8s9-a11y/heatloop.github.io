@@ -83,13 +83,32 @@ def rectangle(room,s,clearance,radius,feed,back):
     if not candidates:raise ValueError("Nie znaleziono bezkolizyjnego ślimaka w limicie 80 m")
     turns,drawn,go,ret,turn,total=max(candidates,key=lambda x:(x[0],x[1]))
     return {"status":"experimental","kind":"counterflow-rectangle","supply":go,"return":ret,"cap":turn,"drawn_m":round(drawn,3),"total_m":round(total,3),"margin_m":round(80-total,3),"turns":turns,"installation_ready":False}
-def analyze_room(points,settings):
+def analyze_room(points,settings,heating_points=None):
+    """Validate the whole room and an optional independent heating polygon.
+
+    The heating field can be a subset of the room; for an irregular shape
+    the current generator returns PLANNED, not a fictitious pipe route.
+    """
     room=validate_room(points)
+    heating=validate_room(heating_points) if heating_points is not None else room
+    if not room.covers(heating):
+        raise ValueError("Pole ogrzewania musi w całości znajdować się wewnątrz pomieszczenia")
     s=settings["spacing_m"];diameter=settings["diameter_m"];edge=settings["wall_edge_m"];radius=settings["radius_m"];feed=settings["feed_m"];back=settings["back_m"]
     if any(not isinstance(v,(int,float)) or not isfinite(v) for v in (s,diameter,edge,radius,feed,back)):raise ValueError("Nieprawidłowe liczby")
     if not any(abs(s-x)<1e-7 for x in SPACINGS):raise ValueError("Rozstaw: 10, 12,5, 15 lub 20 cm")
     if not (0<diameter<=.05 and 0<=edge<=1 and 0<radius<=.5 and 0<=feed<=100 and 0<=back<=100):raise ValueError("Nieprawidłowe parametry rur")
-    est=room.area/s+feed+back
-    try:layout=rectangle(room,s,edge+diameter/2,radius,feed,back)
+    est=heating.area/s+feed+back
+    try:layout=rectangle(heating,s,edge+diameter/2,radius,feed,back)
     except ValueError as e:layout={"status":"planned","kind":"none","message":str(e),"installation_ready":False}
-    return {"area_m2":round(room.area,4),"perimeter_m":round(room.length,4),"estimate_m":round(est,2),"estimate_over_limit":est>80,"axis_offset_m":edge+diameter/2,"layout":layout}
+    return {
+        "area_m2":round(heating.area,4),
+        "room_area_m2":round(room.area,4),
+        "heating_area_m2":round(heating.area,4),
+        "unheated_area_m2":round(max(0,room.area-heating.area),4),
+        "perimeter_m":round(room.length,4),
+        "estimate_m":round(est,2),
+        "estimate_over_limit":est>80,
+        "axis_offset_m":edge+diameter/2,
+        "custom_heating_area":heating_points is not None,
+        "layout":layout
+    }
