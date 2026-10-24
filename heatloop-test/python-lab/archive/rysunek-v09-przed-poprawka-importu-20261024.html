@@ -1,0 +1,960 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9</title><style>
+:root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
+ #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
+ .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
+ .heat-legend{color:#198063;font-weight:700}.handle-tip{font-size:11px;color:#426e83;line-height:1.5;padding:7px 0}.edit-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0}.edit-btns button{width:100%;min-width:0}.edit-btns .primary{background:#087daa;color:#fff}.room .room-name{width:100%;padding:7px 8px;font-size:13px;border:1px solid #d1e0e8;border-radius:7px;display:block}.zone-info{font-size:12px;color:#14694d;margin-top:8px}.nav-help{font-size:11px;color:#607a8b;line-height:1.5;margin:5px 0 9px}
+
+/* Compact drawing workspace: one control section at a time */
+#controls{display:flex;flex-direction:column;min-width:0;height:calc(100dvh - 132px);min-height:370px;overflow:hidden;gap:8px}
+.workflow-tabs{display:flex;gap:5px;padding:5px 2px 8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;flex-shrink:0}
+.workflow-tabs button{flex:0 0 auto;white-space:nowrap;padding:9px 10px;min-height:39px;border-radius:9px;background:#e0eaf0;border-color:#c9dbe4;color:#365a6b}
+.workflow-tabs button.active{background:#097fae;color:#fff;border-color:#097fae}
+#controls [data-pane]{display:none;min-height:0;flex:1;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#controls [data-pane].active-pane{display:block}
+#stage{min-width:0;max-height:calc(100dvh - 132px);overflow:auto;position:sticky;top:8px;scrollbar-width:thin}
+#stage #plan{max-height:62dvh}
+.view-more{margin:4px 0 10px;padding:6px 9px;background:#eff6f9;border-radius:9px;border:1px solid #d4e3ea}
+.view-more summary{font-size:12px;cursor:pointer;font-weight:650;color:#26617b;min-height:22px}
+.circuit-entry{border:1px solid #cddfe8;background:#f8fbfd;border-radius:10px;padding:11px;margin:8px 0}
+.circuit-entry.active-circuit{border-color:#0b8dba;background:#edf9ff}
+.circuit-entry strong{font-size:13px}
+.circuit-entry .field input,.circuit-entry .field select{font-size:13px;padding:7px}
+.circuit-meta{font-size:11px;color:#527589;margin:5px 0}
+.manifold-entry{border:1px solid #cedde4;background:#f8fbfe;border-radius:10px;padding:11px;margin:8px 0}
+.manifold-entry.active-manifold{border-color:#1484b0;background:#effaff}
+.manifold-entry .field input,.manifold-entry .field select{font-size:13px;padding:7px}
+.manifold-stats{font-size:12px;line-height:1.55;color:#436375;margin:9px 0}
+.panel-note{font-size:12px;line-height:1.6;color:#5e7382}
+@media (max-width:930px){
+ .grid{display:flex;flex-direction:column;gap:8px}
+ #stage{order:0;position:sticky;top:0;z-index:8;max-height:51dvh;padding:9px;box-shadow:0 5px 14px rgba(29,55,66,.12)}
+ #controls{order:1;height:auto;min-height:0;overflow:visible}
+ #controls [data-pane].active-pane{overflow:visible;max-height:none}
+ #stage #plan{max-height:29dvh}
+ #stage .stat{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px}
+ #stage .stat div{padding:5px}
+ #stage .stat strong{font-size:15px}
+ #stage .stat small{font-size:9px}
+ #stage .chip{padding:6px;font-size:11px}
+ .workflow-tabs{margin:0 -4px;padding:5px}
+}
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9 · rozdzielacze i indywidualne rozstawy pętli</small></header>
+<main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit: <b>80 m na pętlę</b>, razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
+<nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
+<button type="button" data-tab="drawing" class="active">Rysunek</button>
+<button type="button" data-tab="rooms">Pokoje</button>
+<button type="button" data-tab="loops">Pętle</button>
+<button type="button" data-tab="manifolds">Rozdzielacze</button>
+<button type="button" data-tab="project">Projekt</button>
+</nav>
+<section class="panel active-pane" data-pane="drawing"><h2>01 · Wczytaj rysunek</h2><input id="file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf"><div class="mini">PNG / JPG / WEBP, pierwsza strona PDF (wymaga dostępu do internetu).</div><div class="buttons"><button id="sample" class="primary">Rysunek przykładowy</button><button id="clear">Wyczyść</button></div><h3>Kalibracja wymiarów (rzeczywiste wartości)</h3>
+<div class="pair">
+  <div class="field"><label for="dimX">Znany wymiar poziomy</label><div class="dimension-input"><input id="dimX" type="text" inputmode="decimal" value="4,70" autocomplete="off"><select id="unitX" aria-label="Jednostka wymiaru poziomego"><option value="m">m</option><option value="cm">cm</option><option value="mm">mm</option></select></div></div>
+  <div class="field"><label for="dimY">Znany wymiar pionowy</label><div class="dimension-input"><input id="dimY" type="text" inputmode="decimal" value="5,40" autocomplete="off"><select id="unitY" aria-label="Jednostka wymiaru pionowego"><option value="m">m</option><option value="cm">cm</option><option value="mm">mm</option></select></div></div>
+</div>
+<div class="buttons"><button data-tool="cx">1. Kalibruj poziom</button><button data-tool="cy">2. Kalibruj pion</button></div>
+<div class="buttons"><button data-tool="measure">📏 Sprawdź wymiar</button><button id="clearCalibration">Usuń kalibrację</button></div>
+<div id="scale" class="chip warn">Wczytaj rysunek i skalibruj znany wymiar.</div>
+<div id="measureResult" class="readout" style="margin-top:7px">Po kalibracji kliknij „Sprawdź wymiar” i wskaż dowolne dwa punkty. Wyświetlę rzeczywistą odległość w metrach.</div>
+<div class="mini" style="margin-top:8px">Wpisz wymiar np. <b>4,70 m</b>, <b>470 cm</b> albo <b>4700 mm</b>. Wskaż dwa końce tej samej linii. Pomiar dotyczy właściwej osi rysunku, a nie przekątnej. Powiększenie i obrót nie zmieniają wymiarów.</div></section>
+<section class="panel" data-pane="rooms"><h2>02 · Zaznacz pomieszczenie</h2><div class="pair"><button data-tool="rect">▭ Prostokąt / kwadrat</button><button data-tool="poly">⬡ Wielokąt punktowy</button><button data-tool="select" class="active">Wybierz pomieszczenie</button><button id="undo">↶ Cofnij punkt</button></div><div class="buttons"><button id="finish" class="primary" type="button" aria-live="polite">Zamknij wielokąt</button><button id="cancel">Anuluj rysowanie</button></div>
+<h3>Edytuj wybrane pomieszczenie</h3>
+<div class="edit-btns">
+ <button data-tool="editRoom">✥ Przesuń narożniki</button>
+ <button data-tool="moveRoom">✋ Przesuń pomieszczenie</button>
+ <button data-tool="addRoomPoint">＋ Dodaj narożnik</button>
+ <button data-tool="deleteRoomPoint">− Usuń narożnik</button>
+</div>
+<button id="undoEdit" style="width:100%">↶ Cofnij ostatnią zmianę obrysu / pola</button>
+<div class="handle-tip">Wybierz pomieszczenie z listy, następnie narzędzie. Dotknij i przeciągnij niebieskie punkty. Prostokąt zachowuje kształt; wielokąt ma niezależne narożniki.</div>
+<h3>Pole ogrzewania podłogowego</h3>
+<div class="edit-btns">
+ <button data-tool="heatRect" class="primary">▭ Zaznacz prostokątem</button>
+ <button data-tool="heatPoly" class="primary">⬡ Zaznacz wielokątem</button>
+ <button data-tool="editHeat">✥ Edytuj pole</button>
+ <button data-tool="moveHeat">✋ Przesuń pole</button>
+</div>
+<button id="resetHeat" style="width:100%">Usuń wszystkie pola / ogrzewaj cały pokój</button>
+<div id="heatInfo" class="chip">Domyślnie ogrzewana jest cała powierzchnia wybranego pomieszczenia.</div>
+<div id="zoneList" style="margin-top:9px"></div>
+<div class="handle-tip">Możesz dodać kilka osobnych pól w jednym pokoju, a ich rozstawy ustawić w zakładce „Pętle”. Aby zakończyć wielokąt, kliknij „Zamknij wielokąt” albo dotknij pierwszego punktu. Zielone pola nie mogą się nakładać. Wybierz pole z listy, aby edytować je lub przesunąć. Przy kilku polach długości rur i dojścia wymagają osobnego projektu pętli.</div>
+<div id="drawing" class="chip">Wybierz narzędzie. Pole jest obliczane podczas zaznaczania.</div><h3>Pomieszczenia</h3><div id="rooms" class="mini">Nie dodano pomieszczeń.</div></section>
+<section class="panel" data-pane="loops"><h2>03 · Pętle i parametry rur</h2><div class="pair"><div class="field"><label>Domyślny rozstaw nowej pętli</label><select id="spacing"><option value=".10">10 cm</option><option value=".125">12,5 cm</option><option value=".15">15 cm</option><option selected value=".20">20 cm</option></select></div><div class="field"><label>Rura (mm)</label><input type="number" id="diam" value="16" min="8" max="32"></div><div class="field"><label>Ściana → krawędź (mm)</label><input type="number" id="edge" value="100" min="0" max="500"></div><div class="field"><label>Promień gięcia (mm)</label><input type="number" id="radius" value="80" min="10" max="300"></div><div class="field"><label>Dojście (m)</label><input type="number" id="feed" value="2" min="0" max="100" step=".5"></div><div class="field"><label>Powrót (m)</label><input type="number" id="back" value="2" min="0" max="100" step=".5"></div></div><div class="chip">Rozstaw i przypisanie rozdzielacza możesz zmienić <b>osobno dla każdej pętli</b> poniżej.</div>
+<div id="circuitList" style="margin:9px 0"></div>
+<button class="primary" id="loop" style="width:100%;margin-top:9px">Przelicz pętle wybranego pokoju</button><div id="engine" class="chip warn">Uruchamianie Python + Shapely…</div></section>
+<section class="panel" data-pane="manifolds"><h2>04 · Rozdzielacze</h2>
+<div class="buttons"><button class="primary" id="addManifold">＋ Dodaj rozdzielacz</button></div>
+<div class="panel-note">Możesz dodać kilka rozdzielaczy i umieścić je na rzucie. Przypisuj do nich pętle w zakładce „Pętle”. Liczba sekcji wynika z przypisanych pętli, z możliwością ręcznego zwiększenia. Szafka: <b>2 sekcje większa</b>.</div>
+<div id="manifoldList"></div>
+<div id="manifoldSummary" class="chip">Nie dodano jeszcze rozdzielacza.</div>
+<div class="panel-note" style="margin-top:9px">Uwaga: położenie rozdzielacza jest poglądowe. Długości rzeczywistych dojść zasilania i powrotu wpisujesz osobno dla każdej pętli.</div>
+</section>
+<section class="panel" data-pane="project"><h2>05 · Zapis projektu</h2><div class="buttons"><button id="save">Pobierz JSON</button><button id="import">Wczytaj JSON</button><input id="jsonfile" type="file" accept=".json,application/json" hidden></div><div class="mini">Projekt i rysunek pozostają na Twoim urządzeniu; nie przesyłamy go na serwer.</div></section>
+</aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2><div class="buttons"><button id="zoomout" title="Oddal">−</button><button id="resetzoom">100%</button><button id="zoomin" title="Przybliż">+</button><button id="panTool" data-tool="pan">✋ Przesuń rysunek</button></div>
+<details class="view-more"><summary>Obrót, przesuwanie i widoczność podkładu</summary><div class="nav-actions"><button id="moveLeft" title="Przesuń rysunek w lewo" aria-label="Przesuń rysunek w lewo">← Lewo</button><button id="moveUp" title="Przesuń rysunek w górę" aria-label="Przesuń rysunek w górę">↑ Góra</button><button id="moveDown" title="Przesuń rysunek w dół" aria-label="Przesuń rysunek w dół">↓ Dół</button><button id="moveRight" title="Przesuń rysunek w prawo" aria-label="Przesuń rysunek w prawo">Prawo →</button></div>
+<div class="nav-actions"><button id="rotateLeft" title="Obróć plan o 90° przeciwnie do ruchu wskazówek zegara">↶ Obróć w lewo 90°</button><button id="rotateRight" title="Obróć plan o 90° zgodnie z ruchem wskazówek zegara">↷ Obróć w prawo 90°</button><span class="angle" id="angle">Obrót: 0°</span></div>
+<div class="nav-help">Po powiększeniu wybierz „✋ Przesuń rysunek” i przeciągaj myszą lub palcem. W trybie wyboru pomieszczenia można także przeciągać powiększony plan. Strzałki umożliwiają przesuwanie w pionie i poziomie. Obrót obejmuje podkład, obrysy, kalibrację i rury — bez zmiany wymiarów.</div>
+<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · fiolet: obrys · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg><div id="hint">Wczytaj plan lub użyj „Rysunek przykładowy”.</div><div class="stat" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+ <div><strong id="area">—</strong><small>Powierzchnia pomieszczenia m²</small></div>
+ <div><strong id="heatArea">—</strong><small>Pole podłogówki m²</small></div>
+ <div><strong id="excluded">—</strong><small>Bez ogrzewania m²</small></div>
+ <div><strong id="length">—</strong><small>Suma długości pętli (m)</small></div>
+ <div><strong id="left">—</strong><small>Najmniejszy zapas jednej pętli do 80 m</small></div>
+ </div><div id="status" class="chip">Zacznij od rysunku i kalibracji.</div></section></div></main>
+<script type="module">
+import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=09';
+import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap,pointDistance,normalizeClosedPolygon,tappedFirstPoint} from './room-editor.mjs?v=09';
+import {SPACINGS,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=09';
+const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
+let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map();
+const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
+const info=(t,cls='')=>{$('drawing').textContent=t;$('drawing').className='chip '+cls};
+function getKnown(kind){return parseKnownLength($(kind==='cx'?'dimX':'dimY').value,$(kind==='cx'?'unitX':'unitY').value)}
+function scaleRead(){
+ const full=calibratedX&&calibratedY;
+ let note=sx>0&&sy>0?(`Skala rysunku: oś X — ${fmt(sx*1000)} mm/jedn. podkładu; oś Y — ${fmt(sy*1000)} mm/jedn. `+(full?'Oba kierunki skalibrowane.':'Drugi kierunek wykorzystuje tę samą skalę — zalecana dodatkowa kalibracja.')):'Nie skalibrowano. Wskaż dwa końce znanego wymiaru.';
+ if(full&&Math.abs(sx-sy)/Math.max(sx,sy)>.1)note+=' Uwaga: duża różnica skali X i Y — sprawdź, czy podkład nie jest rozciągnięty.';
+ $('scale').textContent=note;$('scale').className='chip '+(sx&&sy?'ok':'warn');
+}
+function recomputeScale(){
+ const found={};
+ for(const type of ['cx','cy']){
+   const pair=calLines[type];
+   if(pair.length!==2)continue;
+   const sourceAxis=calAxes[type]|| (type==='cx'?'x':'y');
+   const metres=getKnown(type);
+   found[sourceAxis]=axisScale(pair,metres,sourceAxis);
+ }
+ if(!found.x&&!found.y)return;
+ sx=found.x||found.y;sy=found.y||found.x;
+ calibratedX=!!found.x;calibratedY=!!found.y;
+ for(const room of rooms)room.loop=null; // geometry uses unchanged source coordinates
+ scaleRead();list();update();
+}
+function drawCalLines(){
+ for(const [type,color,dim] of [['cx','#d68a22','dimX'],['cy','#914bc1','dimY']]){
+   const pp=calLines[type];if(pp.length!==2)continue;
+   layer.append(E('line',{x1:pp[0][0],y1:pp[0][1],x2:pp[1][0],y2:pp[1][1],stroke:color,'stroke-width':3,'stroke-dasharray':'8 5','vector-effect':'non-scaling-stroke'}));
+   pp.forEach(p=>layer.append(E('circle',{cx:p[0],cy:p[1],r:5,fill:color,stroke:'#fff','stroke-width':2})));
+   const txt=E('text',{x:(pp[0][0]+pp[1][0])/2+7,y:(pp[0][1]+pp[1][1])/2-10,'font-size':15,fill:color,'font-weight':'bold',stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
+   txt.textContent=$(dim).value+' '+$(type==='cx'?'unitX':'unitY').value;layer.append(txt);
+ }
+ const active=tools==='measure'||tools==='cx'||tools==='cy';
+ if(active&&pts.length){
+   const color=tools==='measure'?'#159b85':tools==='cx'?'#d68a22':'#914bc1';
+   const to=hover||pts[0];layer.append(E('line',{x1:pts[0][0],y1:pts[0][1],x2:to[0],y2:to[1],stroke:color,'stroke-width':2,'stroke-dasharray':'5 4','vector-effect':'non-scaling-stroke'}));
+   layer.append(E('circle',{cx:pts[0][0],cy:pts[0][1],r:4,fill:color}));
+ }
+ if(checkLine.length===2){
+   const [a,b]=checkLine;
+   layer.append(E('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'#119b80','stroke-width':3,'stroke-dasharray':'7 4','vector-effect':'non-scaling-stroke'}));
+   const t=E('text',{x:(a[0]+b[0])/2+5,y:(a[1]+b[1])/2-14,'font-size':16,fill:'#078369','font-weight':700,stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
+   try{t.textContent=fmt(measuredLength(a,b,sx,sy))+' m'}catch(_){t.textContent='Brak skali'}layer.append(t);
+ }
+}
+function drawRoomDimensions(room){
+ if(room.id!==selected||!(sx>0&&sy>0))return;
+ const edgeInfo=polygonEdges(room.points,sx,sy);
+ for(const e of edgeInfo){
+   const p=room.points[e.index],q=room.points[(e.index+1)%room.points.length];
+   if(Math.hypot(q[0]-p[0],q[1]-p[1])<42||e.lengthM<.05)continue;
+   const label=E('text',{x:e.midpoint[0],y:e.midpoint[1]-8,'font-size':13,fill:'#164e70','font-weight':700,'text-anchor':'middle',stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
+   label.textContent=fmt(e.lengthM)+' m';layer.append(label);
+ }
+}
+function pointsToMeter(p){return p.map(a=>[a[0]*sx,a[1]*sy])}
+function area(p){return Math.abs(p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a[0]*b[1]-b[0]*a[1]},0))/2}
+function inside(p,r){let v=r.points,c=false;for(let i=0,j=v.length-1;i<v.length;j=i++){let a=v[i],b=v[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+function polyline(ps,color,width=3){let el=E('polyline',{points:ps.map(p=>p.join(',')).join(' '),fill:'none',stroke:color,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round','vector-effect':'non-scaling-stroke'});layer.append(el)}
+function applyView(){
+ S.setAttribute('viewBox',`${(W-W/zoom)/2-panX} ${(H-H/zoom)/2-panY} ${W/zoom} ${H/zoom}`);
+}
+function sceneTransform(){
+ if(rotation===0)return '';
+ const cX=imageFit.x+imageFit.width/2,cY=imageFit.y+imageFit.height/2;
+ const k=rotation%180===0?1:Math.min(W/imageFit.height,H/imageFit.width);
+ return `translate(${W/2} ${H/2}) rotate(${rotation}) scale(${k}) translate(${-cX} ${-cY})`;
+}
+function drawHandles(points,color){
+ const m=layer.getScreenCTM(),scale=m?Math.max(.05,Math.hypot(m.a,m.b)):1;
+ const radius=Math.min(30,Math.max(5,12/scale));
+ for(let i=0;i<points.length;i++){
+  const p=points[i];
+  layer.append(E('circle',{cx:p[0],cy:p[1],r:radius,fill:color,stroke:'#fff','stroke-width':2,'data-edit-handle':i}));
+  const label=E('text',{x:p[0],y:p[1]+4/scale,fill:'#fff','font-size':Math.min(30,Math.max(9,12/scale)),'text-anchor':'middle','font-weight':700});
+  label.textContent=String(i+1);layer.append(label);
+ }
+}
+function findHandle(points,evOrPoint,tolerance=22){
+ if(!points)return -1;
+ const m=layer.getScreenCTM(),factor=m?Math.max(.05,Math.hypot(m.a,m.b)):1;
+ const point=Array.isArray(evOrPoint)?evOrPoint:xy(evOrPoint);
+ let best=-1,near=tolerance/factor;
+ for(let i=0;i<points.length;i++){
+  const d=Math.hypot(points[i][0]-point[0],points[i][1]-point[1]);
+  if(d<near){near=d;best=i}
+ }
+ return best;
+}
+function render(){
+ S.innerHTML='';applyView();
+ layer=E('g');const t=sceneTransform();if(t)layer.setAttribute('transform',t);
+ S.append(layer);
+ layer.append(E('rect',{x:-W*8,y:-H*8,width:W*17,height:H*17,fill:'#fff'}));
+ if(bg)layer.append(E('image',{href:bg,x:imageFit.x,y:imageFit.y,width:imageFit.width,height:imageFit.height,opacity,preserveAspectRatio:'xMidYMid meet'}));
+ else for(let x=0;x<=W;x+=50)layer.append(E('line',{x1:x,y1:0,x2:x,y2:H,stroke:'#e6eef4'}));
+for(let r of rooms){
+ const sel=r.id===selected;
+ layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':sel?.17:.06,stroke:sel?'#167cba':'#9a53cf','stroke-width':sel?3.5:2,'stroke-dasharray':sel?'':'7 4'}));
+
+ const zones=r.heatingZones||[];
+ for(let zi=0;zi<zones.length;zi++){
+   const z=zones[zi],isActive=sel&&r.selectedZoneId===z.id;
+   layer.append(E('polygon',{
+     points:z.points.map(p=>p.join(',')).join(' '),
+     fill:isActive?'#1aba7f':'#48b67f','fill-opacity':isActive?.31:.19,
+     stroke:isActive?'#05794b':'#0c9662','stroke-width':isActive?4.3:2.7,
+     'stroke-dasharray':isActive?'':'8 4','stroke-linejoin':'round'
+   }));
+   const center=z.points.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/z.points.length);
+   const tag=E('text',{x:center[0],y:center[1]+17,
+     fill:'#126947','font-size':13,'text-anchor':'middle','font-weight':'bold',
+     stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+   tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m² · '+fmt(settingsFor(r,z).spacing_m*100)+' cm';
+   layer.append(tag);
+ }
+ const mx=r.points.reduce((v,p)=>v+p[0],0)/r.points.length,my=r.points.reduce((v,p)=>v+p[1],0)/r.points.length;
+ const title=E('text',{x:mx,y:my,fill:'#24526e','font-size':17,'text-anchor':'middle',
+   'font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+ title.textContent=r.name;layer.append(title);
+  if(r.loop?.zone_results?.length){
+   let drawn=0;
+   const colors=['#128ab5','#654bc2','#2f8d79','#bc4b7e','#7a88a5'];
+   for(const z of r.loop.zone_results){
+     const l=z.layout;
+     if(l?.status!=='experimental')continue;
+     drawn++;
+     const palette=colors[z.index%colors.length];
+     for(const [key,color] of [['supply',palette],['return','#d78330'],['cap','#1b997b']])
+       polyline(l[key].map(p=>[p[0]/sx,p[1]/sy]),color,3);
+   }
+   if(drawn<r.loop.zone_results.length){
+     const tag=E('text',{x:mx,y:my+44,fill:'#9b631a','font-size':12,'text-anchor':'middle',
+        stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+     tag.textContent=(r.loop.zone_results.length-drawn)+' pętli bez zweryfikowanej trasy';layer.append(tag);
+   }
+ }else if(r.loop?.layout?.status==='experimental'){
+   const l=r.loop.layout;
+   for(const [key,color] of [['supply','#0b84b0'],['return','#df812e'],['cap','#1b997b']])
+     polyline(l[key].map(p=>[p[0]/sx,p[1]/sy]),color,3.5);
+ }
+ if(sel){
+   drawRoomDimensions(r);
+   const which=['editRoom','deleteRoomPoint'].includes(tools)?'room':['editHeat'].includes(tools)?'heat':null;
+   if(which){
+     const points=which==='room'?r.points:activeZone(r)?.points;
+     if(points)drawHandles(points,which==='room'?'#167fbd':'#079766');
+   }
+ }
+}
+// Manifold symbols are drafting coordinates. No route is implied by a marker.
+for(const m of manifolds){
+ if(!m.point)continue;
+ const [x,y]=m.point;
+ layer.append(E('rect',{x:x-12,y:y-12,width:24,height:24,rx:5,
+   fill:m.id===activeManifoldId?'#c87920':'#8d653a',stroke:'#fff','stroke-width':2}));
+ const diamond=E('text',{x,y:y+5,fill:'#fff','font-weight':700,'font-size':18,'text-anchor':'middle'});
+ diamond.textContent='M';layer.append(diamond);
+ const label=E('text',{x,y:y-18,'font-size':15,'font-weight':700,'text-anchor':'middle',
+   fill:'#a85812',stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
+ label.textContent=m.name;layer.append(label);
+}
+if(['rect','heatRect'].includes(tools)&&temp){
+ const b=hover||temp;
+ layer.append(E('rect',{x:Math.min(temp[0],b[0]),y:Math.min(temp[1],b[1]),
+  width:Math.abs(temp[0]-b[0]),height:Math.abs(temp[1]-b[1]),
+  fill:tools==='heatRect'?'#30b57a':'#44aeda','fill-opacity':.18,
+  stroke:tools==='heatRect'?'#079766':'#0797c6','stroke-width':2,'stroke-dasharray':'7 4'}));
+}
+if(pts.length){
+ const heat=tools==='heatPoly';
+ polyline(hover&&['poly','heatPoly'].includes(tools)?[...pts,hover]:pts,
+   heat?'#11976e':tools==='poly'?'#b047be':'#d18a1e',2.5);
+ for(const p of pts)layer.append(E('circle',{cx:p[0],cy:p[1],r:4,fill:heat?'#11976e':'#b14aaa'}));
+}
+drawCalLines();
+}
+function chosenRoom(){return rooms.find(r=>r.id===selected)||null}
+function roomZones(room){return room?.heatingZones||[]}
+function activeZone(room){const z=roomZones(room);return z.find(x=>x.id===room?.selectedZoneId)||z[0]||null}
+function heatingAreaPx(room){const zones=roomZones(room);return !room?0:zones.length?zones.reduce((sum,z)=>sum+polygonArea(z.points),0):polygonArea(room.points)}
+function copyZones(zones){return zones.map(z=>({
+ id:z.id,shape:z.shape,points:copyPoints(z.points),
+ settings:z.settings?{...z.settings}:undefined
+}))}
+function defaultLoopSettings(){return {spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),manifold_id:null}}
+function settingsFor(room,zone=null){
+ let stored=zone?zone.settings:room?.implicitSettings;
+ try{return normalizeLoopSettings(stored||{},defaultLoopSettings(),manifolds)}
+ catch(_){return normalizeLoopSettings({},defaultLoopSettings(),manifolds)}
+}
+function mutateLoopSettings(room,zone,patch){
+ try{
+   const merged={...settingsFor(room,zone),...patch};
+   const clean=normalizeLoopSettings(merged,defaultLoopSettings(),manifolds);
+   if(zone)zone.settings=clean;else room.implicitSettings=clean;
+   invalidate(room);list();render();update();redrawManifolds();
+   status('Zmieniono ustawienia pojedynczej pętli. Wynik wymaga ponownego przeliczenia.','warn');
+ }catch(error){status(error.message,'error');update()}
+}
+function showTab(name){
+ const valid=['drawing','rooms','loops','manifolds','project'];
+ if(!valid.includes(name))return;
+ activeTab=name;
+ document.querySelectorAll('#workflowTabs [data-tab]').forEach(b=>{
+   const on=b.dataset.tab===name;b.classList.toggle('active',on);
+   b.setAttribute('aria-selected',String(on));
+ });
+ document.querySelectorAll('#controls [data-pane]').forEach(el=>el.classList.toggle('active-pane',el.dataset.pane===name));
+ if(name==='loops')renderCircuits();
+ if(name==='manifolds')redrawManifolds();
+}
+function selectedManifold(){return manifolds.find(m=>m.id===activeManifoldId)||null}
+function redrawManifolds(){
+ const el=$('manifoldList');if(!el)return;el.innerHTML='';
+ let total=0;
+ for(const m of manifolds){
+   const quantities=manifoldQuantities(rooms,m);total+=quantities.assignedLoops;
+   const card=document.createElement('div');card.className='manifold-entry'+(m.id===activeManifoldId?' active-manifold':'');
+   const name=document.createElement('input');name.className='room-name';name.value=m.name;name.maxLength=65;name.title='Nazwa rozdzielacza';
+   name.onchange=()=>{m.name=name.value.trim().slice(0,65)||'Rozdzielacz '+m.id;name.value=m.name;render()};
+   card.append(name);
+   const point=document.createElement('small');point.textContent=m.point?'Pozycja zaznaczona na rysunku':'Brak punktu na rzucie — wskaż lokalizację';
+   card.append(point);
+   const line=document.createElement('div');line.className='pair';line.style.marginTop='9px';
+   const typeField=document.createElement('div');typeField.className='field';
+   const typeLabel=document.createElement('label');typeLabel.textContent='Typ';typeField.append(typeLabel);
+   const typeSel=document.createElement('select');
+   for(const [val,caption] of [['flowmeters','Z przepływomierzami'],['standard','Standardowy']]){
+     const opt=document.createElement('option');opt.value=val;opt.textContent=caption;typeSel.append(opt);
+   }
+   typeSel.value=m.type;typeSel.onchange=()=>{m.type=typeSel.value};typeField.append(typeSel);line.append(typeField);
+   const sectionsField=document.createElement('div');sectionsField.className='field';
+   const secLabel=document.createElement('label');secLabel.textContent='Sekcje ręcznie (0 = auto)';sectionsField.append(secLabel);
+   const sec=document.createElement('input');sec.type='number';sec.min='0';sec.max='20';sec.step='1';sec.value=m.requestedSections||0;
+   sec.onchange=()=>{const v=Number(sec.value);if(!Number.isInteger(v)||v<0||v>20){status('Dozwolone są rozdzielacze 1–20 sekcji; 0 oznacza automatyczny dobór.','error');sec.value=m.requestedSections||0;return}m.requestedSections=v;redrawManifolds()};
+   sectionsField.append(sec);line.append(sectionsField);card.append(line);
+   const checkbox=document.createElement('label');checkbox.className='panel-note';
+   const pump=document.createElement('input');pump.type='checkbox';pump.checked=!!m.pumpGroup;
+   pump.onchange=()=>{m.pumpGroup=pump.checked;redrawManifolds()};checkbox.append(pump);
+   const pumpText=document.createElement('span');pumpText.textContent=' Grupa pompowa (opcjonalna)';checkbox.append(pumpText);card.append(checkbox);
+   const summary=document.createElement('div');summary.className='manifold-stats';
+   summary.textContent='Przypisane pętle: '+quantities.assignedLoops+
+     ' · rozdzielacz: '+(quantities.sections||'—')+' sekcji · szafka: '+(quantities.cabinetSections||'—')+
+     ' sekcji · Eurokonus: '+quantities.euroconus+' szt. · zawory odcinające: '+quantities.isolatingValves+' szt.'+
+     (quantities.sections>20?' · UWAGA: ponad 20 sekcji — rozdziel obiegi pomiędzy kilka rozdzielaczy.':'');
+   card.append(summary);
+   const actions=document.createElement('div');actions.className='buttons';
+   const place=document.createElement('button');place.textContent='📍 Ustaw na rysunku';
+   place.onclick=()=>{activeManifoldId=m.id;tool('placeManifold');redrawManifolds();status('Dotknij na rzucie miejsca montażu '+m.name+'.','warn')};
+   actions.append(place);
+   const del=document.createElement('button');del.textContent='Usuń';
+   del.onclick=()=>{manifolds=manifolds.filter(x=>x.id!==m.id);
+     for(const room of rooms){
+       const settingsList=[room.implicitSettings,...roomZones(room).map(z=>z.settings)];
+       if(settingsList.some(v=>v?.manifold_id===m.id)){for(const v of settingsList)if(v?.manifold_id===m.id)v.manifold_id=null;invalidate(room)}
+     }
+     if(activeManifoldId===m.id)activeManifoldId=manifolds[0]?.id||null;
+     list();render();update();redrawManifolds();status('Usunięto rozdzielacz. Jego pętle są teraz nieprzypisane.','warn')
+   };
+   actions.append(del);card.append(actions);el.append(card);
+ }
+ const totalCircuits=rooms.reduce((sum,r)=>sum+Math.max(1,roomZones(r).length),0);
+ const unassigned=totalCircuits-total;
+ $('manifoldSummary').textContent=manifolds.length?
+  'Rozdzielacze: '+manifolds.length+' · pętle: '+totalCircuits+' · przypisane: '+total+' · bez rozdzielacza: '+unassigned:
+  'Brak rozdzielacza. Dodaj go i wskaż miejsce na rzucie, a następnie przypisz do niego pętle.';
+ $('manifoldSummary').className='chip '+(unassigned?'warn':'ok');
+}
+function circuitRows(room){
+ const zones=roomZones(room);
+ return zones.length?zones.map((z,i)=>({zone:z,index:i,points:z.points})):
+   [{zone:null,index:0,points:room.points}];
+}
+function renderCircuits(){
+ const el=$('circuitList');if(!el)return;el.innerHTML='';
+ const room=chosenRoom();
+ if(!room){el.textContent='Wybierz pokój w zakładce „Pokoje”.';return}
+ const entries=circuitRows(room);
+ const intro=document.createElement('div');intro.className='panel-note';
+ intro.textContent='Pomieszczenie: '+room.name+' · '+entries.length+' pętla/pętle. Każde pole ma własny rozstaw i dojścia do rozdzielacza.';
+ el.append(intro);
+ for(const item of entries){
+   const zone=item.zone,settings=settingsFor(room,zone);
+   const entry=document.createElement('div');entry.className='circuit-entry'+(zone?.id===room.selectedZoneId?' active-circuit':'');
+   const header=document.createElement('strong');
+   header.textContent='Pętla '+(item.index+1)+(zone?' · pole '+(item.index+1):' · cały pokój');
+   entry.append(header);
+   const meta=document.createElement('div');meta.className='circuit-meta';
+   meta.textContent='Powierzchnia '+fmt(polygonArea(item.points)*sx*sy)+' m²';
+   entry.append(meta);
+   const controls=document.createElement('div');controls.className='pair';
+   function field(label,kind,initial,onChange,type='number'){
+     const wrapper=document.createElement('div');wrapper.className='field';
+     const lab=document.createElement('label');lab.textContent=label;wrapper.append(lab);
+     const input=document.createElement(kind==='select'?'select':'input');
+     if(kind==='select'){
+       for(const [val,caption] of initial){
+         const o=document.createElement('option');o.value=String(val);o.textContent=caption;input.append(o);
+       }
+       input.value=String(type);
+     }else{
+       input.type='number';input.min=0;input.max=100;input.step='.5';input.value=String(initial);
+     }
+     input.onchange=()=>onChange(input.value);
+     wrapper.append(input);controls.append(wrapper);return input;
+   }
+   field('Rozstaw rur','select',[[.10,'10 cm'],[.125,'12,5 cm'],[.15,'15 cm'],[.20,'20 cm']],
+     value=>mutateLoopSettings(room,zone,{spacing_m:Number(value)}),settings.spacing_m);
+   field('Rozdzielacz','select',[[ '', '— Nieprzypisany —'],...manifolds.map(m=>[m.id,m.name])],
+     value=>mutateLoopSettings(room,zone,{manifold_id:value===''?null:Number(value)}),
+     settings.manifold_id??'');
+   field('Dojście do rozdzielacza (m)','input',settings.feed_m,
+     value=>mutateLoopSettings(room,zone,{feed_m:Number(value.replace(',','.'))}));
+   field('Powrót do rozdzielacza (m)','input',settings.back_m,
+     value=>mutateLoopSettings(room,zone,{back_m:Number(value.replace(',','.'))}));
+   entry.append(controls);
+   const result=room.loop?.zone_results?.[item.index];
+   const badge=document.createElement('div');badge.className='chip '+(result?.over_80m?'error':result?.layout.status==='experimental'?'ok':'warn');
+   badge.textContent=result?
+     'Rozstaw '+fmt(result.spacing_m*100)+' cm · '+(result.length_is_estimate?'wstępna długość':'długość narysowana')+' '+
+       fmt(result.checked_length_m)+' m z dojściami'+(result.over_80m?' — przekracza 80 m':' · zapas '+fmt(80-result.checked_length_m)+' m'):
+     'Nie przeliczono pętli. Szacunek długości: '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
+   entry.append(badge);
+   el.append(entry);
+ }
+}
+
+function validZones(roomPoints,zones){
+ if(zones.length>40)return false;
+ return zones.every((z,i)=>validDrawing(z.points)&&insideRoom(roomPoints,z.points) &&
+   zones.every((other,j)=>i===j||!zonesOverlap(z.points,other.points)));
+}
+function invalidate(room){room.loop=null;room.revision=(room.revision||0)+1}
+function notifyHeat(){
+ const r=chosenRoom(),el=$('zoneList');el.innerHTML='';
+ if(!r){$('heatInfo').textContent='Wybierz pomieszczenie, aby zaznaczyć pole grzewcze.';return}
+ const zones=roomZones(r),whole=polygonArea(r.points)*sx*sy,heated=heatingAreaPx(r)*sx*sy;
+ $('heatInfo').textContent=zones.length
+   ?`Pola grzewcze: ${zones.length} · suma ${fmt(heated)} m² / pokój ${fmt(whole)} m². Bez podłogówki: ${fmt(Math.max(0,whole-heated))} m².`
+   :`Całe pomieszczenie ogrzewane (${fmt(whole)} m²). Możesz dodać wiele osobnych pól.`;
+ $('heatInfo').className='chip '+(zones.length?'ok':'');
+ for(let i=0;i<zones.length;i++){
+   const z=zones[i],line=document.createElement('div');
+   line.className='room'+(activeZone(r)?.id===z.id?' sel':'');
+   const title=document.createElement('strong');
+   title.textContent='Pole '+(i+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m²';
+   line.append(title);
+   const select=document.createElement('button');select.textContent='Wybierz';
+   select.onclick=()=>{r.selectedZoneId=z.id;render();update()};
+   line.append(select);
+   const edit=document.createElement('button');edit.textContent='Edytuj';
+   edit.onclick=()=>{r.selectedZoneId=z.id;tool('editHeat');update()};
+   line.append(edit);
+   const remove=document.createElement('button');remove.textContent='Usuń';
+   remove.onclick=()=>{
+     snapshot(r);r.heatingZones=r.heatingZones.filter(v=>v.id!==z.id);
+     r.selectedZoneId=r.heatingZones[0]?.id||null;
+     invalidate(r);list();tool('select');update();
+     info('Usunięto tylko pole '+(i+1)+'; pozostałe pola zachowano.','ok');
+   };
+   line.append(remove);el.append(line);
+ }
+}
+function update(){
+ const r=chosenRoom();
+ $('area').textContent=r&&sx&&sy?fmt(polygonArea(r.points)*sx*sy):'—';
+ $('heatArea').textContent=r&&sx&&sy?fmt(heatingAreaPx(r)*sx*sy):'—';
+ $('excluded').textContent=r&&sx&&sy?fmt(Math.max(0,polygonArea(r.points)-heatingAreaPx(r))*sx*sy):'—';
+ const rows=r?.loop?.zone_results;
+ const total=rows?.reduce((sum,z)=>sum+z.checked_length_m,0);
+ const smallest=rows?.length?Math.min(...rows.map(z=>80-z.checked_length_m)):null;
+ $('length').textContent=Number.isFinite(total)?fmt(total):'—';
+ $('left').textContent=Number.isFinite(smallest)?fmt(smallest):'—';
+ notifyHeat();if(activeTab==='loops')renderCircuits();if(activeTab==='manifolds')redrawManifolds();
+}
+function list(){
+ const el=$('rooms');el.innerHTML='';
+ if(!rooms.length){el.textContent='Nie dodano pomieszczeń.';return}
+ for(const r of rooms){
+   const n=document.createElement('div');n.className='room'+(r.id===selected?' sel':'');
+   const name=document.createElement('input');name.className='room-name';name.type='text';name.value=r.name;name.maxLength=80;
+   name.title='Zmień nazwę pomieszczenia';
+   name.onchange=()=>{r.name=name.value.trim().slice(0,80)||'Pomieszczenie '+r.id;name.value=r.name;render()};
+   n.append(name);
+   const title=document.createElement('small');
+   const whole=polygonArea(r.points)*sx*sy,heat=heatingAreaPx(r)*sx*sy;
+   title.textContent='Pokój '+fmt(whole)+' m² · podłogówka '+fmt(heat)+' m²';
+   n.append(title);
+   const sm=document.createElement('small');
+   sm.textContent=r.loop?
+ (r.loop.layout.status==='experimental'?'Ślimak testowy: '+fmt(r.loop.layout.total_m)+' m':
+  roomZones(r).length>1?'Wiele pól: wstępnie '+fmt(r.loop.estimate_m)+' m rur łącznie; trasy niezweryfikowane':
+  'Pętla planowana: szac. '+fmt(r.loop.estimate_m)+' m'):'Brak przeliczonej pętli';
+   n.append(sm);
+   for(const [caption,kind] of [['Wybierz','select'],['Edytuj','editRoom'],['Pole','heatPoly']]){
+     const b=document.createElement('button');b.textContent=caption;
+     b.onclick=()=>{selected=r.id;list();update();tool(kind)};
+     n.append(b);
+   }
+   const rem=document.createElement('button');rem.textContent='Usuń';
+   rem.onclick=()=>{rooms=rooms.filter(x=>x.id!==r.id);if(selected===r.id)selected=rooms[0]?.id||null;editHistory=[];list();tool('select');update();redrawManifolds()};
+   n.append(rem);el.append(n);
+ }
+}
+const selectionTools=new Set(['heatRect','heatPoly','editRoom','moveRoom','addRoomPoint','deleteRoomPoint','editHeat','moveHeat']);
+function tool(t){
+ if(t==='placeManifold'&&!selectedManifold()){info('Dodaj lub wybierz rozdzielacz w zakładce „Rozdzielacze”.','warn');return}
+ if(selectionTools.has(t)&&!chosenRoom()){info('Najpierw wybierz pomieszczenie z listy lub kliknij jego obrys.','warn');return}
+ if(['editHeat','moveHeat'].includes(t)&&!activeZone(chosenRoom())){info('Najpierw zaznacz osobne pole grzewcze.','warn');return}
+ tools=t;pts=[];temp=null;hover=null;drag=null;syncFinishButton();
+ S.classList.toggle('pan-mode',t==='pan'||t==='moveRoom'||t==='moveHeat');
+ document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
+ $('hint').textContent={
+ cx:'Wskaż dwa końce poziomego odcinka o znanym wymiarze.',
+ cy:'Wskaż dwa końce pionowego odcinka o znanym wymiarze.',
+ measure:'Sprawdź wymiar: wskaż dwa punkty.',
+ rect:'Wskaż dwa przeciwległe narożniki nowego pomieszczenia.',
+ poly:'Dodawaj punkty obrysu pomieszczenia. Następnie: Zamknij wielokąt.',
+ select:'Wybierz pomieszczenie kliknięciem.',
+ pan:'Przeciągnij plan po ekranie.',
+ editRoom:'Przeciągnij NIEBIESKI narożnik wybranego pomieszczenia.',
+ moveRoom:'Przeciągnij wnętrze pomieszczenia: przesunie się także jego pole grzewcze.',
+ addRoomPoint:'Dotknij krawędzi wielokąta, aby dodać punkt.',
+ deleteRoomPoint:'Dotknij narożnika wielokąta, aby go usunąć.',
+ heatRect:'Wskaż dwa narożniki pola podłogówki wewnątrz wybranego pokoju.',
+ heatPoly:'Dodawaj punkty pola podłogówki. Następnie: Zamknij wielokąt.',
+ editHeat:'Przeciągnij ZIELONY narożnik pola ogrzewania.',
+ moveHeat:'Przeciągnij wnętrze zielonego pola ogrzewania.',
+ placeManifold:'Dotknij na planie miejsca montażu wybranego rozdzielacza. Możesz potem zmienić jego pozycję.'
+ }[t]||'Wybierz narzędzie';
+ render();
+}
+function validDrawing(points){return validPolygon(points,Math.max(1,.01/(sx*sy))) && points.every(allowed)}
+function snapshot(room){
+ editHistory.push({id:room.id,points:copyPoints(room.points),shape:room.shape,
+   heatingZones:copyZones(roomZones(room)),selectedZoneId:room.selectedZoneId,zoneSerial:room.zoneSerial});
+ if(editHistory.length>35)editHistory.shift();
+}
+function setRoomGeometry(room,points,shape=room.shape,heatingOverride){
+ if(!validDrawing(points)){info('Obrys pomieszczenia jest nieprawidłowy lub poza rysunkiem.','error');return false}
+ const zones=heatingOverride===undefined?roomZones(room):heatingOverride;
+ if(!validZones(points,zones)){
+  info('Po zmianie obrysu przynajmniej jedno pole grzewcze wychodzi poza pokój lub nachodzi na inne.','error');return false;
+ }
+ room.points=copyPoints(points);room.shape=shape;
+ room.heatingZones=copyZones(zones);
+ invalidate(room);render();update();return true
+}
+function setHeating(room,points,shape='poly'){
+ if(!room){info('Najpierw wybierz pomieszczenie.','warn');return false}
+ const existing=roomZones(room);
+ const candidate={id:(room.zoneSerial||0)+1,points:copyPoints(points),shape,settings:defaultLoopSettings()};
+ if(!validZones(room.points,[...existing,candidate])){
+   info('Pole musi być wewnątrz pomieszczenia i nie może nakładać się na istniejące zielone pola.','error');
+   return false;
+ }
+ room.zoneSerial=candidate.id;room.heatingZones=[...existing,candidate];
+ room.selectedZoneId=candidate.id;
+ invalidate(room);list();render();update();
+ redrawManifolds();info('Dodano pole '+room.heatingZones.length+' ('+fmt(polygonArea(points)*sx*sy)+' m²). Wcześniejsze pola pozostają.','ok');
+ return true;
+}
+function addRoom(points,shape='poly'){
+ if(!(sx>0&&sy>0)){info('Najpierw wykonaj kalibrację.','error');return false}
+ if(!validDrawing(points)){info('Zaznacz poprawny obrys bez przecięć, wewnątrz podkładu.','error');return false}
+ if(rooms.length>=100){info('Przekroczono limit 100 pomieszczeń.','error');return false}
+ const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingZones:[],selectedZoneId:null,zoneSerial:0,implicitSettings:defaultLoopSettings(),loop:null,revision:0};
+ rooms.push(r);selected=id;
+ info('Dodano '+r.name+' · '+fmt(polygonArea(points)*sx*sy)+' m².','ok');
+ list();render();update();redrawManifolds();return true
+}
+function currentPointerTolerance(screenPixels=16){
+ // Convert display pixels to drawing coordinates; zoom and 90° rotation do
+ // not change the physical touch target on a mobile screen.
+ const matrix=layer.getScreenCTM();
+ const scale=matrix?Math.hypot(matrix.a,matrix.b):1;
+ return screenPixels/Math.max(.10,scale);
+}
+function syncFinishButton(){
+ const button=$('finish');
+ if(!button)return;
+ const polygonMode=['poly','heatPoly'].includes(tools);
+ button.textContent=polygonMode?'Zamknij wielokąt ('+pts.length+' pkt)':'Zamknij wielokąt';
+ button.title=polygonMode?'Kliknij, gdy wskażesz minimum 3 punkty, albo dotknij punktu początkowego.':'Wybierz najpierw narzędzie Wielokąt.';
+}
+function finish(){
+ if(!['poly','heatPoly'].includes(tools)){
+   info('Wybierz „Wielokąt punktowy” lub „Zaznacz wielokątem”, a następnie wskaż minimum 3 punkty.','warn');
+   return false;
+ }
+ const polygon=normalizeClosedPolygon(pts,currentPointerTolerance(16),currentPointerTolerance(5));
+ if(polygon.length<3){
+   info('Nie można zamknąć wielokąta: wskaż minimum 3 różne punkty. Masz '+polygon.length+'.','error');
+   status('Zamykanie wielokąta: wymagane minimum trzy różne narożniki.','warn');
+   syncFinishButton();return false;
+ }
+ if(!validDrawing(polygon)){
+   info('Nie można zamknąć: obrys jest zbyt mały, ma przecinające się krawędzie albo wychodzi poza rysunek. Cofnij lub popraw punkt.','error');
+   status('Nieprawidłowy wielokąt. Punkty pozostają do edycji — możesz cofnąć ostatni punkt.','warn');
+   syncFinishButton();return false;
+ }
+ let ok=false;
+ if(tools==='poly')ok=addRoom(polygon,'poly');
+ else{
+   const room=chosenRoom();
+   if(!room){info('Zaznacz pomieszczenie, zanim dodasz pole grzewcze.','error');return false}
+   snapshot(room);
+   ok=setHeating(room,polygon,'poly');
+   if(!ok)editHistory.pop();
+ }
+ if(ok){tool('select');status('Zamknięto wielokąt i zapisano '+(polygon.length)+' wierzchołki.','ok')}
+ return ok;
+}
+function click(p){
+ if(tools==='placeManifold'){
+   const m=selectedManifold();
+   if(!m){info('Nie wybrano rozdzielacza.','error');return}
+   m.point=[p[0],p[1]];
+   tool('select');redrawManifolds();render();status(m.name+' ustawiony na rzucie. Długości dojść podaj oddzielnie przy pętlach.','ok');return
+ }
+ if(tools==='select'){
+   const hit=[...rooms].reverse().find(r=>insidePolygon(p,r.points));
+   if(hit){selected=hit.id;list();render();update()}return
+ }
+ if(['cx','cy','measure'].includes(tools)){
+   pts.push(p);if(pts.length!==2){render();return}
+   const a=pts[0],b=pts[1];
+   if(tools==='measure'){
+     if(!(sx>0&&sy>0)){info('Najpierw skalibruj podkład.','warn');pts=[];render();return}
+     checkLine=pts.map(q=>q.slice());
+     const distance=measuredLength(a,b,sx,sy);
+     $('measureResult').textContent='Pomiar kontrolny: '+fmt(distance)+' m ('+fmt(distance*100)+' cm).';
+     info('Pomiar sprawdzający: '+fmt(distance)+' m.','ok');tool('select');return
+   }
+   const direction=tools,sourceAxis=originalAxisForVisibleTool(direction,rotation);
+   try{
+     const value=getKnown(direction),test=axisScale(pts,value,sourceAxis);
+     if(!(test>0))throw Error('Nieprawidłowa skala.');
+     calLines[direction]=pts.map(q=>q.slice());calAxes[direction]=sourceAxis;
+     const other=direction==='cx'?'cy':'cx';
+     if(calLines[other].length===2&&calAxes[other]===sourceAxis)calLines[other]=[];
+     recomputeScale();checkLine=[];
+     $('measureResult').textContent='Skala ustawiona na podstawie '+fmt(value)+' m w osi '+sourceAxis.toUpperCase()+'.';
+     info('Wymiar skalibrowany poprawnie.','ok');tool('select')
+   }catch(err){info(err.message,'error');pts=[];render()}return
+ }
+ if(['rect','heatRect'].includes(tools)){
+   if(!temp){temp=p;render();return}
+   const polygon=rectFromCorners(temp,p);
+   if(tools==='rect'){
+     if(addRoom(polygon,'rect'))tool('select')
+   }else{
+     const room=chosenRoom();
+     if(room){snapshot(room);if(setHeating(room,polygon,'rect'))tool('select');else editHistory.pop()}
+   }
+   temp=null;render();return
+ }
+ if(['poly','heatPoly'].includes(tools)){
+   const tol=currentPointerTolerance(16);
+   if(tappedFirstPoint(pts,p,tol)){
+     finish(); // natural closing gesture used on iPhone, Android and desktop
+     return;
+   }
+   if(pts.length>0&&pointDistance(pts[pts.length-1],p)<currentPointerTolerance(6)){
+     info('Ten punkt jest zbyt blisko poprzedniego. Wskaż kolejny narożnik lub zamknij wielokąt.','warn');
+     return;
+   }
+   pts.push([p[0],p[1]]);syncFinishButton();
+   info('Punkty: '+pts.length+'. '+(pts.length>=3?'Dotknij pierwszego punktu lub wybierz „Zamknij wielokąt”.':'Wskaż następny narożnik.')+
+     ' Powierzchnia wstępna: '+fmt(pts.length>=3?polygonArea(pts)*sx*sy:0)+' m².','ok');
+   render();return
+ }
+ if(['addRoomPoint','deleteRoomPoint'].includes(tools)){
+   const room=chosenRoom();if(!room)return;
+   try{
+     let result;
+     if(tools==='addRoomPoint'){
+       const m=layer.getScreenCTM(),factor=m?Math.max(.05,Math.hypot(m.a,m.b)):1;
+       result=addVertex(room.points,p,24/factor);
+     }else{
+       const index=findHandle(room.points,p,22);if(index<0)throw Error('Dotknij punktu narożnego.');
+       result=deleteVertex(room.points,index);
+     }
+     snapshot(room);if(setRoomGeometry(room,result,'poly')){list();info('Obrys zmieniony, pętla wymaga ponownego przeliczenia.','ok')}else editHistory.pop()
+   }catch(e){info(e.message,'error')}
+ }
+}
+function screenToCoord(element,ev){
+ const m=element.getScreenCTM();if(!m)return[NaN,NaN];
+ const p=S.createSVGPoint();p.x=ev.clientX;p.y=ev.clientY;
+ const v=p.matrixTransform(m.inverse());return[v.x,v.y]
+}
+const xy=ev=>screenToCoord(layer,ev),xyView=ev=>screenToCoord(S,ev);
+const allowed=p=>!bg||(p[0]>=imageFit.x&&p[0]<=imageFit.x+imageFit.width&&p[1]>=imageFit.y&&p[1]<=imageFit.y+imageFit.height);
+function scaleZoom(next,point){
+ next=Math.max(1,Math.min(8,next));const v=S.viewBox.baseVal,anchor=point||[v.x+v.width/2,v.y+v.height/2];
+ const fx=(anchor[0]-v.x)/v.width,fy=(anchor[1]-v.y)/v.height;
+ zoom=next;panX=(W-W/zoom)/2-(anchor[0]-fx*W/zoom);
+ panY=(H-H/zoom)/2-(anchor[1]-fy*H/zoom);applyView();
+}
+function shiftPlan(directionX,directionY){
+ const v=S.viewBox.baseVal;panX+=directionX*.18*v.width;panY+=directionY*.18*v.height;applyView()
+}
+function panByScreen(dx,dy){
+ const m=S.getScreenCTM();if(!m)return;
+ const inv=m.inverse();
+ panX+=inv.a*dx+inv.c*dy;panY+=inv.b*dx+inv.d*dy;
+ applyView();
+}
+function swapVisibleCalibration(){
+ // Buttons X/Y are always screen-horizontal/screen-vertical.
+ // After a 90-degree turn their original image axes exchange places,
+ // while the physical source-unit scales sx/sy do not change.
+ [calLines.cx,calLines.cy]=[calLines.cy,calLines.cx];
+ [calAxes.cx,calAxes.cy]=[calAxes.cy,calAxes.cx];
+ const a=$('dimX').value,b=$('dimY').value;$('dimX').value=b;$('dimY').value=a;
+ const u=$('unitX').value,v=$('unitY').value;$('unitX').value=v;$('unitY').value=u;
+}
+function turnPlan(delta){
+ pts=[];temp=null;hover=null;
+ if(Math.abs(delta)%180===90)swapVisibleCalibration();
+ rotation=(rotation+delta+360)%360;
+ zoom=1;panX=panY=0;drag=null;render();
+ $('angle').textContent='Obrót: '+rotation+'°';
+ status('Obrócono plan o 90°. Widoczne pola wymiarów X/Y zamieniły się miejscami, ale rzeczywista skala oraz powierzchnie nie uległy zmianie.','ok');
+}
+for(const fld of ['dimX','dimY','unitX','unitY'])$(fld).addEventListener('change',()=>{if(calLines.cx.length===2||calLines.cy.length===2){try{recomputeScale();checkLine=[];render();status('Zmieniono wymiar; obrysy pozostały na miejscu, a pętle wymagają ponownego przeliczenia.','warn')}catch(err){status(err.message,'error')}}});
+$('clearCalibration').onclick=()=>{sx=sy=0;calibratedX=calibratedY=false;calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];for(const r of rooms)r.loop=null;scaleRead();list();update();tool('select');status('Kalibracja usunięta. Obrysy pozostają na rysunku, ale ich wymiary są chwilowo nieznane.','warn')};
+function editDragStep(d,p){
+ const room=rooms.find(r=>r.id===d.roomId);if(!room||!allowed(p))return;
+ if(d.kind==='vertex'){
+  const current=d.target==='room'?d.baseRoom:d.baseHeat;
+  let changed;
+  try{changed=changeVertex(current,d.index,p,d.shape)}catch(_){return}
+  const success=d.target==='room'
+   ?setRoomGeometry(room,changed,d.shape)
+   :setHeatingSilently(room,changed,d.shape,d.zoneId);
+  if(success)d.changed=true;
+  return;
+ }
+ if(d.kind==='moveRoom'||d.kind==='moveHeat'){
+  const dx=p[0]-d.startPoint[0],dy=p[1]-d.startPoint[1];
+  if(Math.hypot(dx,dy)<1e-8)return;
+  if(d.kind==='moveRoom'){
+   const newRoom=movePolygon(d.baseRoom,dx,dy),newHeat=d.baseHeat?movePolygon(d.baseHeat,dx,dy):null;
+   if(setRoomGeometry(room,newRoom,room.shape,d.baseZones.map(z=>({...z,points:movePolygon(z.points,dx,dy)}))))d.changed=true;
+  }else{
+   if(setHeatingSilently(room,movePolygon(d.baseHeat,dx,dy),d.shape,d.zoneId))d.changed=true;
+  }
+ }
+}
+function setHeatingSilently(room,points,shape,id=room.selectedZoneId){
+ const zones=copyZones(roomZones(room)),target=zones.find(z=>z.id===id);
+ if(!target)return false;
+ target.points=copyPoints(points);target.shape=shape;
+ if(!validZones(room.points,zones))return false;
+ room.heatingZones=zones;
+ invalidate(room);render();update();return true;
+}
+S.addEventListener('pointerdown',ev=>{
+ ev.preventDefault();
+ const point=xy(ev);
+ if(['editRoom','editHeat','moveRoom','moveHeat'].includes(tools)){
+  const room=chosenRoom();
+  if(!room||!allowed(point))return;
+  const target=['editHeat','moveHeat'].includes(tools)?'heat':'room';
+  const zone=activeZone(room);const points=target==='heat'?zone?.points:room.points;
+  if(!points)return;
+  const index=['editRoom','editHeat'].includes(tools)?findHandle(points,point,24):-1;
+  if(index<0&&!['moveRoom','moveHeat'].includes(tools))return;
+  if(index<0&&!insidePolygon(point,points))return;
+  drag={kind:index>=0?'vertex':tools,roomId:room.id,target,index,id:ev.pointerId,
+        shape:target==='heat'?zone.shape:room.shape,zoneId:target==='heat'?zone.id:null,
+        startPoint:point,baseRoom:copyPoints(room.points),
+        baseHeat:zone?copyPoints(zone.points):null,baseZones:copyZones(roomZones(room)),changed:false};
+  snapshot(room);try{S.setPointerCapture(ev.pointerId)}catch(_){}
+  return;
+ }
+ const canPan=tools==='pan'||(tools==='select'&&zoom>1);
+ if(canPan){drag={kind:'pan',id:ev.pointerId,x:ev.clientX,y:ev.clientY,startX:ev.clientX,startY:ev.clientY,moved:false};try{S.setPointerCapture(ev.pointerId)}catch(_){}return}
+ if(!allowed(point)){info('Wskaż punkt na podkładzie.','warn');return}
+ click(point);
+});
+S.addEventListener('pointermove',ev=>{
+ if(drag&&drag.id===ev.pointerId){
+  if(drag.kind==='pan'){
+    const dx=ev.clientX-drag.x,dy=ev.clientY-drag.y;
+    if(Math.hypot(ev.clientX-drag.startX,ev.clientY-drag.startY)>4)drag.moved=true;
+    if(drag.moved)panByScreen(dx,dy);drag.x=ev.clientX;drag.y=ev.clientY;
+  }else{editDragStep(drag,xy(ev))}
+  return;
+ }
+ if(['poly','rect','heatPoly','heatRect','cx','cy','measure'].includes(tools)){
+   const p=xy(ev);hover=allowed(p)?p:null;render()
+ }
+});
+S.addEventListener('pointerup',ev=>{
+ if(!drag||drag.id!==ev.pointerId)return;
+ const wasClick=drag.kind==='pan'&&!drag.moved&&tools==='select';
+ const noChange=drag.kind!=='pan'&&!drag.changed;
+ const changed=drag.kind!=='pan'&&drag.changed;
+ drag=null;try{S.releasePointerCapture(ev.pointerId)}catch(_){}
+ if(noChange)editHistory.pop();
+ if(changed){list();update();info('Zmieniono geometrię. Poprzednia pętla została unieważniona — użyj „Przelicz pętlę”.','ok')}
+ if(wasClick){const p=xy(ev);if(allowed(p))click(p)}
+});
+S.addEventListener('pointercancel',()=>{if(drag&&drag.kind!=='pan'&&!drag.changed)editHistory.pop();drag=null});
+S.addEventListener('wheel',ev=>{ev.preventDefault();scaleZoom(zoom*(ev.deltaY<0?1.18:1/1.18),xyView(ev))},{passive:false});
+S.addEventListener('dblclick',ev=>{
+ if(['poly','heatPoly'].includes(tools)){ev.preventDefault();finish()}
+});
+for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>tool(b.dataset.tool);$('finish').onclick=finish;$('undo').onclick=()=>{if(['rect','heatRect'].includes(tools))temp=null;else pts.pop();syncFinishButton();render()};$('cancel').onclick=()=>tool('select');
+$('resetHeat').onclick=()=>{
+ const room=chosenRoom();if(!room)return;
+ if(!roomZones(room).length){info('Całe pomieszczenie jest już ogrzewane.','warn');return}
+ snapshot(room);room.heatingZones=[];room.selectedZoneId=null;invalidate(room);
+ list();render();update();info('Przywrócono podłogówkę na całej powierzchni pokoju.','ok');tool('select');
+};
+$('undoEdit').onclick=()=>{
+ const prev=editHistory.pop();if(!prev){info('Nie ma zmian do cofnięcia.','warn');return}
+ const room=rooms.find(r=>r.id===prev.id);if(!room){info('Pomieszczenie usunięto.','error');return}
+ room.points=copyPoints(prev.points);room.shape=prev.shape;
+ room.heatingZones=copyZones(prev.heatingZones);room.selectedZoneId=prev.selectedZoneId;room.zoneSerial=prev.zoneSerial;
+ invalidate(room);selected=room.id;list();render();update();info('Cofnięto ostatnią edycję. Przelicz pętlę ponownie.','ok');
+};
+for(const nav of document.querySelectorAll('#workflowTabs [data-tab]'))nav.onclick=()=>showTab(nav.dataset.tab);
+$('addManifold').onclick=()=>{
+ if(manifolds.length>=12){status('W wersji testowej można utworzyć maksymalnie 12 rozdzielaczy.','warn');return}
+ const manifold=createManifold(++manifoldSeq);
+ manifolds.push(manifold);activeManifoldId=manifold.id;
+ showTab('manifolds');tool('placeManifold');redrawManifolds();
+ status('Dodano '+manifold.name+'. Kliknij jego pozycję na rysunku.','warn');
+};
+$('zoomin').onclick=()=>scaleZoom(zoom*1.25);
+$('zoomout').onclick=()=>scaleZoom(zoom/1.25);
+$('resetzoom').onclick=()=>{zoom=1;panX=panY=0;applyView()};
+$('moveLeft').onclick=()=>shiftPlan(-1,0);$('moveRight').onclick=()=>shiftPlan(1,0);
+$('moveUp').onclick=()=>shiftPlan(0,-1);$('moveDown').onclick=()=>shiftPlan(0,1);
+$('rotateLeft').onclick=()=>turnPlan(-90);$('rotateRight').onclick=()=>turnPlan(90);
+$('alpha').oninput=()=>{opacity=Number($('alpha').value)/100;$('opacityValue').textContent=$('alpha').value+'%';render()};
+function sample(){manifolds=[];manifoldSeq=0;activeManifoldId=null;const src='<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="750"><rect width="1100" height="750" fill="white"/><path d="M130 130 H600 V340 H830 V670 H130 Z" stroke="#263d4d" stroke-width="12" fill="#f8fbfe"/><text x="300" y="110" font-size="22">4,70 m</text><text x="60" y="450" font-size="22">5,40 m</text><text x="255" y="260" font-size="19" fill="#647785">Pomieszczenie L</text></svg>';bg='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src);sx=sy=.01;calibratedX=calibratedY=true;calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];imageFit={x:0,y:0,width:W,height:H};rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Wczytano rzut demonstracyjny. Możesz zaznaczać pomieszczenia.','ok')}
+$('sample').onclick=sample;$('clear').onclick=()=>{manifolds=[];manifoldSeq=0;activeManifoldId=null;bg='';sx=sy=0;calibratedX=calibratedY=false;imageFit={x:0,y:0,width:W,height:H};calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Wyczyszczono projekt.')};
+function loadImage(src){
+ manifolds=[];manifoldSeq=0;activeManifoldId=null;
+ const im=new Image();
+ im.onload=()=>{
+ const k=Math.min(W/im.naturalWidth,H/im.naturalHeight),width=im.naturalWidth*k,height=im.naturalHeight*k;
+ imageFit={x:(W-width)/2,y:(H-height)/2,width,height};
+ bg=src; // zachowujemy oryginalny obraz i proporcje, bez konwersji na płótno 1100×750
+ rooms=[];selected=null;next=1;editHistory=[];sx=sy=0;calibratedX=calibratedY=false;
+ calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';
+ scaleRead();list();tool('select');update();status('Rysunek wczytany bez deformacji. Wskaż dwa końce znanego wymiaru.','ok')
+ };
+ im.onerror=()=>status('Nie udało się odczytać obrazu.','error');im.src=src
+}
+$('file').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>18e6){status('Rysunek jest zbyt duży (maks. 18 MB).','error');return}
+if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){try{status('Ładowanie pierwszej strony PDF…');const mod=await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');mod.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';let pdf=await mod.getDocument({data:await f.arrayBuffer()}).promise,p=await pdf.getPage(1),v=p.getViewport({scale:1.3}),c=document.createElement('canvas');c.width=v.width;c.height=v.height;await p.render({canvasContext:c.getContext('2d'),viewport:v}).promise;loadImage(c.toDataURL('image/png'))}catch(e){status('Nie udało się otworzyć PDF: '+e.message,'error')}return}
+if(!['image/png','image/jpeg','image/webp'].includes(f.type)){status('Nieobsługiwany format.','error');return}let r=new FileReader();r.onload=()=>loadImage(r.result);r.readAsDataURL(f)};
+const inputs=()=>{let n=id=>Number($(id).value);return {spacing_m:n('spacing'),diameter_m:n('diam')/1000,wall_edge_m:n('edge')/1000,radius_m:n('radius')/1000,feed_m:n('feed'),back_m:n('back')}};
+$('loop').onclick=()=>{let r=rooms.find(x=>x.id===selected);if(!r){status('Wybierz najpierw pomieszczenie.','error');return}if(!ready){status('Python jeszcze się ładuje.','warn');return}
+let args=inputs();if(!Object.values(args).every(Number.isFinite)){status('Błędne parametry rur.','error');return}
+ const entries=circuitRows(r);
+ let zone_settings;try{zone_settings=entries.map(e=>settingsFor(r,e.zone))}
+ catch(err){status(err.message,'error');return}
+ const n=++seq;queue.set(n,{id:r.id,revision:r.revision||0});
+ worker.postMessage({kind:'analyze',seq:n,roomId:r.id,payload:{
+  points:pointsToMeter(r.points),
+  heating_zones:roomZones(r).length?roomZones(r).map(z=>pointsToMeter(z.points)):null,
+  zone_settings,
+  settings:args
+ }});
+ status('Python oblicza '+entries.length+' pętli niezależnie, każdą z jej własnym rozstawem.','warn')};
+try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+ let ref=queue.get(d.seq);queue.delete(d.seq);
+ let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
+ r.loop=d.result;list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
+ const done=zoneData.filter(x=>x.layout.status==='experimental').length;
+ const over=zoneData.filter(x=>x.over_80m).length;
+ status(r.name+': '+zoneData.length+' pętli. Geometria testowa: '+done+'/'+zoneData.length+
+   '. Długości i rozstawy policzone osobno; szacunek łącznie '+fmt(d.result.estimate_m)+' m.'+
+   (over?' UWAGA: '+over+' pętli może przekraczać 80 m.':'')+
+   ' Rozdzielacze i dojścia wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
+$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:8,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
+ manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
+ activeManifoldId,
+ defaults:{spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),
+  diam: $('diam').value, edge:$('edge').value, radius:$('radius').value},
+ known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings()}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
+$('import').onclick=()=>$('jsonfile').click();$('jsonfile').onchange=e=>{const f=e.target.files?.[0];if(!f)return;let fr=new FileReader();fr.onload=()=>{try{let j=JSON.parse(fr.result);if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');
+ const importedManifolds=Array.isArray(j.manifolds)?j.manifolds:[];
+ if(importedManifolds.length>12)throw Error('Zbyt wiele rozdzielaczy w projekcie');
+ const ids=new Set();
+ const validMs=importedManifolds.map((m,i)=>{
+   if(!Number.isInteger(m.id)||m.id<1||ids.has(m.id))throw Error('Nieprawidłowy identyfikator rozdzielacza');
+   ids.add(m.id);
+   const point=m.point;
+   if(point!==null&&point!==undefined&&(!Array.isArray(point)||point.length!==2||point.some(n=>!Number.isFinite(n)||n<0||n>3000)))
+    throw Error('Nieprawidłowe położenie rozdzielacza');
+   const requested=Number(m.requestedSections)||0;
+   if(!Number.isInteger(requested)||requested<0||requested>20)throw Error('Nieprawidłowa liczba sekcji rozdzielacza');
+   return {
+     id:m.id,name:String(m.name||'Rozdzielacz '+m.id).slice(0,65),
+     point:point?[...point]:null,
+     requestedSections:requested,type:m.type==='standard'?'standard':'flowmeters',
+     pumpGroup:!!m.pumpGroup,
+   }
+ });
+ const defaults=j.defaults||{};
+ if(spacingAllowed(Number(defaults.spacing_m)))$('spacing').value=String(defaults.spacing_m);
+ if(Number.isFinite(Number(defaults.feed_m))&&Number(defaults.feed_m)>=0)$('feed').value=defaults.feed_m;
+ if(Number.isFinite(Number(defaults.back_m))&&Number(defaults.back_m)>=0)$('back').value=defaults.back_m;
+ if(defaults.diam!==undefined)$('diam').value=String(defaults.diam);
+ if(defaults.edge!==undefined)$('edge').value=String(defaults.edge);
+ if(defaults.radius!==undefined)$('radius').value=String(defaults.radius);
+ manifolds=validMs;manifoldSeq=Math.max(0,...manifolds.map(m=>m.id));
+ activeManifoldId=manifolds.some(m=>m.id===j.activeManifoldId)?j.activeManifoldId:manifolds[0]?.id||null;
+ bg=j.background||'';
+imageFit=j.imageFit&&[j.imageFit.x,j.imageFit.y,j.imageFit.width,j.imageFit.height].every(Number.isFinite)&&j.imageFit.width>0&&j.imageFit.height>0?j.imageFit:{x:0,y:0,width:W,height:H};
+calLines=j.calLines&&['cx','cy'].every(t=>Array.isArray(j.calLines[t])&&j.calLines[t].length<=2&&j.calLines[t].every(p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)))?j.calLines:{cx:[],cy:[]};
+calAxes=j.calAxes&&['cx','cy'].every(k=>['x','y'].includes(j.calAxes[k]))?j.calAxes:{cx:'x',cy:'y'};
+checkLine=[];
+sx=Number(j.sx)||0;sy=Number(j.sy)||0;
+if(j.known){$('dimX').value=String(j.known.x??'4,70');$('dimY').value=String(j.known.y??'5,40');$('unitX').value=['m','cm','mm'].includes(j.known.unitX)?j.known.unitX:'m';$('unitY').value=['m','cm','mm'].includes(j.known.unitY)?j.known.unitY:'m'}
+else { for(const kind of ['cx','cy'])if(calLines[kind].length===2){const axis=calAxes[kind],i=axis==='x'?0:1,scale=axis==='x'?sx:sy;const measured=Math.abs(calLines[kind][1][i]-calLines[kind][0][i])*scale;if(measured>0){$(kind==='cx'?'dimX':'dimY').value=measured.toFixed(4).replace('.',',');$(kind==='cx'?'unitX':'unitY').value='m'}} }
+calibratedX=!!sx&&['cx','cy'].some(k=>calLines[k].length===2&&calAxes[k]==='x');calibratedY=!!sy&&['cx','cy'].some(k=>calLines[k].length===2&&calAxes[k]==='y');zoom=1;panX=panY=0;rotation=[0,90,180,270].includes(j.rotation)?j.rotation:0;
+if((j.version||1)<4&&rotation%180===90)swapVisibleCalibration(); // older JSON saved pre-rotation labels
+$('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
+ const points=copyPoints(r.points);
+ const zones=Array.isArray(r.heatingZones)?r.heatingZones.map((z,j)=>({
+   id:Number.isInteger(z.id)&&z.id>0?z.id:j+1,
+   shape:['rect','poly'].includes(z.shape)?z.shape:'poly',
+   points:copyPoints(z.points),
+   settings:normalizeLoopSettings(z.settings||{},defaultLoopSettings(),manifolds)
+ })):r.heatingPoints?[{
+   id:1,shape:['rect','poly'].includes(r.heatingShape)?r.heatingShape:'poly',
+   points:copyPoints(r.heatingPoints),
+   settings:normalizeLoopSettings({},defaultLoopSettings(),manifolds)
+ }]:[];
+ const minArea=Math.max(1,.01/(Math.max(sx,1e-9)*Math.max(sy,1e-9)));
+ if(!validPolygon(points,minArea))throw Error('Niepoprawny obrys w projekcie: '+(i+1));
+ if(!validZones(points,zones)||zones.some(z=>!validPolygon(z.points,minArea)))throw Error('Pole grzewcze jest nieprawidłowe lub nachodzi na inne: '+(i+1));
+ const rect=points.length===4&&Math.abs(points[0][1]-points[1][1])<1e-4&&Math.abs(points[1][0]-points[2][0])<1e-4;
+ return {id:i+1,name:String(r.name||'Pomieszczenie '+(i+1)).slice(0,80),points,
+  shape:r.shape==='rect'||r.shape==='poly'?r.shape:(rect?'rect':'poly'),
+  heatingZones:zones,selectedZoneId:zones.some(z=>z.id===r.selectedZoneId)?r.selectedZoneId:zones[0]?.id||null,zoneSerial:Math.max(Number(r.zoneSerial)||0,...zones.map(z=>z.id),0),
+  implicitSettings:normalizeLoopSettings(r.implicitSettings||{},defaultLoopSettings(),manifolds),
+  revision:0,loop:null}
+});editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;scaleRead();list();render();update();redrawManifolds();showTab('rooms');status('Wczytano projekt z ustawieniami pętli i rozdzielaczy. Przelicz pętle ponownie.','ok')}catch(err){status('Błąd importu: '+err.message,'error')}};fr.readAsText(f)};
+scaleRead();render();showTab('drawing');redrawManifolds();
+</script></body></html>
