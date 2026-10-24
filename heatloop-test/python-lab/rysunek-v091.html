@@ -111,9 +111,67 @@ import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,pol
 import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap,pointDistance,normalizeClosedPolygon,tappedFirstPoint} from './room-editor.mjs?v=09';
 import {SPACINGS,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=09';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
-let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map();
+let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false;
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
 const info=(t,cls='')=>{$('drawing').textContent=t;$('drawing').className='chip '+cls};
+function validLoopPreview(preview,zoneCount) {
+ if(!preview||typeof preview!=='object'||!Array.isArray(preview.zone_results)||
+   preview.zone_results.length!==zoneCount||zoneCount<1||zoneCount>40)return false;
+ const finite=v=>typeof v==='number'&&Number.isFinite(v);
+ for(let i=0;i<preview.zone_results.length;i++){
+  const z=preview.zone_results[i];
+  if(!z||z.index!==i||!finite(z.spacing_m)||!finite(z.checked_length_m)||
+     z.checked_length_m<0||z.checked_length_m>10000||!z.layout||typeof z.layout!=='object')return false;
+  const layout=z.layout;
+  if(!['experimental','planned'].includes(layout.status))return false;
+  if(layout.status==='experimental'){
+   for(const key of ['supply','return','cap']){
+    if(!Array.isArray(layout[key])||layout[key].length>12000||
+       layout[key].some(p=>!Array.isArray(p)||p.length!==2||p.some(v=>!finite(v)||Math.abs(v)>500)))return false;
+   }
+  }
+ }
+ return true;
+}
+function countProjectParts() {
+ return {rooms:rooms.length,zones:rooms.reduce((n,r)=>n+roomZones(r).length,0),
+   manifolds:manifolds.length,
+   previews:rooms.filter(r=>r.loop&&validLoopPreview(r.loop,Math.max(1,roomZones(r).length))).length};
+}
+function reportRestore(textMessage,kind='ok'){
+ $('restoreSummary').textContent=textMessage;$('restoreSummary').className='chip '+kind;
+}
+function captureActiveProject() {
+ return {
+   bg,sx,sy,calibratedX,calibratedY,rooms,selected,next,seq,ready,
+   imageFit,calLines,calAxes,checkLine,editHistory,manifolds,manifoldSeq,
+   activeManifoldId,activeTab,rotation,zoom,panX,panY,pendingRestoration,
+   queue:new Map(queue),fields:Object.fromEntries(
+    ['spacing','diam','edge','radius','feed','back','dimX','dimY','unitX','unitY'].map(id=>[id,$(id).value]))
+ };
+}
+function restoreActiveProject(p){
+ ({bg,sx,sy,calibratedX,calibratedY,rooms,selected,next,seq,ready,
+   imageFit,calLines,calAxes,checkLine,editHistory,manifolds,manifoldSeq,
+   activeManifoldId,activeTab,rotation,zoom,panX,panY,pendingRestoration,queue}=p);
+ for(const [id,value] of Object.entries(p.fields))$(id).value=value;
+ $('angle').textContent='Obrót: '+rotation+'°';
+ scaleRead();list();render();update();redrawManifolds();showTab(activeTab);
+}
+function confirmLoadedBackground(){
+ if(!bg)return;
+ if(typeof Image!=='function')return; // browser Image preload; mocks may omit Image
+ const source=bg;
+ const img=new Image();
+ img.onload=()=>{if(bg===source)render()};
+ img.onerror=()=>{
+   if(bg!==source)return;
+   reportRestore('Zaimportowano pokoje i ustawienia, lecz przeglądarka nie odczytuje osadzonego obrazu. Zachowaj oryginalny JSON i sprawdź format JPEG/PNG.','warn');
+   status('Rysunek jest zapisany w projekcie, ale nie udało się go wyświetlić w tej przeglądarce.','error');
+ };
+ img.src=source;
+}
+
 function getKnown(kind){return parseKnownLength($(kind==='cx'?'dimX':'dimY').value,$(kind==='cx'?'unitX':'unitY').value)}
 function scaleRead(){
  const full=calibratedX&&calibratedY;
@@ -895,12 +953,12 @@ try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessa
    '. Długości i rozstawy policzone osobno; szacunek łącznie '+fmt(d.result.estimate_m)+' m.'+
    (over?' UWAGA: '+over+' pętli może przekraczać 80 m.':'')+
    ' Rozdzielacze i dojścia wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
-$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:8,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
+$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:9,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
  manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
  activeManifoldId,
  defaults:{spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),
   diam: $('diam').value, edge:$('edge').value, radius:$('radius').value},
- known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings()}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
+ known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings(),loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
 $('import').onclick=()=>$('jsonfile').click();$('jsonfile').onchange=e=>{const f=e.target.files?.[0];if(!f)return;let fr=new FileReader();fr.onload=()=>{try{let j=JSON.parse(fr.result);if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');
  const importedManifolds=Array.isArray(j.manifolds)?j.manifolds:[];
  if(importedManifolds.length>12)throw Error('Zbyt wiele rozdzielaczy w projekcie');
@@ -959,7 +1017,7 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
   shape:r.shape==='rect'||r.shape==='poly'?r.shape:(rect?'rect':'poly'),
   heatingZones:zones,selectedZoneId:zones.some(z=>z.id===r.selectedZoneId)?r.selectedZoneId:zones[0]?.id||null,zoneSerial:Math.max(Number(r.zoneSerial)||0,...zones.map(z=>z.id),0),
   implicitSettings:normalizeLoopSettings(r.implicitSettings||{},defaultLoopSettings(),manifolds),
-  revision:0,loop:null}
+  revision:0,loop:validLoopPreview(r.loopPreview,Math.max(1,zones.length))?r.loopPreview:null}
 });editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;scaleRead();list();render();update();redrawManifolds();showTab('rooms');status('Wczytano projekt z ustawieniami pętli i rozdzielaczy. Przelicz pętle ponownie.','ok')}catch(err){status('Błąd importu: '+err.message,'error')}};fr.readAsText(f)};
 scaleRead();render();showTab('drawing');redrawManifolds();
 </script></body></html>
