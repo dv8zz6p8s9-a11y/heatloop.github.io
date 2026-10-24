@@ -225,6 +225,9 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
                         "installation_ready":False}
         layouts.append(layout)
         checked_length=layout.get("total_m",estimate)
+        # A shortened schematic can fit within 80 m while the area/spacing
+        # estimate for a fully heated field still exceeds that limit.
+        coverage_warning=(layout["status"]=="schematic" and estimate>80+1e-7)
         zone_results.append({
             "index":index,
             "area_m2":round(field.area,4),
@@ -234,7 +237,9 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
             "manifold_id":zone.get("manifold_id"),
             "estimate_m":round(estimate,2),
             "checked_length_m":round(checked_length,3),
-            "over_80m":checked_length>80+1e-7,
+            "over_80m":checked_length>80+1e-7 or coverage_warning,
+            "coverage_warning":coverage_warning,
+            "full_area_estimate_m":round(estimate,2),
             "length_is_estimate":layout["status"]!="experimental",
             "layout":layout,
         })
