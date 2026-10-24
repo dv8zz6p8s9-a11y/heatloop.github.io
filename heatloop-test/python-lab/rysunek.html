@@ -368,47 +368,76 @@ function render(){
  layer=E('g');const t=sceneTransform();if(t)layer.setAttribute('transform',t);
  S.append(layer);
  layer.append(E('rect',{x:-W*8,y:-H*8,width:W*17,height:H*17,fill:'#fff'}));
- if(bg)layer.append(E('image',{href:bg,x:imageFit.x,y:imageFit.y,width:imageFit.width,height:imageFit.height,opacity,preserveAspectRatio:'xMidYMid meet'}));
+ if(bg)layer.append(E('image',{href:bg,x:imageFit.x,y:imageFit.y,width:imageFit.width,height:imageFit.height,opacity:technicalView?Math.min(opacity,.58):opacity,preserveAspectRatio:'xMidYMid meet'}));
  else for(let x=0;x<=W;x+=50)layer.append(E('line',{x1:x,y1:0,x2:x,y2:H,stroke:'#e6eef4'}));
 for(let r of rooms){
  const sel=r.id===selected;
- layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':sel?.17:.06,stroke:sel?'#167cba':'#9a53cf','stroke-width':sel?3.5:2,'stroke-dasharray':sel?'':'7 4'}));
+ layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':technicalView?.01:(sel?.17:.06),
+ stroke:technicalView?'#7a8589':(sel?'#167cba':'#9a53cf'),
+ 'stroke-width':technicalView?1.3:(sel?3.5:2),'stroke-dasharray':sel&&!technicalView?'':'7 4'}));
 
  const zones=r.heatingZones||[];
  for(let zi=0;zi<zones.length;zi++){
    const z=zones[zi],isActive=sel&&r.selectedZoneId===z.id;
    layer.append(E('polygon',{
      points:z.points.map(p=>p.join(',')).join(' '),
-     fill:isActive?'#1aba7f':'#48b67f','fill-opacity':isActive?.31:.19,
-     stroke:isActive?'#05794b':'#0c9662','stroke-width':isActive?4.3:2.7,
-     'stroke-dasharray':isActive?'':'8 4','stroke-linejoin':'round'
+     fill:isActive?'#1aba7f':'#48b67f','fill-opacity':technicalView?.01:(isActive?.31:.19),
+     stroke:technicalView?'#2e8e79':(isActive?'#05794b':'#0c9662'),
+     'stroke-width':technicalView?1.4:(isActive?4.3:2.7),
+     'stroke-dasharray':technicalView?'5 5':(isActive?'':'8 4'),'stroke-linejoin':'round'
    }));
    const center=z.points.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/z.points.length);
    const tag=E('text',{x:center[0],y:center[1]+17,
      fill:'#126947','font-size':13,'text-anchor':'middle','font-weight':'bold',
      stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
    tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m² · '+fmt(settingsFor(r,z).spacing_m*100)+' cm'+(r.loop?.zone_results?.[zi]?.layout?.status==='schematic'?' · SZKIC':'');
-   layer.append(tag);
+   if(!technicalView)layer.append(tag);
  }
  const mx=r.points.reduce((v,p)=>v+p[0],0)/r.points.length,my=r.points.reduce((v,p)=>v+p[1],0)/r.points.length;
  const title=E('text',{x:mx,y:my,fill:'#24526e','font-size':17,'text-anchor':'middle',
    'font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
- title.textContent=r.name;layer.append(title);
-  if(r.loop?.zone_results?.length){
+ title.textContent=r.name;if(!technicalView)layer.append(title);
+ for(const [zi,zone] of (r.heatingZones.length?r.heatingZones:[{id:0,points:r.points,routing:r.implicitRouting}]).entries()){
+   const routing=routingFor(r,r.heatingZones.length?zone:null);
+   const manifold=manifolds.find(m=>m.id===settingsFor(r,r.heatingZones.length?zone:null).manifold_id);
+   const line=plannedCorridorPolyline(manifold?.point,routing);
+   if(line.length>1){
+     const pts=line.map(p=>p.join(',')).join(' ');
+     const width=routing.corridorWidthM/Math.max(.00001,Math.sqrt(sx*sy));
+     layer.append(E('polyline',{points:pts,fill:'none',stroke:'#ecbe76',
+       'stroke-width':width,opacity:technicalView?.15:.25,'stroke-linecap':'round','stroke-linejoin':'round'}));
+     layer.append(E('polyline',{points:pts,fill:'none',stroke:'#b47625',
+       'stroke-width':technicalView?1.6:2.5,'stroke-dasharray':'7 5',
+       'vector-effect':'non-scaling-stroke'}));
+   }
+   for(const [name,point,color] of [['S',routing.preferredStart,'#087ab2'],['K',routing.preferredEnd,'#dd7c34']]){
+     if(!point)continue;
+     layer.append(E('circle',{cx:point[0],cy:point[1],r:8,fill:'#fff',
+       stroke:color,'stroke-width':2.2,'stroke-dasharray':'3 3','vector-effect':'non-scaling-stroke'}));
+     const hint=E('text',{x:point[0]+10,y:point[1]-9,'font-size':12,fill:color,
+       'font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+     hint.textContent=name+'?';layer.append(hint);
+   }
+ }
+ if(r.loop?.zone_results?.length){
    let drawn=0;
    const colors=['#128ab5','#654bc2','#2f8d79','#bc4b7e','#7a88a5'];
    for(const z of r.loop.zone_results){
      const l=z.layout;
      if(!['experimental','schematic'].includes(l?.status))continue;
      drawn++;
-     const palette=colors[z.index%colors.length];
-     for(const [key,color] of [['supply',palette],['return','#d78330'],['cap','#1b997b']]){
+     const reverse=routingFor(r,roomZones(r)[z.index]||null).direction==='reverse';
+     const palette=technicalView?DRAWING_COLORS.supply:colors[z.index%colors.length];
+     for(const [key,color] of [
+       ['supply',reverse?DRAWING_COLORS.return:palette],
+       ['return',reverse?DRAWING_COLORS.supply:DRAWING_COLORS.return],
+       ['cap',DRAWING_COLORS.turn]]){
        const pts=l[key].map(p=>[p[0]/sx,p[1]/sy]);
        if(l.status==='schematic'){
          layer.append(E('polyline',{points:pts.map(p=>p.join(',')).join(' '),
             fill:'none',stroke:color,'stroke-width':3.3,'stroke-dasharray':'12 3',
             'stroke-linecap':'round','stroke-linejoin':'round','vector-effect':'non-scaling-stroke'}));
-       }else polyline(pts,color,3);
+       }else polyline(pts,color,technicalView?2.1:3);
      }
      drawApproaches(z);
    }
@@ -441,7 +470,8 @@ for(const m of manifolds){
  diamond.textContent='M';layer.append(diamond);
  const label=E('text',{x,y:y-18,'font-size':15,'font-weight':700,'text-anchor':'middle',
    fill:'#a85812',stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
- label.textContent=m.name;layer.append(label);
+ label.textContent=technicalView?'R'+m.id+' · '+manifoldQuantities(rooms,m).sections+' sekc.':m.name;
+ layer.append(label);
 }
 if(['rect','heatRect'].includes(tools)&&temp){
  const b=hover||temp;
@@ -455,6 +485,23 @@ if(pts.length){
  polyline(hover&&['poly','heatPoly'].includes(tools)?[...pts,hover]:pts,
    heat?'#11976e':tools==='poly'?'#b047be':'#d18a1e',2.5);
  for(const p of pts)layer.append(E('circle',{cx:p[0],cy:p[1],r:4,fill:heat?'#11976e':'#b14aaa'}));
+}
+if(technicalView){
+ for(const r of rooms){
+  const fields=roomZones(r).length?roomZones(r):[{points:r.points}];
+  for(let i=0;i<fields.length;i++){
+    const zone=roomZones(r)[i]||null;
+    const settings=settingsFor(r,zone),manifold=manifolds.find(m=>m.id===settings.manifold_id);
+    const tag=getZoneTag(r,zone,i,r.loop?.zone_results?.[i]?.layout,settings,manifold,sx,sy);
+    const x=tag.x,y=tag.y;
+    const width=90,height=26;
+    layer.append(E('rect',{x,y,width,height,rx:5,fill:'#fff','fill-opacity':.95,
+      stroke:'#aabecb','stroke-width':1}));
+    layer.append(E('rect',{x,y,width:5,height,fill:'#087ab2'}));
+    const label=E('text',{x:x+11,y:y+16,'font-size':12,'font-weight':'bold',fill:'#173d51'});
+    label.textContent=tag.id+' · '+fmt(settings.spacing_m*100)+' cm';layer.append(label);
+  }
+ }
 }
 drawCalLines();
 }
