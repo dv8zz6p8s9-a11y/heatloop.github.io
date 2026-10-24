@@ -930,20 +930,46 @@ $('file').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>
 if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){try{status('Ładowanie pierwszej strony PDF…');const mod=await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');mod.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';let pdf=await mod.getDocument({data:await f.arrayBuffer()}).promise,p=await pdf.getPage(1),v=p.getViewport({scale:1.3}),c=document.createElement('canvas');c.width=v.width;c.height=v.height;await p.render({canvasContext:c.getContext('2d'),viewport:v}).promise;loadImage(c.toDataURL('image/png'))}catch(e){status('Nie udało się otworzyć PDF: '+e.message,'error')}return}
 if(!['image/png','image/jpeg','image/webp'].includes(f.type)){status('Nieobsługiwany format.','error');return}let r=new FileReader();r.onload=()=>loadImage(r.result);r.readAsDataURL(f)};
 const inputs=()=>{let n=id=>Number($(id).value);return {spacing_m:n('spacing'),diameter_m:n('diam')/1000,wall_edge_m:n('edge')/1000,radius_m:n('radius')/1000,feed_m:n('feed'),back_m:n('back')}};
-$('loop').onclick=()=>{let r=rooms.find(x=>x.id===selected);if(!r){status('Wybierz najpierw pomieszczenie.','error');return}if(!ready){status('Python jeszcze się ładuje.','warn');return}
-let args=inputs();if(!Object.values(args).every(Number.isFinite)){status('Błędne parametry rur.','error');return}
+function queueAnalysisForRoom(r,quiet=false){
+ if(!ready||!r)return false;
+ const args=inputs();
+ if(!Object.values(args).every(Number.isFinite)){
+   if(!quiet)status('Błędne parametry rur.','error');
+   return false;
+ }
  const entries=circuitRows(r);
- let zone_settings;try{zone_settings=entries.map(e=>settingsFor(r,e.zone))}
- catch(err){status(err.message,'error');return}
+ let zone_settings;
+ try{zone_settings=entries.map(e=>settingsFor(r,e.zone))}
+ catch(err){if(!quiet)status(err.message,'error');return false}
  const n=++seq;queue.set(n,{id:r.id,revision:r.revision||0});
  worker.postMessage({kind:'analyze',seq:n,roomId:r.id,payload:{
   points:pointsToMeter(r.points),
   heating_zones:roomZones(r).length?roomZones(r).map(z=>pointsToMeter(z.points)):null,
-  zone_settings,
-  settings:args
+  zone_settings,settings:args
  }});
- status('Python oblicza '+entries.length+' pętli niezależnie, każdą z jej własnym rozstawem.','warn')};
-try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+ if(!quiet)status('Python oblicza '+entries.length+' pętli wybranego pokoju.','warn');
+ return true;
+}
+function regenerateMissingSavedLoops(){
+ if(!pendingRestoration)return;
+ if(!ready){status('Projekt już przywrócony. Trwa ładowanie Pythona do odtworzenia podglądu pętli.','warn');return}
+ pendingRestoration=false;
+ let sent=0;
+ for(const r of rooms)if(!r.loop&&queueAnalysisForRoom(r,true))sent++;
+ if(sent){
+   reportRestore('Rysunek i obrysy przywrócono. Python odtwarza podglądy pętli dla '+sent+' pomieszczeń.','ok');
+ }else{
+   const counts=countProjectParts();
+   reportRestore('Przywrócono '+counts.rooms+' pomieszczenia, '+counts.zones+' pól, '+counts.manifolds+' rozdzielacze.','ok');
+ }
+}
+$('loop').onclick=()=>{
+ const room=chosenRoom();
+ if(!room){status('Wybierz najpierw pomieszczenie.','error');return}
+ if(!ready){status('Python jeszcze się ładuje.','warn');return}
+ queueAnalysisForRoom(room);
+};
+try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
  r.loop=d.result;list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
