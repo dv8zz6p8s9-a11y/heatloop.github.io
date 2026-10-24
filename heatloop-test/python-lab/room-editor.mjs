@@ -141,3 +141,26 @@ export function zonesOverlap(a,b){
      Math.abs(polygonArea(a)-polygonArea(b))<EPS)return true;
   return false;
 }
+
+/** Closing a polygon must not create a second copy of the first vertex.
+ * Useful for iOS/Android taps and double-clicks on the starting point.
+ */
+export function pointDistance(a,b){
+ if(!a||!b)return Infinity;
+ return Math.hypot(a[0]-b[0],a[1]-b[1]);
+}
+export function normalizeClosedPolygon(points,closeTolerance=15,repeatTolerance=4){
+ if(!Array.isArray(points))return [];
+ const result=[];
+ for(const p of points){
+   if(!Array.isArray(p)||p.length!==2||p.some(v=>!Number.isFinite(v)))return [];
+   if(result.length===0||pointDistance(result[result.length-1],p)>repeatTolerance)
+     result.push([p[0],p[1]]);
+ }
+ if(result.length>=4&&pointDistance(result[0],result[result.length-1])<=closeTolerance)
+   result.pop();
+ return result;
+}
+export function tappedFirstPoint(points,p,tolerance=15){
+ return Array.isArray(points)&&points.length>=3&&pointDistance(points[0],p)<=tolerance;
+}
