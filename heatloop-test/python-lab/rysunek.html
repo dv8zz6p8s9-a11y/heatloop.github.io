@@ -1,4 +1,4 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9.4</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9.5</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
@@ -38,7 +38,7 @@
  #stage .chip{padding:6px;font-size:11px}
  .workflow-tabs{margin:0 -4px;padding:5px}
 }
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9.4 · pętle i dojścia · poprawione odzyskiwanie projektów</small></header>
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9.5 · naprawione rysowanie pętli · poprawione odzyskiwanie projektów</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit: <b>80 m na pętlę</b>, razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
 <button type="button" data-tab="drawing" class="active">Rysunek</button>
@@ -116,7 +116,7 @@
 import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=09';
 import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap,pointDistance,normalizeClosedPolygon,tappedFirstPoint} from './room-editor.mjs?v=09';
 import {SPACINGS,spacingAllowed,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=092';
-import {generateLoopApproaches} from './approach-routing.mjs?v=094';
+import {generateLoopApproaches} from './approach-routing.mjs?v=095';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
 let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true;
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
@@ -130,7 +130,7 @@ function validLoopPreview(preview,zoneCount) {
   if(!z||z.index!==i||!finite(z.spacing_m)||!finite(z.checked_length_m)||
      z.checked_length_m<0||z.checked_length_m>10000||!z.layout||typeof z.layout!=='object')return false;
   const layout=z.layout;
-  if(!['experimental','planned'].includes(layout.status))return false;
+  if(!['experimental','schematic','planned'].includes(layout.status))return false;
   if(z.approach){
     const a=z.approach;
     if(!['draft','blocked','no-manifold','no-loop','invalid'].includes(a.status))return false;
@@ -141,7 +141,7 @@ function validLoopPreview(preview,zoneCount) {
     if(a.status==='draft'&&(!finite(a.supply_m)||!finite(a.return_m)||
        a.supply_m<0||a.return_m<0||a.supply_m>1000||a.return_m>1000))return false;
    }
-   if(layout.status==='experimental'){
+   if(['experimental','schematic'].includes(layout.status)){
    for(const key of ['supply','return','cap']){
     if(!Array.isArray(layout[key])||layout[key].length>12000||
        layout[key].some(p=>!Array.isArray(p)||p.length!==2||p.some(v=>!finite(v)||Math.abs(v)>500)))return false;
@@ -275,12 +275,15 @@ function refreshApproaches(){
    else noLoop++;
   }
  }
+ const warningCount=rooms.reduce((n,room)=>n+
+   (room.loop?.zone_results||[]).filter(z=>z.coverage_warning).length,0);
  const el=$('routeSummary');
  el.textContent='Dojścia (szkice): '+draft+' · bez rozdzielacza: '+noManifold+
   ' · bez gotowej geometrii pętli: '+noLoop+' · zablokowane: '+blocked+
-  (tooLong?' · ponad 80 m: '+tooLong:'')+
+  (tooLong?' · przebieg ponad 80 m: '+tooLong:'')+
+  (warningCount?' · ostrzeżenia o pełnym pokryciu: '+warningCount:'')+
   '. Nie sprawdzono ścian, przejść, promieni gięcia ani kolizji innych rur.';
- el.className='chip '+(blocked||tooLong?'error':'warn');
+ el.className='chip '+(blocked||tooLong||warningCount?'error':'warn');
 }
 function drawApproaches(result){
  const p=result.approach;
@@ -355,7 +358,7 @@ for(let r of rooms){
    const tag=E('text',{x:center[0],y:center[1]+17,
      fill:'#126947','font-size':13,'text-anchor':'middle','font-weight':'bold',
      stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
-   tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m² · '+fmt(settingsFor(r,z).spacing_m*100)+' cm';
+   tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m² · '+fmt(settingsFor(r,z).spacing_m*100)+' cm'+(r.loop?.zone_results?.[zi]?.layout?.status==='schematic'?' · SZKIC':'');
    layer.append(tag);
  }
  const mx=r.points.reduce((v,p)=>v+p[0],0)/r.points.length,my=r.points.reduce((v,p)=>v+p[1],0)/r.points.length;
@@ -367,17 +370,23 @@ for(let r of rooms){
    const colors=['#128ab5','#654bc2','#2f8d79','#bc4b7e','#7a88a5'];
    for(const z of r.loop.zone_results){
      const l=z.layout;
-     if(l?.status!=='experimental')continue;
+     if(!['experimental','schematic'].includes(l?.status))continue;
      drawn++;
      const palette=colors[z.index%colors.length];
-     for(const [key,color] of [['supply',palette],['return','#d78330'],['cap','#1b997b']])
-       polyline(l[key].map(p=>[p[0]/sx,p[1]/sy]),color,3);
+     for(const [key,color] of [['supply',palette],['return','#d78330'],['cap','#1b997b']]){
+       const pts=l[key].map(p=>[p[0]/sx,p[1]/sy]);
+       if(l.status==='schematic'){
+         layer.append(E('polyline',{points:pts.map(p=>p.join(',')).join(' '),
+            fill:'none',stroke:color,'stroke-width':3.3,'stroke-dasharray':'12 3',
+            'stroke-linecap':'round','stroke-linejoin':'round','vector-effect':'non-scaling-stroke'}));
+       }else polyline(pts,color,3);
+     }
      drawApproaches(z);
    }
    if(drawn<r.loop.zone_results.length){
      const tag=E('text',{x:mx,y:my+44,fill:'#9b631a','font-size':12,'text-anchor':'middle',
         stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
-     tag.textContent=(r.loop.zone_results.length-drawn)+' pętli bez zweryfikowanej trasy';layer.append(tag);
+     tag.textContent=(r.loop.zone_results.length-drawn)+' pętli bez podglądu geometrycznego';layer.append(tag);
    }
  }else if(r.loop?.layout?.status==='experimental'){
    const l=r.loop.layout;
@@ -564,14 +573,21 @@ function renderCircuits(){
    const badge=document.createElement('div');
    const routed=result?.approach?.status==='draft',total=result?previewLength(result):null;
    const over=Number.isFinite(total)&&total>80;
-   badge.className='chip '+(over?'error':'warn');
+   const coverage=!!result?.coverage_warning;
+   badge.className='chip '+(over||coverage?'error':'warn');
    badge.textContent=result?
      (routed?
-        'SZKIC: pętla '+fmt(result.visual_heating_m)+' m + zasilanie '+fmt(result.approach.supply_m)+
+        (result.layout.status==='schematic'?'SCHEMAT NIEZWERYFIKOWANY':'PĘTLA TESTOWA')+
+        ': pętla '+fmt(result.visual_heating_m)+' m + zasilanie '+fmt(result.approach.supply_m)+
         ' m + powrót '+fmt(result.approach.return_m)+' m = '+fmt(total)+' m'+
-        (over?' · ponad 80 m!':' · wstępny zapas '+fmt(80-total)+' m'):
-        (result.layout.status==='experimental'?'Ślimak testowy. ':'Trasa grzewcza tylko planowana. ')+
-        fmt(result.checked_length_m)+' m (z ręcznymi dojściami). '+(result.approach?.reason||'')):
+        (over?' · ponad 80 m!':' · wstępny zapas '+fmt(80-total)+' m')+
+        (coverage?' · UWAGA: szacunek pełnego pokrycia '+fmt(result.full_area_estimate_m)+
+          ' m przekracza limit — nie uznawaj szkicu za całkowite pokrycie pola.':''):
+        (result.layout.status==='experimental'?'Ślimak testowy. ':
+         result.layout.status==='schematic'?'Widoczny schemat ślimaka — promienie gięcia niezweryfikowane. ':
+         'Trasa grzewcza tylko planowana. ')+
+        fmt(result.checked_length_m)+' m (z ręcznymi dojściami). '+(result.approach?.reason||'')+
+         (coverage?' Szacunek pełnego pola '+fmt(result.full_area_estimate_m)+' m przekracza 80 m.':'') ):
       'Nie przeliczono pętli. Wstępny szacunek '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
    entry.append(badge);
    el.append(entry);
@@ -1060,18 +1076,20 @@ $('showApproaches').onchange=()=>{
  showApproachRoutes=$('showApproaches').checked;
  render();
 };
-try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+try{worker=new Worker('./rysunek-worker.js?v=095',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
  r.loop=d.result;refreshApproaches();list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
  const done=zoneData.filter(x=>x.layout.status==='experimental').length;
+ const schematic=zoneData.filter(x=>x.layout.status==='schematic').length;
  const routed=zoneData.filter(x=>x.approach?.status==='draft').length;
- const over=zoneData.filter(x=>x.approach?.status==='draft'?x.visual_over_80m:x.over_80m).length;
- status(r.name+': ślimaki testowe '+done+'/'+zoneData.length+' · poglądowe dojścia '+
-   routed+'/'+zoneData.length+
+ const over=zoneData.filter(x=>x.coverage_warning ||
+   (x.approach?.status==='draft'?x.visual_over_80m:x.over_80m)).length;
+ status(r.name+': ślimaki testowe '+done+' · schematy '+schematic+' · bez obrazu '+
+   (zoneData.length-done-schematic)+' · poglądowe dojścia '+routed+'/'+zoneData.length+
    '. Rozstawy pętli są niezależne.'+
    (over?' UWAGA: '+over+' pętli może przekraczać 80 m!':'')+
-   ' Dojścia mają charakter szkicu i wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
+   ' Schematy nie oznaczają sprawdzonych promieni gięcia. Dojścia także wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
 $('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:9,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
  manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
  activeManifoldId,
