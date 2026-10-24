@@ -38,3 +38,18 @@ test('Browser module has valid JavaScript syntax',()=>{
  const stripped=script.replace(/^import\s+\{[^;]+;\s*/gm,'');
  assert.doesNotThrow(()=>new Function(stripped));
 });
+
+test('LAB renders schematic preview from Python when strict geometry is rejected',()=>{
+ assert.match(script,/\['experimental','schematic'\]\.includes\(l\?\.status\)/);
+ assert.match(script,/'stroke-dasharray':'12 3'/);
+ assert.match(script,/schematy '\+schematic/);
+});
+test('Schematic loop previews and their supply-return lines survive JSON storage',()=>{
+ assert.match(script,/\['experimental','schematic','planned'\]\.includes\(layout\.status\)/);
+ assert.match(script,/if\(\['experimental','schematic'\]\.includes\(layout\.status\)\)/);
+ assert.match(script,/loopPreview:validLoopPreview/);
+});
+test('UI warns if full-area estimate exceeds 80m although schematic is shorter',()=>{
+ assert.match(script,/result\.coverage_warning/);
+ assert.match(script,/result\.full_area_estimate_m/);
+});
