@@ -83,32 +83,67 @@ def rectangle(room,s,clearance,radius,feed,back):
     if not candidates:raise ValueError("Nie znaleziono bezkolizyjnego ślimaka w limicie 80 m")
     turns,drawn,go,ret,turn,total=max(candidates,key=lambda x:(x[0],x[1]))
     return {"status":"experimental","kind":"counterflow-rectangle","supply":go,"return":ret,"cap":turn,"drawn_m":round(drawn,3),"total_m":round(total,3),"margin_m":round(80-total,3),"turns":turns,"installation_ready":False}
-def analyze_room(points,settings,heating_points=None):
-    """Validate the whole room and an optional independent heating polygon.
+def analyze_room(points,settings,heating_points=None,heating_zones=None):
+    """Validate a whole room and one or many distinct heating fields.
 
-    The heating field can be a subset of the room; for an irregular shape
-    the current generator returns PLANNED, not a fictitious pipe route.
+    Heating zones are intentionally independent of the containing room polygon.
+    For multiple disjoint fields we report per-zone estimates, not a fictional
+    continuous pipe route. Do not treat experimental geometry as install-ready.
     """
+    from shapely.ops import unary_union
+
     room=validate_room(points)
-    heating=validate_room(heating_points) if heating_points is not None else room
-    if not room.covers(heating):
-        raise ValueError("Pole ogrzewania musi w całości znajdować się wewnątrz pomieszczenia")
+    if heating_zones is not None:
+        if not isinstance(heating_zones,list) or not 1 <= len(heating_zones) <= 40:
+            raise ValueError("Wybierz od 1 do 40 pól ogrzewania")
+        fields=[validate_room(p) for p in heating_zones]
+    elif heating_points is not None:
+        fields=[validate_room(heating_points)]
+    else:
+        fields=[room]
+
+    for field in fields:
+        if not room.covers(field):
+            raise ValueError("Każde pole ogrzewania musi znajdować się w całości wewnątrz pomieszczenia")
+    # Disallow double-counting two overlapping heating fields.
+    # Touching their boundaries is allowed.
+    for i in range(len(fields)):
+        for j in range(i+1,len(fields)):
+            overlap=fields[i].intersection(fields[j]).area
+            if overlap > 1e-7:
+                raise ValueError("Pola grzewcze nachodzą na siebie; skoryguj nakładające się obszary")
+
+    heating=unary_union(fields)
     s=settings["spacing_m"];diameter=settings["diameter_m"];edge=settings["wall_edge_m"];radius=settings["radius_m"];feed=settings["feed_m"];back=settings["back_m"]
-    if any(not isinstance(v,(int,float)) or not isfinite(v) for v in (s,diameter,edge,radius,feed,back)):raise ValueError("Nieprawidłowe liczby")
-    if not any(abs(s-x)<1e-7 for x in SPACINGS):raise ValueError("Rozstaw: 10, 12,5, 15 lub 20 cm")
-    if not (0<diameter<=.05 and 0<=edge<=1 and 0<radius<=.5 and 0<=feed<=100 and 0<=back<=100):raise ValueError("Nieprawidłowe parametry rur")
+    if any(not isinstance(v,(int,float)) or not isfinite(v) for v in (s,diameter,edge,radius,feed,back)):
+        raise ValueError("Nieprawidłowe liczby")
+    if not any(abs(s-x)<1e-7 for x in SPACINGS):
+        raise ValueError("Rozstaw: 10, 12,5, 15 lub 20 cm")
+    if not (0<diameter<=.05 and 0<=edge<=1 and 0<radius<=.5 and 0<=feed<=100 and 0<=back<=100):
+        raise ValueError("Nieprawidłowe parametry rur")
+    estimates=[round(field.area/s,2) for field in fields]
     est=heating.area/s+feed+back
-    try:layout=rectangle(heating,s,edge+diameter/2,radius,feed,back)
-    except ValueError as e:layout={"status":"planned","kind":"none","message":str(e),"installation_ready":False}
+
+    if len(fields)>1:
+        layout={"status":"planned","kind":"multiple-heating-fields",
+                "message":"Wybrano wiele pól. Należy oddzielnie zweryfikować trasę każdej pętli i dojścia do rozdzielacza.",
+                "installation_ready":False}
+    else:
+        try:layout=rectangle(fields[0],s,edge+diameter/2,radius,feed,back)
+        except ValueError as e:layout={"status":"planned","kind":"none","message":str(e),"installation_ready":False}
+
     return {
         "area_m2":round(heating.area,4),
         "room_area_m2":round(room.area,4),
         "heating_area_m2":round(heating.area,4),
         "unheated_area_m2":round(max(0,room.area-heating.area),4),
+        "heating_zone_count":len(fields),
+        "heating_zone_areas_m2":[round(field.area,4) for field in fields],
+        "heating_zone_pipe_estimates_m":estimates,
         "perimeter_m":round(room.length,4),
         "estimate_m":round(est,2),
         "estimate_over_limit":est>80,
         "axis_offset_m":edge+diameter/2,
-        "custom_heating_area":heating_points is not None,
+        "custom_heating_area":heating_points is not None or heating_zones is not None,
         "layout":layout
     }
