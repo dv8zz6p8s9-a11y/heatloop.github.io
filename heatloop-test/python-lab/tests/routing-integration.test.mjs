@@ -26,8 +26,8 @@ test('JSON restore rebuilds manifold approach overlays',()=>{
  assert.match(script,/refreshApproaches\(\);scaleRead\(\);list\(\);render\(\)/);
  assert.match(script,/loopPreview:validLoopPreview/);
 });
-test('Cannot accidentally display unverified polygon geometry',()=>{
- assert.match(script,/if\(l\?\.status!==['"]experimental['"]\)continue/);
+test('Only strict or explicitly schematic loop layouts are drawn',()=>{
+ assert.match(script,/if\(!\['experimental','schematic'\]\.includes\(l\?\.status\)\)continue/);
  assert.match(script,/if\(!showApproachRoutes\|\|p\?\.status!==['"]draft['"]\)return/);
 });
 test('Previous settings and new project confirmation survive integration',()=>{
