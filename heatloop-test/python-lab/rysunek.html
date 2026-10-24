@@ -290,7 +290,10 @@ function refreshApproaches(){
     if(otherRoom!==room||j!==i)obstacles.push(otherZone.points);
    const pref=routingFor(room,zone);
    result.approach=generateLoopApproaches(result.layout,manifold,{
-     sx,sy,obstacles,guide:pref.guide,direction:pref.direction});
+     sx,sy,obstacles,guide:pref.guide,
+     // Python now uses the preferred direction to orient the actual loop.
+     direction:result.layout?.direction==='reverse'?'normal':pref.direction
+   });
    result.visual_total_m=null;result.visual_heating_m=null;result.visual_over_80m=null;
    const approach=result.approach;
    if(approach.status==='draft'){
@@ -426,7 +429,7 @@ for(let r of rooms){
      const l=z.layout;
      if(!['experimental','schematic'].includes(l?.status))continue;
      drawn++;
-     const reverse=routingFor(r,roomZones(r)[z.index]||null).direction==='reverse';
+     const reverse=routingFor(r,roomZones(r)[z.index]||null).direction==='reverse'&&l.direction!=='reverse';
      const palette=technicalView?DRAWING_COLORS.supply:colors[z.index%colors.length];
      for(const [key,color] of [
        ['supply',reverse?DRAWING_COLORS.return:palette],
@@ -722,6 +725,16 @@ function renderCircuits(){
          (coverage?' Szacunek pełnego pola '+fmt(result.full_area_estimate_m)+' m przekracza 80 m.':'') ):
       'Nie przeliczono pętli. Wstępny szacunek '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
    entry.append(badge);
+   if(result?.layout?.entrance_selected){
+     const metrics=document.createElement('div');metrics.className='chip warn';
+     const ds=result.layout.preferred_start_error_m,de=result.layout.preferred_end_error_m;
+     metrics.textContent='Generator wybrał kierunek ślimaka na podstawie wskazań'+
+       (ds!=null?' · odchylenie początku '+fmt(ds)+' m':'')+
+       (de!=null?' · odchylenie końca '+fmt(de)+' m':'')+
+       (result.layout.corridor_considered?' · uwzględniono zarezerwowany pas':'')+
+       '. S?/K? to cele z możliwym odchyleniem; ocena promieni nadal obowiązkowa.';
+     entry.append(metrics)
+   }
    const route=routingFor(room,zone),routeBox=document.createElement('div');
    routeBox.className='route-controls';
    const routeTitle=document.createElement('strong');routeTitle.textContent='Początek, koniec i dojście';routeBox.append(routeTitle);
@@ -1217,8 +1230,24 @@ function queueAnalysisForRoom(r,quiet=false){
  }
  const entries=circuitRows(r);
  let zone_settings;
- try{zone_settings=entries.map(e=>settingsFor(r,e.zone))}
- catch(err){if(!quiet)status(err.message,'error');return false}
+ try{
+   zone_settings=entries.map(e=>{
+     const settings=settingsFor(r,e.zone);
+     const routing=routingFor(r,e.zone);
+     const manifold=manifolds.find(m=>m.id===settings.manifold_id);
+     return{...settings,routing:{
+       direction:routing.direction,
+       preferred_start_m:routing.preferredStart?
+         [routing.preferredStart[0]*sx,routing.preferredStart[1]*sy]:null,
+       preferred_end_m:routing.preferredEnd?
+         [routing.preferredEnd[0]*sx,routing.preferredEnd[1]*sy]:null,
+       manifold_point_m:manifold?.point?
+         [manifold.point[0]*sx,manifold.point[1]*sy]:null,
+       guide_m:routing.guide.map(p=>[p[0]*sx,p[1]*sy]),
+       corridor_width_m:routing.corridorWidthM
+     }};
+   });
+ }catch(err){if(!quiet)status(err.message,'error');return false}
  const n=++seq;queue.set(n,{id:r.id,revision:r.revision||0});
  worker.postMessage({kind:'analyze',seq:n,roomId:r.id,payload:{
   points:pointsToMeter(r.points),
