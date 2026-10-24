@@ -50,8 +50,8 @@
  <div><strong id="left">—</strong><small>Zapas do 80 m</small></div>
  </div><div id="status" class="chip">Zacznij od rysunku i kalibracji.</div></section></div></main>
 <script type="module">
-import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs';
-import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea} from './room-editor.mjs';
+import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=07';
+import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea} from './room-editor.mjs?v=07';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
 let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],opacity=1,queue=new Map();
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
@@ -533,7 +533,7 @@ let args=inputs();if(!Object.values(args).every(Number.isFinite)){status('Błęd
   points:pointsToMeter(r.points),heating_points:r.heatingPoints?pointsToMeter(r.heatingPoints):null,settings:args
  }});
  status('Obliczanie w Pythonie dla pola '+fmt(polygonArea(heatingPoints(r))*sx*sy)+' m²…','warn')};
-try{worker=new Worker('./rysunek-worker.js',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+try{worker=new Worker('./rysunek-worker.js?v=07',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
  r.loop=d.result;list();render();update();let l=d.result.layout;if(l.status==='experimental')status(r.name+': narysowano wstępną pętlę '+fmt(l.total_m)+' m. Nie jest to projekt do montażu.','ok');else status(r.name+': zapisano pętlę planowaną. '+l.message+' Szacunek '+fmt(d.result.estimate_m)+' m.','warn')}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
