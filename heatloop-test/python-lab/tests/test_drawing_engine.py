@@ -91,5 +91,57 @@ class HeatingAreaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"wewnątrz pomieszczenia"):
             analyze_room(ROOM,SETTINGS,heating_zones=[a,b])
 
+    def test_individual_spacing_and_manifold_assignment(self):
+        a=[(.5,.5),(2,.5),(2,3),(.5,3)]
+        b=[(3,.5),(4.5,.5),(4.5,3),(3,3)]
+        result=analyze_room(ROOM,SETTINGS,heating_zones=[a,b],zone_settings=[
+            {"spacing_m":.10,"feed_m":2,"back_m":2,"manifold_id":1},
+            {"spacing_m":.20,"feed_m":3,"back_m":4,"manifold_id":2}
+        ])
+        z=result["zone_results"]
+        self.assertEqual(len(z),2)
+        self.assertEqual(z[0]["spacing_m"],.10)
+        self.assertEqual(z[1]["spacing_m"],.20)
+        self.assertEqual(z[0]["manifold_id"],1)
+        self.assertEqual(z[1]["manifold_id"],2)
+        self.assertAlmostEqual(z[0]["estimate_m"],41.5)
+        self.assertAlmostEqual(z[1]["estimate_m"],25.75)
+        self.assertAlmostEqual(result["estimate_m"],67.25)
+
+    def test_per_loop_limit_not_sum_of_two_independent_loops(self):
+        a=[(.2,.2),(3.2,.2),(3.2,2.2),(.2,2.2)]
+        b=[(.2,2.3),(3.2,2.3),(3.2,3.9),(.2,3.9)]
+        result=analyze_room(ROOM,SETTINGS,heating_zones=[a,b],zone_settings=[
+            {"spacing_m":.15,"feed_m":2,"back_m":2},
+            {"spacing_m":.15,"feed_m":2,"back_m":2}
+        ])
+        self.assertGreater(result["estimate_m"],80)
+        self.assertFalse(result["estimate_over_limit"])
+        self.assertTrue(all(not z["over_80m"] for z in result["zone_results"]))
+
+    def test_length_warning_applies_to_one_overlong_loop(self):
+        a=[(.2,.2),(4.8,.2),(4.8,3.4),(.2,3.4)]
+        r=analyze_room(ROOM,SETTINGS,heating_zones=[a],zone_settings=[
+            {"spacing_m":.10,"feed_m":3,"back_m":3}
+        ])
+        self.assertTrue(r["zone_results"][0]["over_80m"])
+        self.assertTrue(r["estimate_over_limit"])
+        self.assertFalse(r["zone_results"][0]["layout"]["installation_ready"])
+
+    def test_invalid_individual_spacing_rejected(self):
+        a=[(.5,.5),(2,.5),(2,2),(.5,2)]
+        with self.assertRaisesRegex(ValueError,"Rozstaw pojedynczej"):
+            analyze_room(ROOM,SETTINGS,heating_zones=[a],zone_settings=[
+                {"spacing_m":.13,"feed_m":2,"back_m":2}
+            ])
+
+    def test_independent_settings_count_must_match_fields(self):
+        a=[(.5,.5),(2,.5),(2,2),(.5,2)]
+        b=[(3,.5),(4.5,.5),(4.5,2),(3,2)]
+        with self.assertRaisesRegex(ValueError,"Ustawienia pętli"):
+            analyze_room(ROOM,SETTINGS,heating_zones=[a,b],zone_settings=[
+                {"spacing_m":.10,"feed_m":2,"back_m":2}
+            ])
+
 if __name__=="__main__":
     unittest.main()
