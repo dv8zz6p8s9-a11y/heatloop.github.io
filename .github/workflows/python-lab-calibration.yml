@@ -21,6 +21,7 @@ jobs:
         run: |
           node --check heatloop-test/python-lab/calibration-utils.mjs
           node --check heatloop-test/python-lab/room-editor.mjs
+          node --check heatloop-test/python-lab/manifold-utils.mjs
           node --check heatloop-test/python-lab/rysunek-worker.js
       - name: Test dimensional calibration
         run: node --test heatloop-test/python-lab/tests/*.test.mjs
