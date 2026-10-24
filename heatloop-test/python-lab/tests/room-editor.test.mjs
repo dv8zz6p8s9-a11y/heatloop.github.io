@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {polygonArea,validPolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex} from '../room-editor.mjs';
+import {polygonArea,validPolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,zonesOverlap} from '../room-editor.mjs';
 const room=[[100,100],[600,100],[600,500],[100,500]];
 const heating=[[160,160],[420,160],[420,390],[160,390]];
 test('Room geometry is independent of heating surface',()=>{
@@ -32,3 +32,30 @@ test('Add and delete a vertex without crossing',()=>{
 });
 test('Reject removal below three vertices',()=>assert.throws(()=>deleteVertex([[0,0],[100,0],[0,100]],0)));
 test('Room-boundary heating zone allowed',()=>assert.equal(insideRoom(room,room),true));
+
+test('Separate heating fields do not overlap',()=>{
+ const a=[[0,0],[100,0],[100,100],[0,100]];
+ const b=[[150,0],[250,0],[250,100],[150,100]];
+ assert.equal(zonesOverlap(a,b),false);
+});
+test('Heating fields sharing only a border can coexist',()=>{
+ const a=[[0,0],[100,0],[100,100],[0,100]];
+ const b=[[100,0],[200,0],[200,100],[100,100]];
+ assert.equal(zonesOverlap(a,b),false);
+});
+test('Overlapping and identical heating fields are rejected',()=>{
+ const a=[[0,0],[100,0],[100,100],[0,100]];
+ const b=[[60,60],[160,60],[160,160],[60,160]];
+ assert.equal(zonesOverlap(a,b),true);
+ assert.equal(zonesOverlap(a,a),true);
+});
+test('Adding another heating field must not mutate earlier coordinates',()=>{
+ const room=[[0,0],[500,0],[500,500],[0,500]];
+ const first=[[50,50],[150,50],[150,150],[50,150]];
+ const before=JSON.stringify(first);
+ const second=[[220,200],[320,200],[320,300],[220,300]];
+ assert.ok(insideRoom(room,first));
+ assert.ok(insideRoom(room,second));
+ assert.ok(!zonesOverlap(first,second));
+ assert.equal(JSON.stringify(first),before);
+});
