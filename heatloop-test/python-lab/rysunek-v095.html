@@ -275,12 +275,15 @@ function refreshApproaches(){
    else noLoop++;
   }
  }
+ const warningCount=rooms.reduce((n,room)=>n+
+   (room.loop?.zone_results||[]).filter(z=>z.coverage_warning).length,0);
  const el=$('routeSummary');
  el.textContent='Dojścia (szkice): '+draft+' · bez rozdzielacza: '+noManifold+
   ' · bez gotowej geometrii pętli: '+noLoop+' · zablokowane: '+blocked+
-  (tooLong?' · ponad 80 m: '+tooLong:'')+
+  (tooLong?' · przebieg ponad 80 m: '+tooLong:'')+
+  (warningCount?' · ostrzeżenia o pełnym pokryciu: '+warningCount:'')+
   '. Nie sprawdzono ścian, przejść, promieni gięcia ani kolizji innych rur.';
- el.className='chip '+(blocked||tooLong?'error':'warn');
+ el.className='chip '+(blocked||tooLong||warningCount?'error':'warn');
 }
 function drawApproaches(result){
  const p=result.approach;
@@ -570,17 +573,21 @@ function renderCircuits(){
    const badge=document.createElement('div');
    const routed=result?.approach?.status==='draft',total=result?previewLength(result):null;
    const over=Number.isFinite(total)&&total>80;
-   badge.className='chip '+(over?'error':'warn');
+   const coverage=!!result?.coverage_warning;
+   badge.className='chip '+(over||coverage?'error':'warn');
    badge.textContent=result?
      (routed?
         (result.layout.status==='schematic'?'SCHEMAT NIEZWERYFIKOWANY':'PĘTLA TESTOWA')+
         ': pętla '+fmt(result.visual_heating_m)+' m + zasilanie '+fmt(result.approach.supply_m)+
         ' m + powrót '+fmt(result.approach.return_m)+' m = '+fmt(total)+' m'+
-        (over?' · ponad 80 m!':' · wstępny zapas '+fmt(80-total)+' m'):
+        (over?' · ponad 80 m!':' · wstępny zapas '+fmt(80-total)+' m')+
+        (coverage?' · UWAGA: szacunek pełnego pokrycia '+fmt(result.full_area_estimate_m)+
+          ' m przekracza limit — nie uznawaj szkicu za całkowite pokrycie pola.':''):
         (result.layout.status==='experimental'?'Ślimak testowy. ':
          result.layout.status==='schematic'?'Widoczny schemat ślimaka — promienie gięcia niezweryfikowane. ':
          'Trasa grzewcza tylko planowana. ')+
-        fmt(result.checked_length_m)+' m (z ręcznymi dojściami). '+(result.approach?.reason||'')):
+        fmt(result.checked_length_m)+' m (z ręcznymi dojściami). '+(result.approach?.reason||'')+
+         (coverage?' Szacunek pełnego pola '+fmt(result.full_area_estimate_m)+' m przekracza 80 m.':'') ):
       'Nie przeliczono pętli. Wstępny szacunek '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
    entry.append(badge);
    el.append(entry);
@@ -1076,7 +1083,8 @@ try{worker=new Worker('./rysunek-worker.js?v=095',{type:'module'});worker.onmess
  const done=zoneData.filter(x=>x.layout.status==='experimental').length;
  const schematic=zoneData.filter(x=>x.layout.status==='schematic').length;
  const routed=zoneData.filter(x=>x.approach?.status==='draft').length;
- const over=zoneData.filter(x=>x.approach?.status==='draft'?x.visual_over_80m:x.over_80m).length;
+ const over=zoneData.filter(x=>x.coverage_warning ||
+   (x.approach?.status==='draft'?x.visual_over_80m:x.over_80m)).length;
  status(r.name+': ślimaki testowe '+done+' · schematy '+schematic+' · bez obrazu '+
    (zoneData.length-done-schematic)+' · poglądowe dojścia '+routed+'/'+zoneData.length+
    '. Rozstawy pętli są niezależne.'+
