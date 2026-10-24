@@ -290,7 +290,7 @@ function refreshApproaches(){
     if(otherRoom!==room||j!==i)obstacles.push(otherZone.points);
    const pref=routingFor(room,zone);
    result.approach=generateLoopApproaches(result.layout,manifold,{
-     sx,sy,obstacles,guide:pref.guide,
+     sx,sy,obstacles,guide:pref.guide,corridorWidthM:pref.corridorWidthM,
      // Python now uses the preferred direction to orient the actual loop.
      direction:result.layout?.direction==='reverse'?'normal':pref.direction
    });
@@ -314,7 +314,7 @@ function refreshApproaches(){
   ' · bez gotowej geometrii pętli: '+noLoop+' · zablokowane: '+blocked+
   (tooLong?' · przebieg ponad 80 m: '+tooLong:'')+
   (warningCount?' · ostrzeżenia o pełnym pokryciu: '+warningCount:'')+
-  '. Nie sprawdzono ścian, przejść, promieni gięcia ani kolizji innych rur.';
+  '. Dwie linie w ręcznym korytarzu prowadzone są wstępnie co 10 cm. Nie sprawdzono ścian, przejść, promieni gięcia i kolizji wszystkich rur.';
  el.className='chip '+(blocked||tooLong||warningCount?'error':'warn');
 }
 function drawApproaches(result){
@@ -758,7 +758,7 @@ function renderCircuits(){
      ' · cel końca: '+(route.preferredEnd?'oznaczony':'auto')+
      ' · punkty trasy: '+route.guide.length+
      ' · kierunek: '+(route.direction==='reverse'?'odwrócony':'normalny')+
-     '. Punkty docelowe jeszcze nie przenoszą fizycznych końców ślimaka.';
+     '. Przy wskazaniu rozdzielacza i punktów wejścia generator wybierze orientację ślimaka po ponownym przeliczeniu.';
    routeBox.append(guideInfo);
    entry.append(routeBox);
    el.append(entry);
