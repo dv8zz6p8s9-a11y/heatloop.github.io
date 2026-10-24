@@ -1,4 +1,4 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9.6-rc1</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.0-RC1</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
@@ -56,7 +56,7 @@
  main,.grid,#stage{display:block;max-width:none;margin:0;padding:0;box-shadow:none;border:0;overflow:visible;position:static}
  #plan{max-height:none!important;page-break-inside:avoid}
 }
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9.6-RC1 · czytelny rysunek techniczny · poprawione odzyskiwanie projektów</small></header>
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.0-RC1 · ślimak od przyłącza i osobne dojścia · poprawione odzyskiwanie projektów</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit: <b>80 m na pętlę</b>, razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
 <button type="button" data-tab="drawing" class="active">Rysunek</button>
@@ -507,6 +507,13 @@ if(technicalView){
  }
 }
 drawCalLines();
+ if(technicalView){
+   const mark=E('text',{x:W/2,y:H-9,'text-anchor':'middle',
+     fill:'#bb4f36','font-weight':700,'font-size':17,stroke:'#fff',
+     'stroke-width':4,'paint-order':'stroke'});
+   mark.textContent='HEATLOOP TEST · RYSUNEK POGLĄDOWY · NIE PROJEKT WYKONAWCZY';
+   S.append(mark);
+ }
  renderTechnicalLegend();
 }
 function renderTechnicalLegend(){
@@ -725,6 +732,14 @@ function renderCircuits(){
          (coverage?' Szacunek pełnego pola '+fmt(result.full_area_estimate_m)+' m przekracza 80 m.':'') ):
       'Nie przeliczono pętli. Wstępny szacunek '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
    entry.append(badge);
+   if(result?.geometric_coverage_pct!=null){
+     const coverageEl=document.createElement('div');
+     coverageEl.className='chip '+(result.coverage_incomplete?'error':'warn');
+     coverageEl.textContent='Pokrycie geometryczne obrysem rur: '+
+       fmt(result.geometric_coverage_pct)+'% użytecznej powierzchni · wskaźnik poglądowy, NIE wynik obliczeń cieplnych.'+
+       (result.coverage_incomplete?' Uwaga: pozostały fragmenty wymagające korekty.':'');
+     entry.append(coverageEl)
+   }
    if(result?.layout?.entrance_selected){
      const metrics=document.createElement('div');metrics.className='chip warn';
      const ds=result.layout.preferred_start_error_m,de=result.layout.preferred_end_error_m;
