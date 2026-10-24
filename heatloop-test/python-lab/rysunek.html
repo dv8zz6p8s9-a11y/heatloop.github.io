@@ -143,7 +143,7 @@ import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,pol
 import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap,pointDistance,normalizeClosedPolygon,tappedFirstPoint} from './room-editor.mjs?v=09';
 import {SPACINGS,spacingAllowed,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=092';
 import {generateLoopApproaches} from './approach-routing.mjs?v=096';
-import {DRAWING_COLORS,cleanRouting,effectiveEndpoints,getZoneTag,plannedCorridorPolyline} from './technical-drawing.mjs?v=096';
+import {DRAWING_COLORS,cleanRouting,effectiveEndpoints,getZoneTag,plannedCorridorPolyline,snapToFieldEdge,guideMetricLength} from './technical-drawing.mjs?v=096';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
 let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true,technicalView=false,routingTarget=null;
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
@@ -288,7 +288,9 @@ function refreshApproaches(){
    const obstacles=[];
    for(const otherRoom of rooms)for(const [j,otherZone] of roomZones(otherRoom).entries())
     if(otherRoom!==room||j!==i)obstacles.push(otherZone.points);
-   result.approach=generateLoopApproaches(result.layout,manifold,{sx,sy,obstacles});
+   const pref=routingFor(room,zone);
+   result.approach=generateLoopApproaches(result.layout,manifold,{
+     sx,sy,obstacles,guide:pref.guide,direction:pref.direction});
    result.visual_total_m=null;result.visual_heating_m=null;result.visual_over_80m=null;
    const approach=result.approach;
    if(approach.status==='draft'){
@@ -462,8 +464,34 @@ function activeZone(room){const z=roomZones(room);return z.find(x=>x.id===room?.
 function heatingAreaPx(room){const zones=roomZones(room);return !room?0:zones.length?zones.reduce((sum,z)=>sum+polygonArea(z.points),0):polygonArea(room.points)}
 function copyZones(zones){return zones.map(z=>({
  id:z.id,shape:z.shape,points:copyPoints(z.points),
- settings:z.settings?{...z.settings}:undefined
+ settings:z.settings?{...z.settings}:undefined,
+ routing:cleanRouting(z.routing||{})
 }))}
+function routingFor(room,zone=null){
+ return cleanRouting((zone?zone.routing:room?.implicitRouting)||{});
+}
+function assignRouting(room,zone,patch,redraw=true){
+ if(!room)return false;
+ try{
+  const next=cleanRouting({...routingFor(room,zone),...patch});
+  if(zone)zone.routing=next;
+  else room.implicitRouting=next;
+  if(room.loop)refreshApproaches();
+  if(redraw){render();update();}
+  return true;
+ }catch(e){status('Nie zapisano prowadzenia: '+e.message,'error');return false}
+}
+function selectRouteTool(room,zone,mode){
+ if(!room)return;
+ const manifold=manifolds.find(m=>m.id===settingsFor(room,zone).manifold_id);
+ if(mode==='guidePoint'&&(!manifold||!manifold.point)){
+  status('Najpierw przypisz pętlę do rozdzielacza i zaznacz jego lokalizację.','warn');return
+ }
+ selected=room.id;
+ if(zone)room.selectedZoneId=zone.id;
+ routingTarget={roomId:room.id,zoneId:zone?.id??null};
+ tool(mode);showTab('loops');update();
+}
 function defaultLoopSettings(){return {spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),manifold_id:null}}
 function settingsFor(room,zone=null){
  let stored=zone?zone.settings:room?.implicitSettings;
@@ -729,7 +757,8 @@ function tool(t){
 function validDrawing(points){return validPolygon(points,Math.max(1,.01/(sx*sy))) && points.every(allowed)}
 function snapshot(room){
  editHistory.push({id:room.id,points:copyPoints(room.points),shape:room.shape,
-   heatingZones:copyZones(roomZones(room)),selectedZoneId:room.selectedZoneId,zoneSerial:room.zoneSerial});
+   heatingZones:copyZones(roomZones(room)),selectedZoneId:room.selectedZoneId,zoneSerial:room.zoneSerial,
+   implicitRouting:cleanRouting(room.implicitRouting||{})});
  if(editHistory.length>35)editHistory.shift();
 }
 function setRoomGeometry(room,points,shape=room.shape,heatingOverride){
@@ -745,7 +774,7 @@ function setRoomGeometry(room,points,shape=room.shape,heatingOverride){
 function setHeating(room,points,shape='poly'){
  if(!room){info('Najpierw wybierz pomieszczenie.','warn');return false}
  const existing=roomZones(room);
- const candidate={id:(room.zoneSerial||0)+1,points:copyPoints(points),shape,settings:defaultLoopSettings()};
+ const candidate={id:(room.zoneSerial||0)+1,points:copyPoints(points),shape,settings:defaultLoopSettings(),routing:cleanRouting({})};
  if(!validZones(room.points,[...existing,candidate])){
    info('Pole musi być wewnątrz pomieszczenia i nie może nakładać się na istniejące zielone pola.','error');
    return false;
@@ -760,7 +789,8 @@ function addRoom(points,shape='poly'){
  if(!(sx>0&&sy>0)){info('Najpierw wykonaj kalibrację.','error');return false}
  if(!validDrawing(points)){info('Zaznacz poprawny obrys bez przecięć, wewnątrz podkładu.','error');return false}
  if(rooms.length>=100){info('Przekroczono limit 100 pomieszczeń.','error');return false}
- const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingZones:[],selectedZoneId:null,zoneSerial:0,implicitSettings:defaultLoopSettings(),loop:null,revision:0};
+ const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingZones:[],selectedZoneId:null,zoneSerial:0,
+ implicitSettings:defaultLoopSettings(),implicitRouting:cleanRouting({}),loop:null,revision:0};
  rooms.push(r);selected=id;
  info('Dodano '+r.name+' · '+fmt(polygonArea(points)*sx*sy)+' m².','ok');
  list();render();update();redrawManifolds();return true
@@ -1017,6 +1047,7 @@ $('undoEdit').onclick=()=>{
  const room=rooms.find(r=>r.id===prev.id);if(!room){info('Pomieszczenie usunięto.','error');return}
  room.points=copyPoints(prev.points);room.shape=prev.shape;
  room.heatingZones=copyZones(prev.heatingZones);room.selectedZoneId=prev.selectedZoneId;room.zoneSerial=prev.zoneSerial;
+ room.implicitRouting=cleanRouting(prev.implicitRouting||{});
  invalidate(room);selected=room.id;list();render();update();info('Cofnięto ostatnią edycję. Przelicz pętlę ponownie.','ok');
 };
 for(const nav of document.querySelectorAll('#workflowTabs [data-tab]'))nav.onclick=()=>showTab(nav.dataset.tab);
@@ -1117,12 +1148,14 @@ try{worker=new Worker('./rysunek-worker.js?v=095',{type:'module'});worker.onmess
    '. Rozstawy pętli są niezależne.'+
    (over?' UWAGA: '+over+' pętli może przekraczać 80 m!':'')+
    ' Schematy nie oznaczają sprawdzonych promieni gięcia. Dojścia także wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
-$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:9,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
+$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:10,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
  manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
  activeManifoldId,
  defaults:{spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),
   diam: $('diam').value, edge:$('edge').value, radius:$('radius').value},
- known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings(),loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
+ known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings(),
+ implicitRouting:routingFor(r,null),
+ loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
 $('import').onclick=()=>{
  const input=$('jsonfile');input.value='';showTab('settings');input.click();
 };
@@ -1135,7 +1168,7 @@ $('jsonfile').onchange=e=>{
   const previous=captureActiveProject();
   try{
    let j=JSON.parse(String(fr.result||'').replace(/^\uFEFF/,''));
-   if(!Number.isInteger(j.version)||j.version<1||j.version>9)
+   if(!Number.isInteger(j.version)||j.version<1||j.version>10)
     throw Error('Nieobsługiwana wersja JSON '+j.version+'. Otwórz projekt w zgodnej wersji HeatLoop.');
  if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');
  const importedManifolds=Array.isArray(j.manifolds)?j.manifolds:[];
@@ -1181,11 +1214,13 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
    id:Number.isInteger(z.id)&&z.id>0?z.id:j+1,
    shape:['rect','poly'].includes(z.shape)?z.shape:'poly',
    points:copyPoints(z.points),
-   settings:normalizeLoopSettings(z.settings||{},defaultLoopSettings(),manifolds)
+   settings:normalizeLoopSettings(z.settings||{},defaultLoopSettings(),manifolds),
+   routing:cleanRouting(z.routing||{})
  })):r.heatingPoints?[{
    id:1,shape:['rect','poly'].includes(r.heatingShape)?r.heatingShape:'poly',
    points:copyPoints(r.heatingPoints),
-   settings:normalizeLoopSettings({},defaultLoopSettings(),manifolds)
+   settings:normalizeLoopSettings({},defaultLoopSettings(),manifolds),
+   routing:cleanRouting({})
  }]:[];
  const minArea=Math.max(1,.01/(Math.max(sx,1e-9)*Math.max(sy,1e-9)));
  if(!validPolygon(points,minArea))throw Error('Niepoprawny obrys w projekcie: '+(i+1));
@@ -1195,6 +1230,7 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
   shape:r.shape==='rect'||r.shape==='poly'?r.shape:(rect?'rect':'poly'),
   heatingZones:zones,selectedZoneId:zones.some(z=>z.id===r.selectedZoneId)?r.selectedZoneId:zones[0]?.id||null,zoneSerial:Math.max(Number(r.zoneSerial)||0,...zones.map(z=>z.id),0),
   implicitSettings:normalizeLoopSettings(r.implicitSettings||{},defaultLoopSettings(),manifolds),
+  implicitRouting:cleanRouting(r.implicitRouting||{}),
   revision:0,loop:validLoopPreview(r.loopPreview,Math.max(1,zones.length))?r.loopPreview:null}
 });
  queue.clear();editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;
