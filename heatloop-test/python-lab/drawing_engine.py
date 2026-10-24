@@ -386,6 +386,23 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
                         layout={"status":"planned","kind":"none",
                                 "message":str(e)+"; "+str(preview_error),
                                 "installation_ready":False}
+        # Geometric proxy only: tube centerline buffered by half the pitch,
+        # intersected with the usable heating region. Not a thermal simulation.
+        if layout["status"] in ("experimental","schematic"):
+            try:
+                pipe=LineString(layout["supply"]+
+                                layout["cap"][1:]+layout["return"][1:])
+                usable=field.buffer(-(edge+diameter/2))
+                occupied=pipe.buffer(spacing/2,resolution=8).intersection(usable)
+                covered=occupied.area
+                usable_area=usable.area
+                ratio=min(1.,covered/usable_area) if usable_area>.00001 else 0.
+                layout["geometric_coverage_pct"]=round(100*ratio,1)
+                layout["geometric_coverage_m2"]=round(covered,3)
+                layout["usable_area_m2"]=round(usable_area,3)
+                layout["coverage_method"]="buffered-centerline-proxy"
+            except Exception:
+                layout["geometric_coverage_pct"]=None
         layouts.append(layout)
         checked_length=layout.get("total_m",estimate)
         # A shortened schematic can fit within 80 m while the area/spacing
@@ -403,6 +420,11 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
             "over_80m":checked_length>80+1e-7 or coverage_warning,
             "coverage_warning":coverage_warning,
             "full_area_estimate_m":round(estimate,2),
+            "geometric_coverage_pct":layout.get("geometric_coverage_pct"),
+            "coverage_incomplete":(
+                layout.get("geometric_coverage_pct") is not None and
+                layout["geometric_coverage_pct"]<90
+            ),
             "length_is_estimate":layout["status"]!="experimental",
             "layout":layout,
         })
