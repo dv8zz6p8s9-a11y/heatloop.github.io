@@ -351,7 +351,8 @@ function redrawManifolds(){
    const summary=document.createElement('div');summary.className='manifold-stats';
    summary.textContent='Przypisane pętle: '+quantities.assignedLoops+
      ' · rozdzielacz: '+(quantities.sections||'—')+' sekcji · szafka: '+(quantities.cabinetSections||'—')+
-     ' sekcji · Eurokonus: '+quantities.euroconus+' szt. · zawory odcinające: '+quantities.isolatingValves+' szt.';
+     ' sekcji · Eurokonus: '+quantities.euroconus+' szt. · zawory odcinające: '+quantities.isolatingValves+' szt.'+
+     (quantities.sections>20?' · UWAGA: ponad 20 sekcji — rozdziel obiegi pomiędzy kilka rozdzielaczy.':'');
    card.append(summary);
    const actions=document.createElement('div');actions.className='buttons';
    const place=document.createElement('button');place.textContent='📍 Ustaw na rysunku';
