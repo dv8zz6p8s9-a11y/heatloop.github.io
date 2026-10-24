@@ -83,6 +83,78 @@ def rectangle(room,s,clearance,radius,feed,back):
     if not candidates:raise ValueError("Nie znaleziono bezkolizyjnego ślimaka w limicie 80 m")
     turns,drawn,go,ret,turn,total=max(candidates,key=lambda x:(x[0],x[1]))
     return {"status":"experimental","kind":"counterflow-rectangle","supply":go,"return":ret,"cap":turn,"drawn_m":round(drawn,3),"total_m":round(total,3),"margin_m":round(80-total,3),"turns":turns,"installation_ready":False}
+def schematic_rectangle(room, s, clearance, radius, feed, back, rejected_reason):
+    """Clearly marked geometric PREVIEW, never a verified installation route.
+
+    Fall back only for rectangular heating fields when the strict generator
+    cannot satisfy bend/omega constraints. Build interleaved inward and
+    outward rectangular spirals, with a semicircular center turnaround.
+    Shapely checks polygon clearance and self-intersections. Sharp corners
+    and the s/2 turnaround may NOT meet the requested bend radius.
+    """
+    xmin,ymin,xmax,ymax=room.bounds
+    reference=Polygon([(xmin,ymin),(xmax,ymin),(xmax,ymax),(xmin,ymax)])
+    if room.symmetric_difference(reference).area>1e-7:
+        raise ValueError("Podgląd schematyczny jest obecnie dostępny tylko dla prostokątów")
+    x0,y0=xmin+clearance,ymin+clearance
+    x1,y1=xmax-clearance,ymax-clearance
+    candidates=[]
+    for turns in range(1,35):
+        go=[]
+        valid=True
+        for k in range(turns):
+            left=x0+2*k*s
+            top=y0+2*k*s
+            right_edge=x1-2*k*s
+            bottom=y1-2*k*s
+            if min(right_edge-left,bottom-top)<max(2.5*s,0.3):
+                valid=False
+                break
+            if k==0:
+                go.append((left,bottom))
+            go.extend([(left,top),(right_edge,top),
+                       (right_edge,bottom),(left+2*s,bottom)])
+        if not valid:
+            break
+        try:
+            ret=list(reversed(offset(go,-s)))
+            start=go[-1]
+            end=ret[0]
+            cx=(start[0]+end[0])/2
+            cy=(start[1]+end[1])/2
+            rad=hypot(*minus(start,end))/2
+            angle=atan2(start[1]-cy,start[0]-cx)
+            turn=[(cx+rad*cos(angle+pi*j/16),
+                   cy+rad*sin(angle+pi*j/16)) for j in range(17)]
+            whole=go+turn[1:]+ret[1:]
+            line=LineString(whole)
+            if not room.buffer(-clearance).buffer(2e-7).covers(line):
+                continue
+            if not line.is_simple:
+                continue
+            total=line.length+feed+back
+            if total<=80+1e-7:
+                candidates.append((turns,line.length,go,ret,turn,total))
+        except (ValueError,ZeroDivisionError):
+            continue
+    if not candidates:
+        raise ValueError("Nie ma miejsca na uproszczony podgląd w limicie 80 m")
+    turns,drawn,go,ret,turn,total=candidates[-1]
+    return {
+        "status":"schematic",
+        "kind":"counterflow-rectangle-preview",
+        "supply":go,
+        "return":ret,
+        "cap":turn,
+        "drawn_m":round(drawn,3),
+        "total_m":round(total,3),
+        "margin_m":round(80-total,3),
+        "turns":turns,
+        "warning":"SZKIC – promienie narożników i nawrotu omega nie są zatwierdzone do montażu.",
+        "generator_rejection":str(rejected_reason)[:350],
+        "installation_ready":False,
+    }
+
 def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_settings=None):
     """Analyze multiple independently configured heating fields.
 
@@ -143,8 +215,14 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
         try:
             layout=rectangle(field,spacing,edge+diameter/2,radius,feed,back)
         except ValueError as e:
-            layout={"status":"planned","kind":"none","message":str(e),
-                    "installation_ready":False}
+            try:
+                layout=schematic_rectangle(
+                    field,spacing,edge+diameter/2,radius,feed,back,str(e)
+                )
+            except ValueError as preview_error:
+                layout={"status":"planned","kind":"none",
+                        "message":str(e)+"; "+str(preview_error),
+                        "installation_ready":False}
         layouts.append(layout)
         checked_length=layout.get("total_m",estimate)
         zone_results.append({
