@@ -98,8 +98,8 @@
  <div><strong id="area">—</strong><small>Powierzchnia pomieszczenia m²</small></div>
  <div><strong id="heatArea">—</strong><small>Pole podłogówki m²</small></div>
  <div><strong id="excluded">—</strong><small>Bez ogrzewania m²</small></div>
- <div><strong id="length">—</strong><small>Długość pętli z dojściami (m)</small></div>
- <div><strong id="left">—</strong><small>Zapas do 80 m</small></div>
+ <div><strong id="length">—</strong><small>Suma długości pętli (m)</small></div>
+ <div><strong id="left">—</strong><small>Najmniejszy zapas jednej pętli do 80 m</small></div>
  </div><div id="status" class="chip">Zacznij od rysunku i kalibracji.</div></section></div></main>
 <script type="module">
 import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=09';
@@ -227,13 +227,26 @@ for(let r of rooms){
  const title=E('text',{x:mx,y:my,fill:'#24526e','font-size':17,'text-anchor':'middle',
    'font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
  title.textContent=r.name;layer.append(title);
-  if(r.loop?.layout?.status==='experimental'){
+  if(r.loop?.zone_results?.length){
+   let drawn=0;
+   const colors=['#128ab5','#654bc2','#2f8d79','#bc4b7e','#7a88a5'];
+   for(const z of r.loop.zone_results){
+     const l=z.layout;
+     if(l?.status!=='experimental')continue;
+     drawn++;
+     const palette=colors[z.index%colors.length];
+     for(const [key,color] of [['supply',palette],['return','#d78330'],['cap','#1b997b']])
+       polyline(l[key].map(p=>[p[0]/sx,p[1]/sy]),color,3);
+   }
+   if(drawn<r.loop.zone_results.length){
+     const tag=E('text',{x:mx,y:my+44,fill:'#9b631a','font-size':12,'text-anchor':'middle',
+        stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+     tag.textContent=(r.loop.zone_results.length-drawn)+' pętli bez zweryfikowanej trasy';layer.append(tag);
+   }
+ }else if(r.loop?.layout?.status==='experimental'){
    const l=r.loop.layout;
    for(const [key,color] of [['supply','#0b84b0'],['return','#df812e'],['cap','#1b997b']])
      polyline(l[key].map(p=>[p[0]/sx,p[1]/sy]),color,3.5);
- }else if(r.loop){
-   const tag=E('text',{x:mx,y:my+44,fill:'#9b631a','font-size':12,'text-anchor':'middle'});
-   tag.textContent='pętle planowane';layer.append(tag);
  }
  if(sel){
    drawRoomDimensions(r);
@@ -243,6 +256,18 @@ for(let r of rooms){
      if(points)drawHandles(points,which==='room'?'#167fbd':'#079766');
    }
  }
+}
+// Manifold symbols are drafting coordinates. No route is implied by a marker.
+for(const m of manifolds){
+ if(!m.point)continue;
+ const [x,y]=m.point;
+ layer.append(E('rect',{x:x-12,y:y-12,width:24,height:24,rx:5,
+   fill:m.id===activeManifoldId?'#c87920':'#8d653a',stroke:'#fff','stroke-width':2}));
+ const diamond=E('text',{x,y:y+5,fill:'#fff','font-weight':700,'font-size':18,'text-anchor':'middle'});
+ diamond.textContent='M';layer.append(diamond);
+ const label=E('text',{x,y:y-18,'font-size':15,'font-weight':700,'text-anchor':'middle',
+   fill:'#a85812',stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
+ label.textContent=m.name;layer.append(label);
 }
 if(['rect','heatRect'].includes(tools)&&temp){
  const b=hover||temp;
@@ -459,9 +484,12 @@ function update(){
  $('area').textContent=r&&sx&&sy?fmt(polygonArea(r.points)*sx*sy):'—';
  $('heatArea').textContent=r&&sx&&sy?fmt(heatingAreaPx(r)*sx*sy):'—';
  $('excluded').textContent=r&&sx&&sy?fmt(Math.max(0,polygonArea(r.points)-heatingAreaPx(r))*sx*sy):'—';
- const n=r?.loop?.layout?.status==='experimental'?r.loop.layout.total_m:null;
- $('length').textContent=n===null?'—':fmt(n);$('left').textContent=n===null?'—':fmt(80-n);
- notifyHeat();
+ const rows=r?.loop?.zone_results;
+ const total=rows?.reduce((sum,z)=>sum+z.checked_length_m,0);
+ const smallest=rows?.length?Math.min(...rows.map(z=>80-z.checked_length_m)):null;
+ $('length').textContent=Number.isFinite(total)?fmt(total):'—';
+ $('left').textContent=Number.isFinite(smallest)?fmt(smallest):'—';
+ notifyHeat();renderCircuits();
 }
 function list(){
  const el=$('rooms');el.innerHTML='';
@@ -494,6 +522,7 @@ function list(){
 }
 const selectionTools=new Set(['heatRect','heatPoly','editRoom','moveRoom','addRoomPoint','deleteRoomPoint','editHeat','moveHeat']);
 function tool(t){
+ if(t==='placeManifold'&&!selectedManifold()){info('Dodaj lub wybierz rozdzielacz w zakładce „Rozdzielacze”.','warn');return}
  if(selectionTools.has(t)&&!chosenRoom()){info('Najpierw wybierz pomieszczenie z listy lub kliknij jego obrys.','warn');return}
  if(['editHeat','moveHeat'].includes(t)&&!activeZone(chosenRoom())){info('Najpierw zaznacz osobne pole grzewcze.','warn');return}
  tools=t;pts=[];temp=null;hover=null;drag=null;syncFinishButton();
@@ -514,7 +543,8 @@ function tool(t){
  heatRect:'Wskaż dwa narożniki pola podłogówki wewnątrz wybranego pokoju.',
  heatPoly:'Dodawaj punkty pola podłogówki. Następnie: Zamknij wielokąt.',
  editHeat:'Przeciągnij ZIELONY narożnik pola ogrzewania.',
- moveHeat:'Przeciągnij wnętrze zielonego pola ogrzewania.'
+ moveHeat:'Przeciągnij wnętrze zielonego pola ogrzewania.',
+ placeManifold:'Dotknij na planie miejsca montażu wybranego rozdzielacza. Możesz potem zmienić jego pozycję.'
  }[t]||'Wybierz narzędzie';
  render();
 }
@@ -537,7 +567,7 @@ function setRoomGeometry(room,points,shape=room.shape,heatingOverride){
 function setHeating(room,points,shape='poly'){
  if(!room){info('Najpierw wybierz pomieszczenie.','warn');return false}
  const existing=roomZones(room);
- const candidate={id:(room.zoneSerial||0)+1,points:copyPoints(points),shape};
+ const candidate={id:(room.zoneSerial||0)+1,points:copyPoints(points),shape,settings:defaultLoopSettings()};
  if(!validZones(room.points,[...existing,candidate])){
    info('Pole musi być wewnątrz pomieszczenia i nie może nakładać się na istniejące zielone pola.','error');
    return false;
@@ -545,17 +575,17 @@ function setHeating(room,points,shape='poly'){
  room.zoneSerial=candidate.id;room.heatingZones=[...existing,candidate];
  room.selectedZoneId=candidate.id;
  invalidate(room);list();render();update();
- info('Dodano pole '+room.heatingZones.length+' ('+fmt(polygonArea(points)*sx*sy)+' m²). Wcześniejsze pola pozostają.','ok');
+ redrawManifolds();info('Dodano pole '+room.heatingZones.length+' ('+fmt(polygonArea(points)*sx*sy)+' m²). Wcześniejsze pola pozostają.','ok');
  return true;
 }
 function addRoom(points,shape='poly'){
  if(!(sx>0&&sy>0)){info('Najpierw wykonaj kalibrację.','error');return false}
  if(!validDrawing(points)){info('Zaznacz poprawny obrys bez przecięć, wewnątrz podkładu.','error');return false}
  if(rooms.length>=100){info('Przekroczono limit 100 pomieszczeń.','error');return false}
- const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingZones:[],selectedZoneId:null,zoneSerial:0,loop:null,revision:0};
+ const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingZones:[],selectedZoneId:null,zoneSerial:0,implicitSettings:defaultLoopSettings(),loop:null,revision:0};
  rooms.push(r);selected=id;
  info('Dodano '+r.name+' · '+fmt(polygonArea(points)*sx*sy)+' m².','ok');
- list();render();update();return true
+ list();render();update();redrawManifolds();return true
 }
 function currentPointerTolerance(screenPixels=16){
  // Convert display pixels to drawing coordinates; zoom and 90° rotation do
@@ -600,6 +630,12 @@ function finish(){
  return ok;
 }
 function click(p){
+ if(tools==='placeManifold'){
+   const m=selectedManifold();
+   if(!m){info('Nie wybrano rozdzielacza.','error');return}
+   m.point=[p[0],p[1]];
+   tool('select');redrawManifolds();render();status(m.name+' ustawiony na rzucie. Długości dojść podaj oddzielnie przy pętlach.','ok');return
+ }
  if(tools==='select'){
    const hit=[...rooms].reverse().find(r=>insidePolygon(p,r.points));
    if(hit){selected=hit.id;list();render();update()}return
