@@ -51,8 +51,8 @@
  <div><strong id="left">—</strong><small>Zapas do 80 m</small></div>
  </div><div id="status" class="chip">Zacznij od rysunku i kalibracji.</div></section></div></main>
 <script type="module">
-import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=07';
-import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap} from './room-editor.mjs?v=07';
+import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=08';
+import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap} from './room-editor.mjs?v=08';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
 let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],opacity=1,queue=new Map();
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
@@ -181,7 +181,7 @@ for(let r of rooms){
      polyline(l[key].map(p=>[p[0]/sx,p[1]/sy]),color,3.5);
  }else if(r.loop){
    const tag=E('text',{x:mx,y:my+44,fill:'#9b631a','font-size':12,'text-anchor':'middle'});
-   tag.textContent='pętla planowana';layer.append(tag);
+   tag.textContent='pętle planowane';layer.append(tag);
  }
  if(sel){
    drawRoomDimensions(r);
@@ -271,7 +271,10 @@ function list(){
    title.textContent='Pokój '+fmt(whole)+' m² · podłogówka '+fmt(heat)+' m²';
    n.append(title);
    const sm=document.createElement('small');
-   sm.textContent=r.loop?(r.loop.layout.status==='experimental'?'Ślimak testowy: '+fmt(r.loop.layout.total_m)+' m':'Pętla planowana: szac. '+fmt(r.loop.estimate_m)+' m'):'Brak przeliczonej pętli';
+   sm.textContent=r.loop?
+ (r.loop.layout.status==='experimental'?'Ślimak testowy: '+fmt(r.loop.layout.total_m)+' m':
+  roomZones(r).length>1?'Wiele pól: wstępnie '+fmt(r.loop.estimate_m)+' m rur łącznie; trasy niezweryfikowane':
+  'Pętla planowana: szac. '+fmt(r.loop.estimate_m)+' m'):'Brak przeliczonej pętli';
    n.append(sm);
    for(const [caption,kind] of [['Wybierz','select'],['Edytuj','editRoom'],['Pole','heatPoly']]){
      const b=document.createElement('button');b.textContent=caption;
@@ -581,10 +584,16 @@ let args=inputs();if(!Object.values(args).every(Number.isFinite)){status('Błęd
   points:pointsToMeter(r.points),heating_zones:roomZones(r).length?roomZones(r).map(z=>pointsToMeter(z.points)):null,settings:args
  }});
  status('Obliczanie w Pythonie dla pola '+fmt(heatingAreaPx(r)*sx*sy)+' m²…','warn')};
-try{worker=new Worker('./rysunek-worker.js?v=07',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+try{worker=new Worker('./rysunek-worker.js?v=08',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
- r.loop=d.result;list();render();update();let l=d.result.layout;if(l.status==='experimental')status(r.name+': narysowano wstępną pętlę '+fmt(l.total_m)+' m. Nie jest to projekt do montażu.','ok');else status(r.name+': zapisano pętlę planowaną. '+l.message+' Szacunek '+fmt(d.result.estimate_m)+' m.','warn')}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
+ r.loop=d.result;list();render();update();let l=d.result.layout;if(l.status==='experimental'){
+ status(r.name+': narysowano wstępną pętlę '+fmt(l.total_m)+' m. Nie jest to projekt do montażu.','ok');
+}else{
+ const many=d.result.heating_zone_count>1;
+ status(r.name+': '+(many?'zachowano '+d.result.heating_zone_count+' osobne pola grzewcze. ':'zapisano pętlę planowaną. ')+
+ l.message+' Wstępny szacunek rur'+(many?' dla wszystkich pól (z dojściami osobno)':'')+': '+fmt(d.result.estimate_m)+' m.','warn');
+}}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
 $('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:7,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
 $('import').onclick=()=>$('jsonfile').click();$('jsonfile').onchange=e=>{const f=e.target.files?.[0];if(!f)return;let fr=new FileReader();fr.onload=()=>{try{let j=JSON.parse(fr.result);if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');bg=j.background||'';
 imageFit=j.imageFit&&[j.imageFit.x,j.imageFit.y,j.imageFit.width,j.imageFit.height].every(Number.isFinite)&&j.imageFit.width>0&&j.imageFit.height>0?j.imageFit:{x:0,y:0,width:W,height:H};
