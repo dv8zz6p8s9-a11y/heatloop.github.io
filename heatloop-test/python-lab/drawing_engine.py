@@ -143,7 +143,7 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None):
         "heating_zone_pipe_estimates_m":estimates,
         "perimeter_m":round(room.length,4),
         "estimate_m":round(est,2),
-        "estimate_over_limit":est>80,
+        "estimate_over_limit":any(field.area/s+feed+back>80 for field in fields),
         "axis_offset_m":edge+diameter/2,
         "custom_heating_area":heating_points is not None or heating_zones is not None,
         "layout":layout
