@@ -1,4 +1,4 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9.5</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9.6-rc1</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
@@ -38,7 +38,25 @@
  #stage .chip{padding:6px;font-size:11px}
  .workflow-tabs{margin:0 -4px;padding:5px}
 }
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9.5 · naprawione rysowanie pętli · poprawione odzyskiwanie projektów</small></header>
+
+/* Drawing legend and print-preview layers (drafted from reference layout) */
+.tech-tools{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:7px 0}
+.tech-tools button{min-height:37px}
+.tech-note{font-size:11px;line-height:1.55;color:#6f624b;background:#fff8e7;border:1px solid #ead7a9;padding:9px;border-radius:8px;margin:8px 0}
+.route-controls{margin-top:9px;padding:9px;background:#f5f9fc;border:1px solid #dbe7ef;border-radius:9px}
+.route-controls .buttons{margin:5px 0}
+.route-controls button{font-size:11px}
+.route-controls label{font-size:11px;color:#567282;font-weight:650}
+.route-controls input{max-width:100px;padding:7px;width:100%}
+.small-explain{font-size:11px;color:#526e80;line-height:1.5;margin-top:6px}
+#stage.print-preview{background:#fff;color:#18313c}
+#stage.print-preview #plan{background:white}
+@media print {
+ #controls,.notice,header,#stage>.buttons,#stage>.tech-tools,#stage>#hint,#stage>#status,#stage>.view-more{display:none!important}
+ main,.grid,#stage{display:block;max-width:none;margin:0;padding:0;box-shadow:none;border:0;overflow:visible;position:static}
+ #plan{max-height:none!important;page-break-inside:avoid}
+}
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9.6-RC1 · czytelny rysunek techniczny · poprawione odzyskiwanie projektów</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit: <b>80 m na pętlę</b>, razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
 <button type="button" data-tab="drawing" class="active">Rysunek</button>
@@ -86,6 +104,8 @@
 <button id="loopAll">Generuj pętle i dojścia całego projektu (TEST)</button>
 </div>
 <label class="panel-note" style="display:flex;align-items:center;gap:7px;margin:10px 0"><input type="checkbox" id="showApproaches" checked> Pokaż dojścia na rzucie</label>
+<div class="tech-note"><b>Planowanie dojść przed generowaniem:</b> zaznacz punkty docelowe startu/końca, wskaż korytarz od rozdzielacza i dopiero przelicz. Obecny silnik zapisuje te wskazówki i rysuje szkic, ale <b>nie wycina jeszcze pasa technicznego z pętli</b>.</div>
+<div class="buttons"><button id="finishGuide" type="button">Zakończ wskazywanie trasy</button><button id="cancelGuide" type="button">Anuluj wskazywanie</button></div>
 <div id="routeSummary" class="chip warn">Po obliczeniu pętli wyświetlimy poglądowe dojścia do rozdzielaczy. Niezweryfikowane trasy są przerywane.</div>
 <div id="engine" class="chip warn">Uruchamianie Python + Shapely…</div></section>
 <section class="panel" data-pane="manifolds"><h2>04 · Rozdzielacze</h2>
@@ -101,7 +121,13 @@
 <div id="restoreSummary" class="chip warn" role="status" aria-live="polite">Wczytywanie projektu przywraca rysunek, kalibrację, pokoje, pola grzewcze, rozdzielacze i ustawienia każdej pętli.</div>
 <div class="mini">Plik JSON zawiera także podkład graficzny. Nie wybieraj tutaj JPG/PDF: JPG/PDF służy tylko do wymiany rysunku i rozpoczyna nową pracę. Projekt pozostaje na Twoim urządzeniu.</div>
 </section>
-</aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2><div class="buttons"><button id="zoomout" title="Oddal">−</button><button id="resetzoom">100%</button><button id="zoomin" title="Przybliż">+</button><button id="panTool" data-tool="pan">✋ Przesuń rysunek</button></div>
+</aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2>
+<div class="tech-tools">
+ <button id="technicalView">Widok techniczny</button>
+ <button id="workingView" class="active">Widok roboczy</button>
+ <button id="exportSvg">Eksport rzutu SVG (TEST)</button>
+</div>
+<div class="buttons"><button id="zoomout" title="Oddal">−</button><button id="resetzoom">100%</button><button id="zoomin" title="Przybliż">+</button><button id="panTool" data-tool="pan">✋ Przesuń rysunek</button></div>
 <details class="view-more"><summary>Obrót, przesuwanie i widoczność podkładu</summary><div class="nav-actions"><button id="moveLeft" title="Przesuń rysunek w lewo" aria-label="Przesuń rysunek w lewo">← Lewo</button><button id="moveUp" title="Przesuń rysunek w górę" aria-label="Przesuń rysunek w górę">↑ Góra</button><button id="moveDown" title="Przesuń rysunek w dół" aria-label="Przesuń rysunek w dół">↓ Dół</button><button id="moveRight" title="Przesuń rysunek w prawo" aria-label="Przesuń rysunek w prawo">Prawo →</button></div>
 <div class="nav-actions"><button id="rotateLeft" title="Obróć plan o 90° przeciwnie do ruchu wskazówek zegara">↶ Obróć w lewo 90°</button><button id="rotateRight" title="Obróć plan o 90° zgodnie z ruchem wskazówek zegara">↷ Obróć w prawo 90°</button><span class="angle" id="angle">Obrót: 0°</span></div>
 <div class="nav-help">Po powiększeniu wybierz „✋ Przesuń rysunek” i przeciągaj myszą lub palcem. W trybie wyboru pomieszczenia można także przeciągać powiększony plan. Strzałki umożliwiają przesuwanie w pionie i poziomie. Obrót obejmuje podkład, obrysy, kalibrację i rury — bez zmiany wymiarów.</div>
@@ -116,9 +142,10 @@
 import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=09';
 import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap,pointDistance,normalizeClosedPolygon,tappedFirstPoint} from './room-editor.mjs?v=09';
 import {SPACINGS,spacingAllowed,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=092';
-import {generateLoopApproaches} from './approach-routing.mjs?v=095';
+import {generateLoopApproaches} from './approach-routing.mjs?v=096';
+import {DRAWING_COLORS,cleanRouting,effectiveEndpoints,getZoneTag,plannedCorridorPolyline} from './technical-drawing.mjs?v=096';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
-let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true;
+let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true,technicalView=false,routingTarget=null;
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
 const info=(t,cls='')=>{$('drawing').textContent=t;$('drawing').className='chip '+cls};
 function validLoopPreview(preview,zoneCount) {
