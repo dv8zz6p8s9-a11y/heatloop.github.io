@@ -86,7 +86,7 @@ export function previewOrthogonalRoute(a,b,options){
 }
 export function generateLoopApproaches(layout,manifold,options){
  const {sx,sy,obstacles=[]}=options||{};
- if(layout?.status!=='experimental')return{status:'no-loop',reason:'Brak zweryfikowanej geometrii samej pętli.',supply:[],return:[]};
+ if(!['experimental','schematic'].includes(layout?.status))return{status:'no-loop',reason:'Brak zweryfikowanej geometrii samej pętli.',supply:[],return:[]};
  if(!Array.isArray(layout.supply)||!layout.supply.length||!Array.isArray(layout.return)||!layout.return.length)
   return{status:'no-loop',reason:'Pętla nie ma obu końców.',supply:[],return:[]};
  if(!manifold||!finitePoint(manifold.point))return{status:'no-manifold',reason:'Przypisz i ustaw rozdzielacz na rysunku.',supply:[],return:[]};
