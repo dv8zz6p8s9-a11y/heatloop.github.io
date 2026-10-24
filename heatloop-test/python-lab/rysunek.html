@@ -1,9 +1,9 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.7</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.8</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
  .heat-legend{color:#198063;font-weight:700}.handle-tip{font-size:11px;color:#426e83;line-height:1.5;padding:7px 0}.edit-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0}.edit-btns button{width:100%;min-width:0}.edit-btns .primary{background:#087daa;color:#fff}.room .room-name{width:100%;padding:7px 8px;font-size:13px;border:1px solid #d1e0e8;border-radius:7px;display:block}.zone-info{font-size:12px;color:#14694d;margin-top:8px}.nav-help{font-size:11px;color:#607a8b;line-height:1.5;margin:5px 0 9px}
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.7 · edycja pomieszczeń i własne pola podłogówki</small></header>
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.8 · wiele pól grzewczych w jednym pomieszczeniu</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Python i Shapely wyznaczają powierzchnię pomieszczeń i wstępne pętle prostokątne. Dla L i nieregularnych wielokątów pętlę można przypisać jako <b>planowaną</b>; nie jest to jeszcze gotowa trasa rur do montażu. Limit jednej pętli: 80 m łącznie z dojściami.</div><div class="grid"><aside>
 <section class="panel"><h2>01 · Wczytaj rysunek</h2><input id="file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf"><div class="mini">PNG / JPG / WEBP, pierwsza strona PDF (wymaga dostępu do internetu).</div><div class="buttons"><button id="sample" class="primary">Rysunek przykładowy</button><button id="clear">Wyczyść</button></div><h3>Kalibracja wymiarów (rzeczywiste wartości)</h3>
 <div class="pair">
@@ -32,9 +32,10 @@
  <button data-tool="editHeat">✥ Edytuj pole</button>
  <button data-tool="moveHeat">✋ Przesuń pole</button>
 </div>
-<button id="resetHeat" style="width:100%">Całe pomieszczenie ogrzewane</button>
+<button id="resetHeat" style="width:100%">Usuń wszystkie pola / ogrzewaj cały pokój</button>
 <div id="heatInfo" class="chip">Domyślnie ogrzewana jest cała powierzchnia wybranego pomieszczenia.</div>
-<div class="handle-tip">Zaznacz tylko fragment przeznaczony pod rury, np. bez stałej zabudowy. Pole grzewcze musi być wewnątrz pomieszczenia. Dla wielokątów nieregularnych pętla pozostanie planowana.</div>
+<div id="zoneList" style="margin-top:9px"></div>
+<div class="handle-tip">Możesz dodać kilka osobnych pól w jednym pokoju. Zielone pola nie mogą się nakładać. Wybierz pole z listy, aby edytować je lub przesunąć. Przy kilku polach długości rur i dojścia wymagają osobnego projektu pętli.</div>
 <div id="drawing" class="chip">Wybierz narzędzie. Pole jest obliczane podczas zaznaczania.</div><h3>Pomieszczenia</h3><div id="rooms" class="mini">Nie dodano pomieszczeń.</div></section>
 <section class="panel"><h2>03 · Dodaj pętlę</h2><div class="pair"><div class="field"><label>Rozstaw</label><select id="spacing"><option value=".10">10 cm</option><option value=".125">12,5 cm</option><option value=".15">15 cm</option><option selected value=".20">20 cm</option></select></div><div class="field"><label>Rura (mm)</label><input type="number" id="diam" value="16" min="8" max="32"></div><div class="field"><label>Ściana → krawędź (mm)</label><input type="number" id="edge" value="100" min="0" max="500"></div><div class="field"><label>Promień gięcia (mm)</label><input type="number" id="radius" value="80" min="10" max="300"></div><div class="field"><label>Dojście (m)</label><input type="number" id="feed" value="2" min="0" max="100" step=".5"></div><div class="field"><label>Powrót (m)</label><input type="number" id="back" value="2" min="0" max="100" step=".5"></div></div><button class="primary" id="loop" style="width:100%;margin-top:9px">+ Przypisz / przelicz pętlę</button><div id="engine" class="chip warn">Uruchamianie Python + Shapely…</div></section>
 <section class="panel"><h2>04 · Zapis projektu</h2><div class="buttons"><button id="save">Pobierz JSON</button><button id="import">Wczytaj JSON</button><input id="jsonfile" type="file" accept=".json,application/json" hidden></div><div class="mini">Projekt i rysunek pozostają na Twoim urządzeniu; nie przesyłamy go na serwer.</div></section>
@@ -50,8 +51,8 @@
  <div><strong id="left">—</strong><small>Zapas do 80 m</small></div>
  </div><div id="status" class="chip">Zacznij od rysunku i kalibracji.</div></section></div></main>
 <script type="module">
-import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=07';
-import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea} from './room-editor.mjs?v=07';
+import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=08';
+import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap} from './room-editor.mjs?v=08';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
 let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],opacity=1,queue=new Map();
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
@@ -153,30 +154,40 @@ function render(){
 for(let r of rooms){
  const sel=r.id===selected;
  layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':sel?.17:.06,stroke:sel?'#167cba':'#9a53cf','stroke-width':sel?3.5:2,'stroke-dasharray':sel?'':'7 4'}));
- if(r.heatingPoints){
-   layer.append(E('polygon',{points:r.heatingPoints.map(p=>p.join(',')).join(' '),fill:'#48b67f','fill-opacity':.21,stroke:'#0c9662','stroke-width':3,'stroke-dasharray':'8 4','stroke-linejoin':'round'}));
+
+ const zones=r.heatingZones||[];
+ for(let zi=0;zi<zones.length;zi++){
+   const z=zones[zi],isActive=sel&&r.selectedZoneId===z.id;
+   layer.append(E('polygon',{
+     points:z.points.map(p=>p.join(',')).join(' '),
+     fill:isActive?'#1aba7f':'#48b67f','fill-opacity':isActive?.31:.19,
+     stroke:isActive?'#05794b':'#0c9662','stroke-width':isActive?4.3:2.7,
+     'stroke-dasharray':isActive?'':'8 4','stroke-linejoin':'round'
+   }));
+   const center=z.points.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/z.points.length);
+   const tag=E('text',{x:center[0],y:center[1]+17,
+     fill:'#126947','font-size':13,'text-anchor':'middle','font-weight':'bold',
+     stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+   tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m²';
+   layer.append(tag);
  }
  const mx=r.points.reduce((v,p)=>v+p[0],0)/r.points.length,my=r.points.reduce((v,p)=>v+p[1],0)/r.points.length;
- const t=E('text',{x:mx,y:my,fill:'#24526e','font-size':17,'text-anchor':'middle','font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
- t.textContent=r.name;layer.append(t);
- if(r.heatingPoints){
-   const center=r.heatingPoints.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/r.heatingPoints.length);
-   const tag=E('text',{x:center[0],y:center[1]+22,fill:'#117e57','font-size':13,'text-anchor':'middle','font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
-   tag.textContent='Podłogówka '+fmt(polygonArea(r.heatingPoints)*sx*sy)+' m²';layer.append(tag);
- }
- if(r.loop?.layout?.status==='experimental'){
+ const title=E('text',{x:mx,y:my,fill:'#24526e','font-size':17,'text-anchor':'middle',
+   'font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+ title.textContent=r.name;layer.append(title);
+  if(r.loop?.layout?.status==='experimental'){
    const l=r.loop.layout;
    for(const [key,color] of [['supply','#0b84b0'],['return','#df812e'],['cap','#1b997b']])
      polyline(l[key].map(p=>[p[0]/sx,p[1]/sy]),color,3.5);
  }else if(r.loop){
    const tag=E('text',{x:mx,y:my+44,fill:'#9b631a','font-size':12,'text-anchor':'middle'});
-   tag.textContent='pętla planowana';layer.append(tag);
+   tag.textContent='pętle planowane';layer.append(tag);
  }
  if(sel){
    drawRoomDimensions(r);
    const which=['editRoom','deleteRoomPoint'].includes(tools)?'room':['editHeat'].includes(tools)?'heat':null;
    if(which){
-     const points=which==='room'?r.points:r.heatingPoints;
+     const points=which==='room'?r.points:activeZone(r)?.points;
      if(points)drawHandles(points,which==='room'?'#167fbd':'#079766');
    }
  }
@@ -197,24 +208,51 @@ if(pts.length){
 drawCalLines();
 }
 function chosenRoom(){return rooms.find(r=>r.id===selected)||null}
-function heatingPoints(room){return room?.heatingPoints||room?.points||null}
+function roomZones(room){return room?.heatingZones||[]}
+function activeZone(room){const z=roomZones(room);return z.find(x=>x.id===room?.selectedZoneId)||z[0]||null}
+function heatingAreaPx(room){const zones=roomZones(room);return !room?0:zones.length?zones.reduce((sum,z)=>sum+polygonArea(z.points),0):polygonArea(room.points)}
+function copyZones(zones){return zones.map(z=>({id:z.id,shape:z.shape,points:copyPoints(z.points)}))}
+function validZones(roomPoints,zones){
+ if(zones.length>40)return false;
+ return zones.every((z,i)=>validDrawing(z.points)&&insideRoom(roomPoints,z.points) &&
+   zones.every((other,j)=>i===j||!zonesOverlap(z.points,other.points)));
+}
 function invalidate(room){room.loop=null;room.revision=(room.revision||0)+1}
 function notifyHeat(){
- const r=chosenRoom();
+ const r=chosenRoom(),el=$('zoneList');el.innerHTML='';
  if(!r){$('heatInfo').textContent='Wybierz pomieszczenie, aby zaznaczyć pole grzewcze.';return}
- if(r.heatingPoints){
-   $('heatInfo').textContent='Pole podłogówki: '+fmt(polygonArea(r.heatingPoints)*sx*sy)+' m² / pokój '+fmt(polygonArea(r.points)*sx*sy)+' m². Reszta nie jest ogrzewana.';
-   $('heatInfo').className='chip ok';
- }else{
-   $('heatInfo').textContent='Całe pomieszczenie ogrzewane ('+fmt(polygonArea(r.points)*sx*sy)+' m²). Możesz zaznaczyć mniejsze pole.';
-   $('heatInfo').className='chip';
+ const zones=roomZones(r),whole=polygonArea(r.points)*sx*sy,heated=heatingAreaPx(r)*sx*sy;
+ $('heatInfo').textContent=zones.length
+   ?`Pola grzewcze: ${zones.length} · suma ${fmt(heated)} m² / pokój ${fmt(whole)} m². Bez podłogówki: ${fmt(Math.max(0,whole-heated))} m².`
+   :`Całe pomieszczenie ogrzewane (${fmt(whole)} m²). Możesz dodać wiele osobnych pól.`;
+ $('heatInfo').className='chip '+(zones.length?'ok':'');
+ for(let i=0;i<zones.length;i++){
+   const z=zones[i],line=document.createElement('div');
+   line.className='room'+(activeZone(r)?.id===z.id?' sel':'');
+   const title=document.createElement('strong');
+   title.textContent='Pole '+(i+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m²';
+   line.append(title);
+   const select=document.createElement('button');select.textContent='Wybierz';
+   select.onclick=()=>{r.selectedZoneId=z.id;render();update()};
+   line.append(select);
+   const edit=document.createElement('button');edit.textContent='Edytuj';
+   edit.onclick=()=>{r.selectedZoneId=z.id;tool('editHeat');update()};
+   line.append(edit);
+   const remove=document.createElement('button');remove.textContent='Usuń';
+   remove.onclick=()=>{
+     snapshot(r);r.heatingZones=r.heatingZones.filter(v=>v.id!==z.id);
+     r.selectedZoneId=r.heatingZones[0]?.id||null;
+     invalidate(r);list();tool('select');update();
+     info('Usunięto tylko pole '+(i+1)+'; pozostałe pola zachowano.','ok');
+   };
+   line.append(remove);el.append(line);
  }
 }
 function update(){
  const r=chosenRoom();
  $('area').textContent=r&&sx&&sy?fmt(polygonArea(r.points)*sx*sy):'—';
- $('heatArea').textContent=r&&sx&&sy?fmt(polygonArea(heatingPoints(r))*sx*sy):'—';
- $('excluded').textContent=r&&sx&&sy?fmt(Math.max(0,polygonArea(r.points)-polygonArea(heatingPoints(r)))*sx*sy):'—';
+ $('heatArea').textContent=r&&sx&&sy?fmt(heatingAreaPx(r)*sx*sy):'—';
+ $('excluded').textContent=r&&sx&&sy?fmt(Math.max(0,polygonArea(r.points)-heatingAreaPx(r))*sx*sy):'—';
  const n=r?.loop?.layout?.status==='experimental'?r.loop.layout.total_m:null;
  $('length').textContent=n===null?'—':fmt(n);$('left').textContent=n===null?'—':fmt(80-n);
  notifyHeat();
@@ -229,11 +267,14 @@ function list(){
    name.onchange=()=>{r.name=name.value.trim().slice(0,80)||'Pomieszczenie '+r.id;name.value=r.name;render()};
    n.append(name);
    const title=document.createElement('small');
-   const whole=polygonArea(r.points)*sx*sy,heat=polygonArea(heatingPoints(r))*sx*sy;
+   const whole=polygonArea(r.points)*sx*sy,heat=heatingAreaPx(r)*sx*sy;
    title.textContent='Pokój '+fmt(whole)+' m² · podłogówka '+fmt(heat)+' m²';
    n.append(title);
    const sm=document.createElement('small');
-   sm.textContent=r.loop?(r.loop.layout.status==='experimental'?'Ślimak testowy: '+fmt(r.loop.layout.total_m)+' m':'Pętla planowana: szac. '+fmt(r.loop.estimate_m)+' m'):'Brak przeliczonej pętli';
+   sm.textContent=r.loop?
+ (r.loop.layout.status==='experimental'?'Ślimak testowy: '+fmt(r.loop.layout.total_m)+' m':
+  roomZones(r).length>1?'Wiele pól: wstępnie '+fmt(r.loop.estimate_m)+' m rur łącznie; trasy niezweryfikowane':
+  'Pętla planowana: szac. '+fmt(r.loop.estimate_m)+' m'):'Brak przeliczonej pętli';
    n.append(sm);
    for(const [caption,kind] of [['Wybierz','select'],['Edytuj','editRoom'],['Pole','heatPoly']]){
      const b=document.createElement('button');b.textContent=caption;
@@ -248,7 +289,7 @@ function list(){
 const selectionTools=new Set(['heatRect','heatPoly','editRoom','moveRoom','addRoomPoint','deleteRoomPoint','editHeat','moveHeat']);
 function tool(t){
  if(selectionTools.has(t)&&!chosenRoom()){info('Najpierw wybierz pomieszczenie z listy lub kliknij jego obrys.','warn');return}
- if(['editHeat','moveHeat'].includes(t)&&!chosenRoom().heatingPoints){info('Najpierw zaznacz osobne pole grzewcze.','warn');return}
+ if(['editHeat','moveHeat'].includes(t)&&!activeZone(chosenRoom())){info('Najpierw zaznacz osobne pole grzewcze.','warn');return}
  tools=t;pts=[];temp=null;hover=null;drag=null;
  S.classList.toggle('pan-mode',t==='pan'||t==='moveRoom'||t==='moveHeat');
  document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
@@ -274,32 +315,38 @@ function tool(t){
 function validDrawing(points){return validPolygon(points,Math.max(1,.01/(sx*sy))) && points.every(allowed)}
 function snapshot(room){
  editHistory.push({id:room.id,points:copyPoints(room.points),shape:room.shape,
-   heatingPoints:room.heatingPoints?copyPoints(room.heatingPoints):null,heatingShape:room.heatingShape});
+   heatingZones:copyZones(roomZones(room)),selectedZoneId:room.selectedZoneId,zoneSerial:room.zoneSerial});
  if(editHistory.length>35)editHistory.shift();
 }
 function setRoomGeometry(room,points,shape=room.shape,heatingOverride){
- if(!validDrawing(points)){info('Obrys jest nieprawidłowy, przecina się lub wychodzi poza rysunek.','error');return false}
- const heating=heatingOverride!==undefined?heatingOverride:room.heatingPoints;
- if(heating&&(!validDrawing(heating)||!insideRoom(points,heating))){
-   info('Pole ogrzewania nie mieści się w nowym obrysie. Najpierw skoryguj lub usuń zielone pole.','error');return false;
+ if(!validDrawing(points)){info('Obrys pomieszczenia jest nieprawidłowy lub poza rysunkiem.','error');return false}
+ const zones=heatingOverride===undefined?roomZones(room):heatingOverride;
+ if(!validZones(points,zones)){
+  info('Po zmianie obrysu przynajmniej jedno pole grzewcze wychodzi poza pokój lub nachodzi na inne.','error');return false;
  }
  room.points=copyPoints(points);room.shape=shape;
- if(heatingOverride!==undefined)room.heatingPoints=heating?copyPoints(heating):null;
+ room.heatingZones=copyZones(zones);
  invalidate(room);render();update();return true
 }
 function setHeating(room,points,shape='poly'){
- if(!validDrawing(points)||!insideRoom(room.points,points)){
-   info('Pole grzewcze musi być poprawnym wielokątem, całkowicie wewnątrz pomieszczenia.','error');return false;
+ if(!room){info('Najpierw wybierz pomieszczenie.','warn');return false}
+ const existing=roomZones(room);
+ const candidate={id:(room.zoneSerial||0)+1,points:copyPoints(points),shape};
+ if(!validZones(room.points,[...existing,candidate])){
+   info('Pole musi być wewnątrz pomieszczenia i nie może nakładać się na istniejące zielone pola.','error');
+   return false;
  }
- room.heatingPoints=copyPoints(points);room.heatingShape=shape;
+ room.zoneSerial=candidate.id;room.heatingZones=[...existing,candidate];
+ room.selectedZoneId=candidate.id;
  invalidate(room);list();render();update();
- info('Pole grzewcze: '+fmt(polygonArea(points)*sx*sy)+' m². Przelicz pętlę ponownie.','ok');return true;
+ info('Dodano pole '+room.heatingZones.length+' ('+fmt(polygonArea(points)*sx*sy)+' m²). Wcześniejsze pola pozostają.','ok');
+ return true;
 }
 function addRoom(points,shape='poly'){
  if(!(sx>0&&sy>0)){info('Najpierw wykonaj kalibrację.','error');return false}
  if(!validDrawing(points)){info('Zaznacz poprawny obrys bez przecięć, wewnątrz podkładu.','error');return false}
  if(rooms.length>=100){info('Przekroczono limit 100 pomieszczeń.','error');return false}
- const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingPoints:null,heatingShape:null,loop:null,revision:0};
+ const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingZones:[],selectedZoneId:null,zoneSerial:0,loop:null,revision:0};
  rooms.push(r);selected=id;
  info('Dodano '+r.name+' · '+fmt(polygonArea(points)*sx*sy)+' m².','ok');
  list();render();update();return true
@@ -419,7 +466,7 @@ function editDragStep(d,p){
   try{changed=changeVertex(current,d.index,p,d.shape)}catch(_){return}
   const success=d.target==='room'
    ?setRoomGeometry(room,changed,d.shape)
-   :setHeatingSilently(room,changed,d.shape);
+   :setHeatingSilently(room,changed,d.shape,d.zoneId);
   if(success)d.changed=true;
   return;
  }
@@ -428,15 +475,19 @@ function editDragStep(d,p){
   if(Math.hypot(dx,dy)<1e-8)return;
   if(d.kind==='moveRoom'){
    const newRoom=movePolygon(d.baseRoom,dx,dy),newHeat=d.baseHeat?movePolygon(d.baseHeat,dx,dy):null;
-   if(setRoomGeometry(room,newRoom,room.shape,newHeat))d.changed=true;
+   if(setRoomGeometry(room,newRoom,room.shape,d.baseZones.map(z=>({...z,points:movePolygon(z.points,dx,dy)}))))d.changed=true;
   }else{
-   if(setHeatingSilently(room,movePolygon(d.baseHeat,dx,dy),room.heatingShape))d.changed=true;
+   if(setHeatingSilently(room,movePolygon(d.baseHeat,dx,dy),d.shape,d.zoneId))d.changed=true;
   }
  }
 }
-function setHeatingSilently(room,points,shape){
- if(!validDrawing(points)||!insideRoom(room.points,points))return false;
- room.heatingPoints=copyPoints(points);room.heatingShape=shape;invalidate(room);render();update();return true;
+function setHeatingSilently(room,points,shape,id=room.selectedZoneId){
+ const zones=copyZones(roomZones(room)),target=zones.find(z=>z.id===id);
+ if(!target)return false;
+ target.points=copyPoints(points);target.shape=shape;
+ if(!validZones(room.points,zones))return false;
+ room.heatingZones=zones;
+ invalidate(room);render();update();return true;
 }
 S.addEventListener('pointerdown',ev=>{
  ev.preventDefault();
@@ -445,15 +496,15 @@ S.addEventListener('pointerdown',ev=>{
   const room=chosenRoom();
   if(!room||!allowed(point))return;
   const target=['editHeat','moveHeat'].includes(tools)?'heat':'room';
-  const points=target==='heat'?room.heatingPoints:room.points;
+  const zone=activeZone(room);const points=target==='heat'?zone?.points:room.points;
   if(!points)return;
   const index=['editRoom','editHeat'].includes(tools)?findHandle(points,point,24):-1;
   if(index<0&&!['moveRoom','moveHeat'].includes(tools))return;
   if(index<0&&!insidePolygon(point,points))return;
   drag={kind:index>=0?'vertex':tools,roomId:room.id,target,index,id:ev.pointerId,
-        shape:target==='heat'?room.heatingShape:room.shape,
+        shape:target==='heat'?zone.shape:room.shape,zoneId:target==='heat'?zone.id:null,
         startPoint:point,baseRoom:copyPoints(room.points),
-        baseHeat:room.heatingPoints?copyPoints(room.heatingPoints):null,changed:false};
+        baseHeat:zone?copyPoints(zone.points):null,baseZones:copyZones(roomZones(room)),changed:false};
   snapshot(room);try{S.setPointerCapture(ev.pointerId)}catch(_){}
   return;
  }
@@ -487,19 +538,19 @@ S.addEventListener('pointerup',ev=>{
 });
 S.addEventListener('pointercancel',()=>{if(drag&&drag.kind!=='pan'&&!drag.changed)editHistory.pop();drag=null});
 S.addEventListener('wheel',ev=>{ev.preventDefault();scaleZoom(zoom*(ev.deltaY<0?1.18:1/1.18),xyView(ev))},{passive:false});
-S.addEventListener('dblclick',ev=>{if(tools==='poly'){ev.preventDefault();finish()}});
-for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>tool(b.dataset.tool);$('finish').onclick=finish;$('undo').onclick=()=>{if(tools==='rect')temp=null;else pts.pop();render()};$('cancel').onclick=()=>tool('select');
+S.addEventListener('dblclick',ev=>{if(['poly','heatPoly'].includes(tools)){ev.preventDefault();finish()}});
+for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>tool(b.dataset.tool);$('finish').onclick=finish;$('undo').onclick=()=>{if(['rect','heatRect'].includes(tools))temp=null;else pts.pop();render()};$('cancel').onclick=()=>tool('select');
 $('resetHeat').onclick=()=>{
  const room=chosenRoom();if(!room)return;
- if(!room.heatingPoints){info('Całe pomieszczenie jest już ogrzewane.','warn');return}
- snapshot(room);room.heatingPoints=null;room.heatingShape=null;invalidate(room);
+ if(!roomZones(room).length){info('Całe pomieszczenie jest już ogrzewane.','warn');return}
+ snapshot(room);room.heatingZones=[];room.selectedZoneId=null;invalidate(room);
  list();render();update();info('Przywrócono podłogówkę na całej powierzchni pokoju.','ok');tool('select');
 };
 $('undoEdit').onclick=()=>{
  const prev=editHistory.pop();if(!prev){info('Nie ma zmian do cofnięcia.','warn');return}
  const room=rooms.find(r=>r.id===prev.id);if(!room){info('Pomieszczenie usunięto.','error');return}
  room.points=copyPoints(prev.points);room.shape=prev.shape;
- room.heatingPoints=prev.heatingPoints?copyPoints(prev.heatingPoints):null;room.heatingShape=prev.heatingShape;
+ room.heatingZones=copyZones(prev.heatingZones);room.selectedZoneId=prev.selectedZoneId;room.zoneSerial=prev.zoneSerial;
  invalidate(room);selected=room.id;list();render();update();info('Cofnięto ostatnią edycję. Przelicz pętlę ponownie.','ok');
 };
 $('zoomin').onclick=()=>scaleZoom(zoom*1.25);
@@ -530,14 +581,20 @@ const inputs=()=>{let n=id=>Number($(id).value);return {spacing_m:n('spacing'),d
 $('loop').onclick=()=>{let r=rooms.find(x=>x.id===selected);if(!r){status('Wybierz najpierw pomieszczenie.','error');return}if(!ready){status('Python jeszcze się ładuje.','warn');return}
 let args=inputs();if(!Object.values(args).every(Number.isFinite)){status('Błędne parametry rur.','error');return}let n=++seq;queue.set(n,{id:r.id,revision:r.revision||0});
  worker.postMessage({kind:'analyze',seq:n,roomId:r.id,payload:{
-  points:pointsToMeter(r.points),heating_points:r.heatingPoints?pointsToMeter(r.heatingPoints):null,settings:args
+  points:pointsToMeter(r.points),heating_zones:roomZones(r).length?roomZones(r).map(z=>pointsToMeter(z.points)):null,settings:args
  }});
- status('Obliczanie w Pythonie dla pola '+fmt(polygonArea(heatingPoints(r))*sx*sy)+' m²…','warn')};
-try{worker=new Worker('./rysunek-worker.js?v=07',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+ status('Obliczanie w Pythonie dla pola '+fmt(heatingAreaPx(r)*sx*sy)+' m²…','warn')};
+try{worker=new Worker('./rysunek-worker.js?v=08',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
- r.loop=d.result;list();render();update();let l=d.result.layout;if(l.status==='experimental')status(r.name+': narysowano wstępną pętlę '+fmt(l.total_m)+' m. Nie jest to projekt do montażu.','ok');else status(r.name+': zapisano pętlę planowaną. '+l.message+' Szacunek '+fmt(d.result.estimate_m)+' m.','warn')}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
-$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:6,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingPoints:r.heatingPoints||null,heatingShape:r.heatingShape||null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
+ r.loop=d.result;list();render();update();let l=d.result.layout;if(l.status==='experimental'){
+ status(r.name+': narysowano wstępną pętlę '+fmt(l.total_m)+' m. Nie jest to projekt do montażu.','ok');
+}else{
+ const many=d.result.heating_zone_count>1;
+ status(r.name+': '+(many?'zachowano '+d.result.heating_zone_count+' osobne pola grzewcze. ':'zapisano pętlę planowaną. ')+
+ l.message+' Wstępny szacunek rur'+(many?' dla wszystkich pól (z dojściami osobno)':'')+': '+fmt(d.result.estimate_m)+' m.','warn');
+}}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
+$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:7,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
 $('import').onclick=()=>$('jsonfile').click();$('jsonfile').onchange=e=>{const f=e.target.files?.[0];if(!f)return;let fr=new FileReader();fr.onload=()=>{try{let j=JSON.parse(fr.result);if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');bg=j.background||'';
 imageFit=j.imageFit&&[j.imageFit.x,j.imageFit.y,j.imageFit.width,j.imageFit.height].every(Number.isFinite)&&j.imageFit.width>0&&j.imageFit.height>0?j.imageFit:{x:0,y:0,width:W,height:H};
 calLines=j.calLines&&['cx','cy'].every(t=>Array.isArray(j.calLines[t])&&j.calLines[t].length<=2&&j.calLines[t].every(p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)))?j.calLines:{cx:[],cy:[]};
@@ -549,15 +606,19 @@ else { for(const kind of ['cx','cy'])if(calLines[kind].length===2){const axis=ca
 calibratedX=!!sx&&['cx','cy'].some(k=>calLines[k].length===2&&calAxes[k]==='x');calibratedY=!!sy&&['cx','cy'].some(k=>calLines[k].length===2&&calAxes[k]==='y');zoom=1;panX=panY=0;rotation=[0,90,180,270].includes(j.rotation)?j.rotation:0;
 if((j.version||1)<4&&rotation%180===90)swapVisibleCalibration(); // older JSON saved pre-rotation labels
 $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
- const points=copyPoints(r.points),heating=r.heatingPoints===null||r.heatingPoints===undefined?null:r.heatingPoints;
+ const points=copyPoints(r.points);
+ const zones=Array.isArray(r.heatingZones)?r.heatingZones.map((z,j)=>({
+   id:Number.isInteger(z.id)&&z.id>0?z.id:j+1,
+   shape:['rect','poly'].includes(z.shape)?z.shape:'poly',
+   points:copyPoints(z.points)
+ })):r.heatingPoints?[{id:1,shape:['rect','poly'].includes(r.heatingShape)?r.heatingShape:'poly',points:copyPoints(r.heatingPoints)}]:[];
  const minArea=Math.max(1,.01/(Math.max(sx,1e-9)*Math.max(sy,1e-9)));
  if(!validPolygon(points,minArea))throw Error('Niepoprawny obrys w projekcie: '+(i+1));
- if(heating&&(!validPolygon(heating,minArea)||!insideRoom(points,heating)))throw Error('Pole grzewcze wychodzi poza pomieszczenie: '+(i+1));
+ if(!validZones(points,zones)||zones.some(z=>!validPolygon(z.points,minArea)))throw Error('Pole grzewcze jest nieprawidłowe lub nachodzi na inne: '+(i+1));
  const rect=points.length===4&&Math.abs(points[0][1]-points[1][1])<1e-4&&Math.abs(points[1][0]-points[2][0])<1e-4;
  return {id:i+1,name:String(r.name||'Pomieszczenie '+(i+1)).slice(0,80),points,
   shape:r.shape==='rect'||r.shape==='poly'?r.shape:(rect?'rect':'poly'),
-  heatingPoints:heating?copyPoints(heating):null,
-  heatingShape:['rect','poly'].includes(r.heatingShape)?r.heatingShape:'poly',
+  heatingZones:zones,selectedZoneId:zones.some(z=>z.id===r.selectedZoneId)?r.selectedZoneId:zones[0]?.id||null,zoneSerial:Math.max(Number(r.zoneSerial)||0,...zones.map(z=>z.id),0),
   revision:0,loop:null}
 });editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;scaleRead();list();render();update();status('Wczytano projekt. Przelicz pętle ponownie.','ok')}catch(err){status('Błąd importu: '+err.message,'error')}};fr.readAsText(f)};
 scaleRead();render();
