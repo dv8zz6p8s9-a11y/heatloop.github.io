@@ -64,3 +64,26 @@ Te propozycje rozwijają **gotowy** silnik, ale nie zastępują wymaganego teraz
 - **2026-10-24:** Ustalono priorytet na skompletowanie projektu HeatLoop. Usprawnienia UI i ergonomii są zbierane osobno i realizowane później.
 - **2026-10-24:** Zapisano uciążliwość częstego przełączania między „Pokojami” i „Pętlami” (UX-001–UX-003).
 - **2026-10-24:** Zapisano problem nadmiernego przewijania strony na telefonie oraz propozycję dalszego upraszczania paneli (UX-004–UX-005).
+
+
+## Dopisane po analizie wzorca projektu i badań źródeł (24.10.2026)
+
+Poniższe zadania pozostają w **oddzielnej kolejce usprawnień**. Prototyp v1.0-RC1 implementuje jedynie oznaczone podglądy i wstępną orientację, a nie pełen zamknięty proces projektowy. Techniczna specyfikacja i procedury odbioru znajdują się w `heatloop-test/python-lab/SPECYFIKACJA_GENERATORA_V10_TEST.md`.
+
+| ID | Sugestia / warunek jakości | Znaczenie | Stan |
+| --- | --- | --- | --- |
+| ALG-007 | **Fizyczne otwieranie ślimaka dokładnie od wybranego S/K**, a nie tylko wybór najbliższego obiegu spośród 8 orientacji | Skraca podejścia; wymaga walidacji zwojów i promieni | Zapisane; v10 tylko wybiera orientację |
+| ALG-008 | **Rejestr rezerwacji korytarzy** dla wszystkich obiegów, planowanie od rozdzielacza przed rozkładaniem pola | Żadne dwa podejścia nie zajmują tego samego miejsca | Do wdrożenia |
+| ALG-009 | **Automatyczne zagęszczanie przy rozdzielaczu** z rozstawami wyłącznie dozwolonymi dla systemu i raportem dodatkowych metrów | Kontroluje temperaturę, odległość rur i liczbę obiegów | Do wdrożenia |
+| ALG-010 | **Bifilarna L i T**: jedna ciągła pętla z omijaniem wąskich przejść zgodnie z wariantem A | Brak pozornej geometrii przez ściany/obrys | Do wdrożenia |
+| ALG-011 | **Automatyczne nawroty omega** z testem minimalnego promienia gięcia producenta | Umożliwia poprawną geometrię przy mniejszym rozstawie | Do wdrożenia |
+| ALG-012 | **Węzły edycji pętli i dojść**, cofnij / usuń / przywróć auto, bez utraty projektu JSON | Montażysta poprawia wynik bez przechodzenia wszystkich ekranów | Do wdrożenia |
+| ALG-013 | Wykrywanie prawdziwych **drzwi, dylatacji i ścian** jako ograniczeń prowadzenia podejść | Blokada przejścia przez ścianę, przypomnienie tulei ochronnej | Do wdrożenia |
+| ALG-014 | Dla każdego przewodu **sprawdzenie minimalnej odległości od innych przewodów** (nie tylko przecinania osi), także między pętlami | Usuwa skrzyżowania i kolizje przy rozdzielaczu | Do wdrożenia |
+| UX-016 | **Dwa tryby rzutu**, roboczy oraz czytelny techniczny wzorowany na zdjęciu instalacji | Osobny interfejs i wydruk; minimum tekstu na rurach | Kandydat v1.0-RC1, test wymagany |
+| UX-017 | Etykiety **P01, R1**, pełna tabela poza pętlą, legenda kierunku | Czytelność gęstego rzutu | Kandydat v1.0-RC1, test wymagany |
+| UX-018 | Włączenie/wyłączenie pojedynczych warstw i kolorów obiegów | Unikanie wizualnego chaosu | Do wdrożenia |
+| UX-019 | Podgląd **rzeczywistego punktu S/K** oraz odległości od celu i ostrzeżenia, gdy cel jest tylko preferencją | Uczciwość rysunku technicznego | Kandydat v1.0-RC1, test wymagany |
+| UX-020 | **Eksport PDF** z czystą tabelą, legendą, parametrami obiegów, ostrzeżeniami i miejscem na sprawdzenie przez projektanta | Możliwość przekazania klientowi dokumentacji | SVG TEST przygotowany; PDF do wdrożenia |
+
+**Dodatkowa decyzja:** Nie wdrażać automatycznie algorytmów, które tworzą „ładny”, ale fizycznie niemożliwy przebieg. Status `schematic` pozostaje osobny od wyniku, który przeszedł walidację geometryczną i produktową.
