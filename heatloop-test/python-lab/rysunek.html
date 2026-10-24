@@ -131,7 +131,7 @@
 <details class="view-more"><summary>Obrót, przesuwanie i widoczność podkładu</summary><div class="nav-actions"><button id="moveLeft" title="Przesuń rysunek w lewo" aria-label="Przesuń rysunek w lewo">← Lewo</button><button id="moveUp" title="Przesuń rysunek w górę" aria-label="Przesuń rysunek w górę">↑ Góra</button><button id="moveDown" title="Przesuń rysunek w dół" aria-label="Przesuń rysunek w dół">↓ Dół</button><button id="moveRight" title="Przesuń rysunek w prawo" aria-label="Przesuń rysunek w prawo">Prawo →</button></div>
 <div class="nav-actions"><button id="rotateLeft" title="Obróć plan o 90° przeciwnie do ruchu wskazówek zegara">↶ Obróć w lewo 90°</button><button id="rotateRight" title="Obróć plan o 90° zgodnie z ruchem wskazówek zegara">↷ Obróć w prawo 90°</button><span class="angle" id="angle">Obrót: 0°</span></div>
 <div class="nav-help">Po powiększeniu wybierz „✋ Przesuń rysunek” i przeciągaj myszą lub palcem. W trybie wyboru pomieszczenia można także przeciągać powiększony plan. Strzałki umożliwiają przesuwanie w pionie i poziomie. Obrót obejmuje podkład, obrysy, kalibrację i rury — bez zmiany wymiarów.</div>
-<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · <span style="color:#087ba9">┄</span> dojście testowe · fiolet: obrys · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg><div id="hint">Wczytaj plan lub użyj „Rysunek przykładowy”.</div><div class="stat" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · <span style="color:#087ba9">┄</span> dojście testowe · fiolet: obrys · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg><div id="technicalLegend" style="display:none;margin-top:10px"></div><div id="hint">Wczytaj plan lub użyj „Rysunek przykładowy”.</div><div class="stat" style="grid-template-columns:repeat(2,minmax(0,1fr))">
  <div><strong id="area">—</strong><small>Powierzchnia pomieszczenia m²</small></div>
  <div><strong id="heatArea">—</strong><small>Pole podłogówki m²</small></div>
  <div><strong id="excluded">—</strong><small>Bez ogrzewania m²</small></div>
@@ -504,6 +504,36 @@ if(technicalView){
  }
 }
 drawCalLines();
+ renderTechnicalLegend();
+}
+function renderTechnicalLegend(){
+ const el=$('technicalLegend');if(!el)return;
+ el.style.display=technicalView?'block':'none';
+ if(!technicalView)return;
+ el.innerHTML='';
+ const lead=document.createElement('h3');lead.textContent='Zestawienie pętli · podgląd techniczny';el.append(lead);
+ const warning=document.createElement('div');warning.className='tech-note';
+ warning.textContent='TEST: schematy, promienie gięcia, przejścia przez ściany i równoległe dojścia wymagają sprawdzenia. Preferowane punkty wejścia/wyjścia nie przemieszczają jeszcze geometrii rur.';
+ el.append(warning);
+ for(const room of rooms){
+   const fields=roomZones(room).length?roomZones(room):[{points:room.points}];
+   for(let i=0;i<fields.length;i++){
+     const zone=roomZones(room)[i]||null;
+     const settings=settingsFor(room,zone),manifold=manifolds.find(m=>m.id===settings.manifold_id);
+     const result=room.loop?.zone_results?.[i];
+     const tag=getZoneTag(room,zone,i,result?.layout,settings,manifold,sx,sy);
+     const item=document.createElement('div');item.className='circuit-entry';
+     const title=document.createElement('strong');title.textContent=tag.id+' · '+tag.title;item.append(title);
+     const desc=document.createElement('div');desc.className='circuit-meta';
+     desc.textContent=tag.lines.join(' · ')+(result?' · suma z dojściami: '+fmt(previewLength(result))+' m':'');
+     item.append(desc);
+     if(result?.layout?.status==='schematic'||result?.coverage_warning){
+       const w=document.createElement('div');w.className='mini';
+       w.textContent='Ostrzeżenie: geometria i pokrycie pola nie są zweryfikowane.';item.append(w)
+     }
+     el.append(item)
+   }
+ }
 }
 function chosenRoom(){return rooms.find(r=>r.id===selected)||null}
 function roomZones(room){return room?.heatingZones||[]}
@@ -1225,6 +1255,33 @@ $('loopAll').onclick=()=>{
  status('Generowanie ślimaków i poglądowych dojść dla '+sent+' pomieszczeń.','warn');
 };
 $('showApproaches').onchange=()=>{showApproachRoutes=$('showApproaches').checked;render()};
+function setTechnicalView(v){
+ technicalView=!!v;
+ $('stage').classList.toggle('print-preview',technicalView);
+ $('technicalView').classList.toggle('active',technicalView);
+ $('workingView').classList.toggle('active',!technicalView);
+ render();
+}
+$('technicalView').onclick=()=>setTechnicalView(true);
+$('workingView').onclick=()=>setTechnicalView(false);
+$('exportSvg').onclick=()=>{
+ // Export only the current SVG plan with embedded raster and labels.
+ const original=technicalView;
+ try{
+   setTechnicalView(true);
+   const clone=S.cloneNode(true);
+   clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+   clone.setAttribute('width','1650');
+   clone.setAttribute('height','1125');
+   clone.setAttribute('aria-label','HeatLoop — eksperymentalny rysunek techniczny');
+   const source='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
+   const b=new Blob([source],{type:'image/svg+xml;charset=utf-8'}),link=document.createElement('a');
+   link.href=URL.createObjectURL(b);link.download='heatloop_rzut_techniczny_TEST.svg';
+   link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1200);
+   status('Wyeksportowano rzut SVG TEST. To nie jest zatwierdzony projekt wykonawczy.','warn');
+ }catch(e){status('Nie udało się wyeksportować SVG: '+e.message,'error')}
+ finally{setTechnicalView(original)}
+};
 $('finishGuide').onclick=()=>{
  if(tools==='guidePoint'){
    tool('select');renderCircuits();
