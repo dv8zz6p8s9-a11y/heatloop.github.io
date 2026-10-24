@@ -118,3 +118,26 @@ export function deleteVertex(points,index) {
   if(!validPolygon(result))throw Error('Nie można usunąć tego narożnika.');
   return result;
 }
+
+/** Reject meaningful overlap of two intended distinct fields.
+ * Boundaries may touch; the Python/Shapely check remains authoritative.
+ */
+export function zonesOverlap(a,b){
+  if(!validPolygon(a)||!validPolygon(b))return false;
+  const strictlyInside=(p,poly)=>insidePolygon(p,poly)&&
+    !poly.some((q,i)=>onSegment(p,q,poly[(i+1)%poly.length]));
+  if(a.some(p=>strictlyInside(p,b))||b.some(p=>strictlyInside(p,a)))return true;
+  for(let i=0;i<a.length;i++){
+    const p=a[i],q=a[(i+1)%a.length];
+    for(let j=0;j<b.length;j++){
+      const r=b[j],s=b[(j+1)%b.length];
+      const v=[orient(p,q,r),orient(p,q,s),orient(r,s,p),orient(r,s,q)];
+      if(((v[0]>EPS&&v[1]<-EPS)||(v[0]<-EPS&&v[1]>EPS)) &&
+         ((v[2]>EPS&&v[3]<-EPS)||(v[2]<-EPS&&v[3]>EPS)))return true;
+    }
+  }
+  // Coincident boundaries: every point is on the other polygon boundary.
+  if(a.every(p=>insidePolygon(p,b))&&b.every(p=>insidePolygon(p,a)) &&
+     Math.abs(polygonArea(a)-polygonArea(b))<EPS)return true;
+  return false;
+}
