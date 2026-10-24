@@ -985,7 +985,21 @@ $('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:9,backgr
  defaults:{spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),
   diam: $('diam').value, edge:$('edge').value, radius:$('radius').value},
  known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings(),loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
-$('import').onclick=()=>$('jsonfile').click();$('jsonfile').onchange=e=>{const f=e.target.files?.[0];if(!f)return;let fr=new FileReader();fr.onload=()=>{try{let j=JSON.parse(fr.result);if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');
+$('import').onclick=()=>{
+ const input=$('jsonfile');input.value='';showTab('project');input.click();
+};
+$('jsonfile').onchange=e=>{
+ const input=e.target,file=input.files?.[0];input.value=''; // same file may now be reopened
+ if(!file)return;
+ if(Number(file.size)>35e6){status('Projekt przekracza 35 MB; nie wykonano żadnych zmian.','error');return}
+ const fr=new FileReader();
+ fr.onload=()=>{
+  const previous=captureActiveProject();
+  try{
+   let j=JSON.parse(String(fr.result||'').replace(/^\uFEFF/,''));
+   if(!Number.isInteger(j.version)||j.version<1||j.version>9)
+    throw Error('Nieobsługiwana wersja JSON '+j.version+'. Otwórz projekt w zgodnej wersji HeatLoop.');
+ if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');
  const importedManifolds=Array.isArray(j.manifolds)?j.manifolds:[];
  if(importedManifolds.length>12)throw Error('Zbyt wiele rozdzielaczy w projekcie');
  const ids=new Set();
@@ -1044,6 +1058,25 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
   heatingZones:zones,selectedZoneId:zones.some(z=>z.id===r.selectedZoneId)?r.selectedZoneId:zones[0]?.id||null,zoneSerial:Math.max(Number(r.zoneSerial)||0,...zones.map(z=>z.id),0),
   implicitSettings:normalizeLoopSettings(r.implicitSettings||{},defaultLoopSettings(),manifolds),
   revision:0,loop:validLoopPreview(r.loopPreview,Math.max(1,zones.length))?r.loopPreview:null}
-});editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;scaleRead();list();render();update();redrawManifolds();showTab('rooms');status('Wczytano projekt z ustawieniami pętli i rozdzielaczy. Przelicz pętle ponownie.','ok')}catch(err){status('Błąd importu: '+err.message,'error')}};fr.readAsText(f)};
+});
+ queue.clear();editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;
+ pendingRestoration=rooms.some(r=>!r.loop);
+ scaleRead();list();render();update();redrawManifolds();showTab('rooms');
+ confirmLoadedBackground();
+ const parts=countProjectParts();
+ const summary='Odzyskano rysunek: '+(bg?'TAK':'BRAK')+' · '+parts.rooms+' pomieszczenia · '+parts.zones+
+   ' pól grzewczych · '+parts.manifolds+' rozdzielacze · '+parts.previews+' podglądy pętli.';
+ reportRestore(summary,'ok');status(summary,'ok');
+ regenerateMissingSavedLoops();
+ }catch(err){
+   try{restoreActiveProject(previous)}catch(rollbackErr){status('Błąd przywracania poprzedniego projektu: '+rollbackErr.message,'error')}
+   reportRestore('Nie udało się odczytać projektu: '+err.message+'. Dotychczasowa praca została zachowana.','error');
+   status('Import odrzucony: '+err.message+'. Bieżący projekt bez zmian.','error');
+ }
+ };
+ fr.onerror=()=>{status('Nie można odczytać wybranego pliku JSON. Bieżący projekt bez zmian.','error')};
+ fr.onabort=()=>{status('Anulowano wczytywanie. Bieżący projekt bez zmian.','warn')};
+ try{fr.readAsText(file)}catch(err){status('Odczyt JSON nie powiódł się: '+err.message,'error')}
+};
 scaleRead();render();showTab('drawing');redrawManifolds();
 </script></body></html>
