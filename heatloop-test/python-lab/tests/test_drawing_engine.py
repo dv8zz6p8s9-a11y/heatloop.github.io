@@ -143,5 +143,57 @@ class HeatingAreaTests(unittest.TestCase):
                 {"spacing_m":.10,"feed_m":2,"back_m":2}
             ])
 
+    def test_schematic_counterflow_preview_after_strict_radius_rejection(self):
+        import math
+        from shapely.geometry import Polygon, LineString
+        settings=dict(SETTINGS,spacing_m=.125,radius_m=.08)
+        result=analyze_room(ROOM,settings)
+        layout=result["zone_results"][0]["layout"]
+        self.assertEqual(layout["status"],"schematic")
+        self.assertEqual(layout["kind"],"counterflow-rectangle-preview")
+        self.assertFalse(layout["installation_ready"])
+        self.assertTrue(layout["warning"].startswith("SZKIC"))
+        self.assertGreater(layout["turns"],0)
+        self.assertGreater(len(layout["supply"]),4)
+        self.assertGreater(len(layout["return"]),4)
+        self.assertEqual(len(layout["cap"]),17)
+        combined=layout["supply"]+layout["cap"][1:]+layout["return"][1:]
+        line=LineString(combined)
+        clearance=settings["wall_edge_m"]+settings["diameter_m"]/2
+        self.assertTrue(Polygon(ROOM).buffer(-clearance).buffer(2e-7).covers(line))
+        self.assertTrue(line.is_simple)
+        self.assertLessEqual(layout["total_m"],80)
+        self.assertAlmostEqual(layout["drawn_m"],line.length,places=2)
+
+    def test_all_seven_reference_size_rectangles_have_visible_schematic(self):
+        # Representative dimensions/individual spacings from the 7-field
+        # drawing test, without storing any client image or personal data.
+        sizes=[(2.07,3.00,.125),(1.93,3.00,.125),
+               (4.73,2.28,.125),(4.75,2.07,.125),
+               (4.75,2.13,.10),(1.77,4.20,.125),
+               (1.80,3.61,.15)]
+        for w,h,spacing in sizes:
+            with self.subTest(width=w,height=h,spacing=spacing):
+                room=[(0,0),(w,0),(w,h),(0,h)]
+                settings=dict(SETTINGS,spacing_m=spacing)
+                result=analyze_room(room,settings)
+                layout=result["zone_results"][0]["layout"]
+                self.assertIn(layout["status"],("experimental","schematic"))
+                self.assertGreater(layout["drawn_m"],0)
+                self.assertLessEqual(layout["total_m"],80)
+                self.assertFalse(layout["installation_ready"])
+
+    def test_schematic_warns_about_full_coverage_estimate(self):
+        settings=dict(SETTINGS,spacing_m=.10)
+        rectangle=[(0,0),(4.75,0),(4.75,2.13),(0,2.13)]
+        result=analyze_room(rectangle,settings)
+        zone=result["zone_results"][0]
+        self.assertEqual(zone["layout"]["status"],"schematic")
+        self.assertTrue(zone["coverage_warning"])
+        self.assertTrue(zone["over_80m"])
+        self.assertTrue(result["estimate_over_limit"])
+        self.assertGreater(zone["full_area_estimate_m"],80)
+        self.assertLessEqual(zone["layout"]["total_m"],80)
+
 if __name__=="__main__":
     unittest.main()
