@@ -110,7 +110,7 @@ class HeatingAreaTests(unittest.TestCase):
 
     def test_per_loop_limit_not_sum_of_two_independent_loops(self):
         a=[(.2,.2),(3.2,.2),(3.2,2.2),(.2,2.2)]
-        b=[(.2,2.3),(3.2,2.3),(3.2,3.9),(.2,3.9)]
+        b=[(.2,2.21),(3.2,2.21),(3.2,3.99),(.2,3.99)]
         result=analyze_room(ROOM,SETTINGS,heating_zones=[a,b],zone_settings=[
             {"spacing_m":.15,"feed_m":2,"back_m":2},
             {"spacing_m":.15,"feed_m":2,"back_m":2}
