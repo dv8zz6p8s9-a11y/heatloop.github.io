@@ -110,7 +110,7 @@
  <div><strong id="heatArea">—</strong><small>Pole podłogówki m²</small></div>
  <div><strong id="excluded">—</strong><small>Bez ogrzewania m²</small></div>
  <div><strong id="length">—</strong><small>Suma długości pętli (m)</small></div>
- <div><strong id="left">—</strong><small>Najmniejszy zapas jednej pętli do 80 m</small></div>
+ <div><strong id="left">—</strong><small>Najmniejszy wstępny zapas pętli do 80 m</small></div>
  </div><div id="status" class="chip">Zacznij od rysunku i kalibracji.</div></section></div></main>
 <script type="module">
 import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=09';
@@ -131,7 +131,17 @@ function validLoopPreview(preview,zoneCount) {
      z.checked_length_m<0||z.checked_length_m>10000||!z.layout||typeof z.layout!=='object')return false;
   const layout=z.layout;
   if(!['experimental','planned'].includes(layout.status))return false;
-  if(layout.status==='experimental'){
+  if(z.approach){
+    const a=z.approach;
+    if(!['draft','blocked','no-manifold','no-loop','invalid'].includes(a.status))return false;
+    for(const key of ['supply','return']){
+      if(!Array.isArray(a[key])||a[key].length>100||
+         a[key].some(p=>!Array.isArray(p)||p.length!==2||p.some(v=>!finite(v)||Math.abs(v)>50000)))return false;
+    }
+    if(a.status==='draft'&&(!finite(a.supply_m)||!finite(a.return_m)||
+       a.supply_m<0||a.return_m<0||a.supply_m>1000||a.return_m>1000))return false;
+   }
+   if(layout.status==='experimental'){
    for(const key of ['supply','return','cap']){
     if(!Array.isArray(layout[key])||layout[key].length>12000||
        layout[key].some(p=>!Array.isArray(p)||p.length!==2||p.some(v=>!finite(v)||Math.abs(v)>500)))return false;
@@ -759,7 +769,7 @@ function click(p){
    const m=selectedManifold();
    if(!m){info('Nie wybrano rozdzielacza.','error');return}
    m.point=[p[0],p[1]];
-   tool('select');redrawManifolds();render();status(m.name+' ustawiony na rzucie. Długości dojść podaj oddzielnie przy pętlach.','ok');return
+   refreshApproaches();tool('select');redrawManifolds();render();status(m.name+' ustawiony na rzucie. Długości dojść podaj oddzielnie przy pętlach.','ok');return
  }
  if(tools==='select'){
    const hit=[...rooms].reverse().find(r=>insidePolygon(p,r.points));
@@ -1039,16 +1049,29 @@ $('loop').onclick=()=>{
  if(!ready){status('Python jeszcze się ładuje.','warn');return}
  queueAnalysisForRoom(room);
 };
+$('loopAll').onclick=()=>{
+ if(!ready){status('Python jeszcze się ładuje.','warn');return}
+ let sent=0;
+ for(const r of rooms)if(queueAnalysisForRoom(r,true))sent++;
+ if(!sent){status('Najpierw zaznacz pomieszczenia i pola ogrzewania.','warn');return}
+ status('Generowanie ślimaków i poglądowych dojść dla '+sent+' pomieszczeń.','warn');
+};
+$('showApproaches').onchange=()=>{
+ showApproachRoutes=$('showApproaches').checked;
+ render();
+};
 try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
- r.loop=d.result;list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
+ r.loop=d.result;refreshApproaches();list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
  const done=zoneData.filter(x=>x.layout.status==='experimental').length;
- const over=zoneData.filter(x=>x.over_80m).length;
- status(r.name+': '+zoneData.length+' pętli. Geometria testowa: '+done+'/'+zoneData.length+
-   '. Długości i rozstawy policzone osobno; szacunek łącznie '+fmt(d.result.estimate_m)+' m.'+
-   (over?' UWAGA: '+over+' pętli może przekraczać 80 m.':'')+
-   ' Rozdzielacze i dojścia wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
+ const routed=zoneData.filter(x=>x.approach?.status==='draft').length;
+ const over=zoneData.filter(x=>x.approach?.status==='draft'?x.visual_over_80m:x.over_80m).length;
+ status(r.name+': ślimaki testowe '+done+'/'+zoneData.length+' · poglądowe dojścia '+
+   routed+'/'+zoneData.length+
+   '. Rozstawy pętli są niezależne.'+
+   (over?' UWAGA: '+over+' pętli może przekraczać 80 m!':'')+
+   ' Dojścia mają charakter szkicu i wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
 $('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:9,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
  manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
  activeManifoldId,
@@ -1131,7 +1154,7 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
 });
  queue.clear();editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;
  pendingRestoration=rooms.some(r=>!r.loop);
- scaleRead();list();render();update();redrawManifolds();showTab('rooms');
+ refreshApproaches();scaleRead();list();render();update();redrawManifolds();showTab('rooms');
  confirmLoadedBackground();
  const parts=countProjectParts();
  const summary='Odzyskano rysunek: '+(bg?'TAK':'BRAK')+' · '+parts.rooms+' pomieszczenia · '+parts.zones+
