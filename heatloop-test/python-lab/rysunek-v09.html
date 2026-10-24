@@ -263,7 +263,161 @@ function chosenRoom(){return rooms.find(r=>r.id===selected)||null}
 function roomZones(room){return room?.heatingZones||[]}
 function activeZone(room){const z=roomZones(room);return z.find(x=>x.id===room?.selectedZoneId)||z[0]||null}
 function heatingAreaPx(room){const zones=roomZones(room);return !room?0:zones.length?zones.reduce((sum,z)=>sum+polygonArea(z.points),0):polygonArea(room.points)}
-function copyZones(zones){return zones.map(z=>({id:z.id,shape:z.shape,points:copyPoints(z.points)}))}
+function copyZones(zones){return zones.map(z=>({
+ id:z.id,shape:z.shape,points:copyPoints(z.points),
+ settings:z.settings?{...z.settings}:undefined
+}))}
+function defaultLoopSettings(){return {spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),manifold_id:null}}
+function settingsFor(room,zone=null){
+ let stored=zone?zone.settings:room?.implicitSettings;
+ try{return normalizeLoopSettings(stored||{},defaultLoopSettings(),manifolds)}
+ catch(_){return normalizeLoopSettings({},defaultLoopSettings(),manifolds)}
+}
+function mutateLoopSettings(room,zone,patch){
+ try{
+   const merged={...settingsFor(room,zone),...patch};
+   const clean=normalizeLoopSettings(merged,defaultLoopSettings(),manifolds);
+   if(zone)zone.settings=clean;else room.implicitSettings=clean;
+   invalidate(room);list();render();update();redrawManifolds();
+   status('Zmieniono ustawienia pojedynczej pętli. Wynik wymaga ponownego przeliczenia.','warn');
+ }catch(error){status(error.message,'error');update()}
+}
+function showTab(name){
+ const valid=['drawing','rooms','loops','manifolds','project'];
+ if(!valid.includes(name))return;
+ activeTab=name;
+ document.querySelectorAll('#workflowTabs [data-tab]').forEach(b=>{
+   const on=b.dataset.tab===name;b.classList.toggle('active',on);
+   b.setAttribute('aria-selected',String(on));
+ });
+ document.querySelectorAll('#controls [data-pane]').forEach(el=>el.classList.toggle('active-pane',el.dataset.pane===name));
+ if(name==='loops')renderCircuits();
+ if(name==='manifolds')redrawManifolds();
+}
+function selectedManifold(){return manifolds.find(m=>m.id===activeManifoldId)||null}
+function unassignedCount(){
+ let n=0;
+ for(const room of rooms){
+  const zz=roomZones(room);
+  if(zz.length)for(const z of zz)if(!settingsFor(room,z).manifold_id)n++;
+  else if(!settingsFor(room).manifold_id)n++;
+ }
+ return n;
+}
+function redrawManifolds(){
+ const el=$('manifoldList');if(!el)return;el.innerHTML='';
+ let total=0;
+ for(const m of manifolds){
+   const quantities=manifoldQuantities(rooms,m);total+=quantities.assignedLoops;
+   const card=document.createElement('div');card.className='manifold-entry'+(m.id===activeManifoldId?' active-manifold':'');
+   const name=document.createElement('input');name.className='room-name';name.value=m.name;name.maxLength=65;name.title='Nazwa rozdzielacza';
+   name.onchange=()=>{m.name=name.value.trim().slice(0,65)||'Rozdzielacz '+m.id;name.value=m.name;render()};
+   card.append(name);
+   const point=document.createElement('small');point.textContent=m.point?'Pozycja zaznaczona na rysunku':'Brak punktu na rzucie — wskaż lokalizację';
+   card.append(point);
+   const line=document.createElement('div');line.className='pair';line.style.marginTop='9px';
+   const typeField=document.createElement('div');typeField.className='field';
+   const typeLabel=document.createElement('label');typeLabel.textContent='Typ';typeField.append(typeLabel);
+   const typeSel=document.createElement('select');
+   for(const [val,caption] of [['flowmeters','Z przepływomierzami'],['standard','Standardowy']]){
+     const opt=document.createElement('option');opt.value=val;opt.textContent=caption;typeSel.append(opt);
+   }
+   typeSel.value=m.type;typeSel.onchange=()=>{m.type=typeSel.value};typeField.append(typeSel);line.append(typeField);
+   const sectionsField=document.createElement('div');sectionsField.className='field';
+   const secLabel=document.createElement('label');secLabel.textContent='Sekcje ręcznie (0 = auto)';sectionsField.append(secLabel);
+   const sec=document.createElement('input');sec.type='number';sec.min='0';sec.max='20';sec.step='1';sec.value=m.requestedSections||0;
+   sec.onchange=()=>{const v=Number(sec.value);if(!Number.isInteger(v)||v<0||v>20){status('Dozwolone są rozdzielacze 1–20 sekcji; 0 oznacza automatyczny dobór.','error');sec.value=m.requestedSections||0;return}m.requestedSections=v;redrawManifolds()};
+   sectionsField.append(sec);line.append(sectionsField);card.append(line);
+   const checkbox=document.createElement('label');checkbox.className='panel-note';
+   const pump=document.createElement('input');pump.type='checkbox';pump.checked=!!m.pumpGroup;
+   pump.onchange=()=>{m.pumpGroup=pump.checked;redrawManifolds()};checkbox.append(pump);
+   const pumpText=document.createElement('span');pumpText.textContent=' Grupa pompowa (opcjonalna)';checkbox.append(pumpText);card.append(checkbox);
+   const summary=document.createElement('div');summary.className='manifold-stats';
+   summary.textContent='Przypisane pętle: '+quantities.assignedLoops+
+     ' · rozdzielacz: '+(quantities.sections||'—')+' sekcji · szafka: '+(quantities.cabinetSections||'—')+
+     ' sekcji · Eurokonus: '+quantities.euroconus+' szt. · zawory odcinające: '+quantities.isolatingValves+' szt.';
+   card.append(summary);
+   const actions=document.createElement('div');actions.className='buttons';
+   const place=document.createElement('button');place.textContent='📍 Ustaw na rysunku';
+   place.onclick=()=>{activeManifoldId=m.id;tool('placeManifold');redrawManifolds();status('Dotknij na rzucie miejsca montażu '+m.name+'.','warn')};
+   actions.append(place);
+   const del=document.createElement('button');del.textContent='Usuń';
+   del.onclick=()=>{manifolds=manifolds.filter(x=>x.id!==m.id);
+     for(const room of rooms){
+       const settingsList=[room.implicitSettings,...roomZones(room).map(z=>z.settings)];
+       if(settingsList.some(v=>v?.manifold_id===m.id)){for(const v of settingsList)if(v?.manifold_id===m.id)v.manifold_id=null;invalidate(room)}
+     }
+     if(activeManifoldId===m.id)activeManifoldId=manifolds[0]?.id||null;
+     list();render();update();redrawManifolds();status('Usunięto rozdzielacz. Jego pętle są teraz nieprzypisane.','warn')
+   };
+   actions.append(del);card.append(actions);el.append(card);
+ }
+ const totalCircuits=rooms.reduce((sum,r)=>sum+Math.max(1,roomZones(r).length),0);
+ const unassigned=totalCircuits-total;
+ $('manifoldSummary').textContent=manifolds.length?
+  'Rozdzielacze: '+manifolds.length+' · pętle: '+totalCircuits+' · przypisane: '+total+' · bez rozdzielacza: '+unassigned:
+  'Brak rozdzielacza. Dodaj go i wskaż miejsce na rzucie, a następnie przypisz do niego pętle.';
+ $('manifoldSummary').className='chip '+(unassigned?'warn':'ok');
+}
+function circuitRows(room){
+ const zones=roomZones(room);
+ return zones.length?zones.map((z,i)=>({zone:z,index:i,points:z.points})):
+   [{zone:null,index:0,points:room.points}];
+}
+function renderCircuits(){
+ const el=$('circuitList');if(!el)return;el.innerHTML='';
+ const room=chosenRoom();
+ if(!room){el.textContent='Wybierz pokój w zakładce „Pokoje”.';return}
+ const entries=circuitRows(room);
+ const intro=document.createElement('div');intro.className='panel-note';
+ intro.textContent='Pomieszczenie: '+room.name+' · '+entries.length+' pętla/pętle. Każde pole ma własny rozstaw i dojścia do rozdzielacza.';
+ el.append(intro);
+ for(const item of entries){
+   const zone=item.zone,settings=settingsFor(room,zone);
+   const entry=document.createElement('div');entry.className='circuit-entry'+(zone?.id===room.selectedZoneId?' active-circuit':'');
+   const header=document.createElement('strong');
+   header.textContent='Pętla '+(item.index+1)+(zone?' · pole '+(item.index+1):' · cały pokój');
+   entry.append(header);
+   const meta=document.createElement('div');meta.className='circuit-meta';
+   meta.textContent='Powierzchnia '+fmt(polygonArea(item.points)*sx*sy)+' m²';
+   entry.append(meta);
+   const controls=document.createElement('div');controls.className='pair';
+   function field(label,kind,initial,onChange,type='number'){
+     const wrapper=document.createElement('div');wrapper.className='field';
+     const lab=document.createElement('label');lab.textContent=label;wrapper.append(lab);
+     const input=document.createElement(kind==='select'?'select':'input');
+     if(kind==='select'){
+       for(const [val,caption] of initial){
+         const o=document.createElement('option');o.value=String(val);o.textContent=caption;input.append(o);
+       }
+       input.value=String(type);
+     }else{
+       input.type='number';input.min=0;input.max=100;input.step='.5';input.value=String(initial);
+     }
+     input.onchange=()=>onChange(input.value);
+     wrapper.append(input);controls.append(wrapper);return input;
+   }
+   field('Rozstaw rur','select',[[.10,'10 cm'],[.125,'12,5 cm'],[.15,'15 cm'],[.20,'20 cm']],
+     value=>mutateLoopSettings(room,zone,{spacing_m:Number(value)}),settings.spacing_m);
+   field('Rozdzielacz','select',[[ '', '— Nieprzypisany —'],...manifolds.map(m=>[m.id,m.name])],
+     value=>mutateLoopSettings(room,zone,{manifold_id:value===''?null:Number(value)}),
+     settings.manifold_id??'');
+   field('Dojście do rozdzielacza (m)','input',settings.feed_m,
+     value=>mutateLoopSettings(room,zone,{feed_m:Number(value.replace(',','.'))}));
+   field('Powrót do rozdzielacza (m)','input',settings.back_m,
+     value=>mutateLoopSettings(room,zone,{back_m:Number(value.replace(',','.'))}));
+   entry.append(controls);
+   const result=room.loop?.zone_results?.[item.index];
+   const badge=document.createElement('div');badge.className='chip '+(result?.over_80m?'error':result?.layout.status==='experimental'?'ok':'warn');
+   badge.textContent=result?
+     'Rozstaw '+fmt(result.spacing_m*100)+' cm · '+(result.length_is_estimate?'wstępna długość':'długość narysowana')+' '+
+       fmt(result.checked_length_m)+' m z dojściami'+(result.over_80m?' — przekracza 80 m':' · zapas '+fmt(80-result.checked_length_m)+' m'):
+     'Nie przeliczono pętli. Szacunek długości: '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
+   entry.append(badge);
+   el.append(entry);
+ }
+}
+
 function validZones(roomPoints,zones){
  if(zones.length>40)return false;
  return zones.every((z,i)=>validDrawing(z.points)&&insideRoom(roomPoints,z.points) &&
