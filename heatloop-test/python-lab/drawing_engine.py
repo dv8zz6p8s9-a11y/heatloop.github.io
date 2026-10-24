@@ -121,8 +121,9 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None):
         raise ValueError("Rozstaw: 10, 12,5, 15 lub 20 cm")
     if not (0<diameter<=.05 and 0<=edge<=1 and 0<radius<=.5 and 0<=feed<=100 and 0<=back<=100):
         raise ValueError("Nieprawidłowe parametry rur")
-    estimates=[round(field.area/s,2) for field in fields]
-    est=heating.area/s+feed+back
+    estimates=[round(field.area/s+feed+back,2) for field in fields]
+    # Planned estimate assumes one separate pair of manifold runs per field.
+    est=sum(field.area/s+feed+back for field in fields)
 
     if len(fields)>1:
         layout={"status":"planned","kind":"multiple-heating-fields",
