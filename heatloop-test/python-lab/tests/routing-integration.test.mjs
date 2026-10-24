@@ -50,6 +50,6 @@ test('Schematic loop previews and their supply-return lines survive JSON storage
  assert.match(script,/loopPreview:validLoopPreview/);
 });
 test('UI warns if full-area estimate exceeds 80m although schematic is shorter',()=>{
- assert.match(script,/result\.coverage_warning/);
+ assert.match(script,/result\?\.coverage_warning/);
  assert.match(script,/result\.full_area_estimate_m/);
 });
