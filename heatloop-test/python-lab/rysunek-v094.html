@@ -233,6 +233,61 @@ function drawRoomDimensions(room){
  }
 }
 function pointsToMeter(p){return p.map(a=>[a[0]*sx,a[1]*sy])}
+function previewLength(result){
+ if(result?.approach?.status==='draft'&&Number.isFinite(result.visual_total_m))
+  return result.visual_total_m;
+ return Number.isFinite(result?.checked_length_m)?result.checked_length_m:null;
+}
+function refreshApproaches(){
+ if(!(sx>0&&sy>0))return;
+ let draft=0,blocked=0,noManifold=0,noLoop=0,tooLong=0;
+ for(const room of rooms){
+  if(!room.loop?.zone_results)continue;
+  const ownZones=roomZones(room);
+  for(const result of room.loop.zone_results){
+   const i=result.index,zone=ownZones[i]||null;
+   const settings=settingsFor(room,zone);
+   const manifold=manifolds.find(m=>m.id===settings.manifold_id);
+   const obstacles=[];
+   for(const otherRoom of rooms)for(const [j,otherZone] of roomZones(otherRoom).entries())
+    if(otherRoom!==room||j!==i)obstacles.push(otherZone.points);
+   result.approach=generateLoopApproaches(result.layout,manifold,{sx,sy,obstacles});
+   result.visual_total_m=null;result.visual_heating_m=null;result.visual_over_80m=null;
+   const approach=result.approach;
+   if(approach.status==='draft'){
+    if(!Number.isFinite(result.layout?.drawn_m)){noLoop++;continue}
+    result.visual_heating_m=result.layout.drawn_m;
+    result.visual_total_m=Number((result.visual_heating_m+approach.supply_m+approach.return_m).toFixed(3));
+    result.visual_over_80m=result.visual_total_m>80+1e-7;draft++;
+    if(result.visual_over_80m)tooLong++;
+   }else if(approach.status==='blocked')blocked++;
+   else if(approach.status==='no-manifold')noManifold++;
+   else noLoop++;
+  }
+ }
+ const el=$('routeSummary');
+ el.textContent='Dojścia (szkice): '+draft+' · bez rozdzielacza: '+noManifold+
+  ' · bez gotowej geometrii pętli: '+noLoop+' · zablokowane: '+blocked+
+  (tooLong?' · ponad 80 m: '+tooLong:'')+
+  '. Nie sprawdzono ścian, przejść, promieni gięcia ani kolizji innych rur.';
+ el.className='chip '+(blocked||tooLong?'error':'warn');
+}
+function drawApproaches(result){
+ const p=result.approach;
+ if(!showApproachRoutes||p?.status!=='draft')return;
+ for(const [points,color] of [[p.supply,'#087ba9'],[p.return,'#d78330']]){
+  if(!Array.isArray(points)||points.length<2)continue;
+  const props={points:points.map(pt=>pt.join(',')).join(' '),fill:'none',
+   'stroke-width':3,'stroke-dasharray':'9 6','stroke-linecap':'round',
+   'stroke-linejoin':'round','vector-effect':'non-scaling-stroke'};
+  layer.append(E('polyline',{...props,stroke:'#fff','stroke-width':6,
+    'stroke-dasharray':'none',opacity:.9}));
+  layer.append(E('polyline',{...props,stroke:color}));
+ }
+ for(const [point,color] of [[p.start_point,'#087ba9'],[p.end_point,'#d78330']])
+  layer.append(E('circle',{cx:point[0],cy:point[1],r:5,fill:color,stroke:'#fff',
+    'stroke-width':2,'vector-effect':'non-scaling-stroke'}));
+}
 function area(p){return Math.abs(p.reduce((s,a,i)=>{const b=p[(i+1)%p.length];return s+a[0]*b[1]-b[0]*a[1]},0))/2}
 function inside(p,r){let v=r.points,c=false;for(let i=0,j=v.length-1;i<v.length;j=i++){let a=v[i],b=v[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
 function polyline(ps,color,width=3){let el=E('polyline',{points:ps.map(p=>p.join(',')).join(' '),fill:'none',stroke:color,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round','vector-effect':'non-scaling-stroke'});layer.append(el)}
@@ -307,6 +362,7 @@ for(let r of rooms){
      const palette=colors[z.index%colors.length];
      for(const [key,color] of [['supply',palette],['return','#d78330'],['cap','#1b997b']])
        polyline(l[key].map(p=>[p[0]/sx,p[1]/sy]),color,3);
+     drawApproaches(z);
    }
    if(drawn<r.loop.zone_results.length){
      const tag=E('text',{x:mx,y:my+44,fill:'#9b631a','font-size':12,'text-anchor':'middle',
@@ -495,11 +551,18 @@ function renderCircuits(){
      value=>mutateLoopSettings(room,zone,{back_m:Number(value.replace(',','.'))}));
    entry.append(controls);
    const result=room.loop?.zone_results?.[item.index];
-   const badge=document.createElement('div');badge.className='chip '+(result?.over_80m?'error':result?.layout.status==='experimental'?'ok':'warn');
+   const badge=document.createElement('div');
+   const routed=result?.approach?.status==='draft',total=result?previewLength(result):null;
+   const over=Number.isFinite(total)&&total>80;
+   badge.className='chip '+(over?'error':'warn');
    badge.textContent=result?
-     'Rozstaw '+fmt(result.spacing_m*100)+' cm · '+(result.length_is_estimate?'wstępna długość':'długość narysowana')+' '+
-       fmt(result.checked_length_m)+' m z dojściami'+(result.over_80m?' — przekracza 80 m':' · zapas '+fmt(80-result.checked_length_m)+' m'):
-     'Nie przeliczono pętli. Szacunek długości: '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
+     (routed?
+        'SZKIC: pętla '+fmt(result.visual_heating_m)+' m + zasilanie '+fmt(result.approach.supply_m)+
+        ' m + powrót '+fmt(result.approach.return_m)+' m = '+fmt(total)+' m'+
+        (over?' · ponad 80 m!':' · wstępny zapas '+fmt(80-total)+' m'):
+        (result.layout.status==='experimental'?'Ślimak testowy. ':'Trasa grzewcza tylko planowana. ')+
+        fmt(result.checked_length_m)+' m (z ręcznymi dojściami). '+(result.approach?.reason||'')):
+      'Nie przeliczono pętli. Wstępny szacunek '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
    entry.append(badge);
    el.append(entry);
  }
@@ -547,8 +610,8 @@ function update(){
  $('heatArea').textContent=r&&sx&&sy?fmt(heatingAreaPx(r)*sx*sy):'—';
  $('excluded').textContent=r&&sx&&sy?fmt(Math.max(0,polygonArea(r.points)-heatingAreaPx(r))*sx*sy):'—';
  const rows=r?.loop?.zone_results;
- const total=rows?.reduce((sum,z)=>sum+z.checked_length_m,0);
- const smallest=rows?.length?Math.min(...rows.map(z=>80-z.checked_length_m)):null;
+ const total=rows?.reduce((sum,z)=>sum+(previewLength(z)||0),0);
+ const smallest=rows?.length?Math.min(...rows.map(z=>80-(previewLength(z)||0))):null;
  $('length').textContent=Number.isFinite(total)?fmt(total):'—';
  $('left').textContent=Number.isFinite(smallest)?fmt(smallest):'—';
  notifyHeat();if(activeTab==='loops')renderCircuits();if(activeTab==='manifolds')redrawManifolds();
