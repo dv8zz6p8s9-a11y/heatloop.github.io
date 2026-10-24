@@ -4,7 +4,7 @@ import {
  cleanRouting,effectiveEndpoints,getZoneTag,plannedCorridorPolyline,
  snapToFieldEdge,guideMetricLength
 } from '../technical-drawing.mjs';
-import {generateLoopApproaches,previewGuidedRoute} from '../approach-routing.mjs';
+import {generateLoopApproaches,previewGuidedRoute,previewParallelGuide} from '../approach-routing.mjs';
 
 const field=[[100,100],[400,100],[400,360],[100,360]];
 const layout={
@@ -80,4 +80,30 @@ test('Guided corridor length depends on calibration X and Y',()=>{
 test('Unsupported and uncalibrated loops must not claim valid physical ends',()=>{
  assert.equal(effectiveEndpoints({status:'planned'},.01,.01),null);
  assert.equal(effectiveEndpoints(layout,0,.01),null);
+});
+
+test('Parallel guide offsets supply and return centre lines by 10 cm',()=>{
+ const res=previewParallelGuide([10,10],[140,80],[140,100],[[60,10],[120,10]],{
+   sx:.01,sy:.01,corridorWidthM:.20,obstacles:[]
+ });
+ assert.equal(res.status,'draft');
+ assert.equal(res.parallel,true);
+ assert.equal(res.local_spacing_m,.10);
+ // For the first 2 straight guide segments, the two lane centerlines
+ // retain a distance of 10 px = 10 cm.
+ assert.equal(Math.abs(res.supply[2][1]-res.return.at(-3)[1]),10);
+ assert.notDeepEqual(res.supply,res.return.toReversed());
+});
+test('Narrow technical corridor fails rather than overlapping two runs',()=>{
+ const r=previewParallelGuide([0,0],[100,100],[120,100],[[30,0],[60,0]],{
+  sx:.01,sy:.01,obstacles:[],corridorWidthM:.11
+ });
+ assert.equal(r.status,'blocked');
+ assert.match(r.reason,/zbyt wąski/);
+});
+test('Dual-lane corridor refuses to cut through another heating zone',()=>{
+ const r=previewParallelGuide([10,10],[140,100],[140,120],[[60,10],[100,60]],{
+  sx:.01,sy:.01,obstacles:[[[40,0],[80,0],[80,40],[40,40]]],corridorWidthM:.20
+ });
+ assert.equal(r.status,'blocked');
 });
