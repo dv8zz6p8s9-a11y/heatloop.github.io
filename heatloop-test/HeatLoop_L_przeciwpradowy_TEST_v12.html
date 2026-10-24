@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HeatLoop • Ślimak przeciwprądowy L — test v1.2</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:#17344a;background:#edf3f7}*{box-sizing:border-box}body{max-width:1460px;margin:auto;padding:16px}h1{font-size:25px;margin:0}h1 em{font-style:normal;color:#0879a9}.small{font-size:12px;color:#597187;line-height:1.55}.layout{display:grid;grid-template-columns:322px minmax(0,1fr);gap:14px;margin-top:12px}.panel{background:#fff;border-radius:14px;padding:16px;box-shadow:0 3px 15px #1a3f5a11;min-width:0}h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:17px 0 7px}label{font-weight:650;font-size:12px;display:block;margin:9px 0 4px}input:not([type=checkbox]),select{width:100%;padding:9px 10px;border:1px solid #beced9;border-radius:8px;font-size:16px;min-width:0}select{padding:9px 10px;border:1px solid #beced9;border-radius:8px;font-size:16px;background:white}input[type=file]{font-size:12px;background:#f5fafc}input:disabled{background:#eaf0f3}button{border:0;border-radius:8px;padding:10px 12px;background:#087baa;color:#fff;font:700 13px system-ui;cursor:pointer}button.secondary{background:#526e83}button.ghost{background:#eaf2f7;color:#24526c}button:disabled{opacity:.47;cursor:not-allowed}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.two>*{min-width:0}.gridbuttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px}.full{width:100%;margin-top:10px}.hint{background:#eaf7fb;border-left:3px solid #1686b7;border-radius:6px;padding:9px 10px;font-size:12px;line-height:1.55;margin-top:11px}.warnbox{background:#fff6e6;border-left:3px solid #d79618;border-radius:6px;padding:9px 10px;font-size:12px;line-height:1.5;margin-top:10px}.status{padding:11px 13px;border-radius:9px;font-size:13px;font-weight:700;line-height:1.55;background:#fff4d9;color:#865600;margin-bottom:10px}.status.ok{background:#e9f7ee;color:#19623d}.status.bad{background:#fdeaea;color:#a42e35}.status.info{background:#eaf3f9;color:#255e7b}.canvas{border:1px solid #cbdde7;border-radius:10px;background:#f7fbff;overflow:hidden;position:relative}svg{display:block;width:100%;height:auto;max-height:70vh;touch-action:none;user-select:none}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:10px 0}.metric{padding:9px 7px;background:#eff6fa;border-radius:8px}.metric strong{display:block;font-size:18px;overflow-wrap:anywhere}.metric small{font-size:11px;color:#567085}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#526a7d;margin:8px 0}.stroke{width:22px;height:4px;display:inline-block;vertical-align:middle;border-radius:3px;margin-right:5px}.result{white-space:pre-wrap;font:12px/1.6 system-ui;color:#345267;margin:8px 0}.step{border:1px solid #cbdce7;padding:10px;border-radius:9px;margin-top:9px;background:#f7fafc}.step b{font-size:12px}.step p{font-size:12px;line-height:1.5;margin:5px 0}.tool{background:#e9f4fa;padding:8px 10px;border-radius:8px;font-size:12px;color:#235875;margin:8px 0}.buttonrow{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}.buttonrow button{flex:1;min-width:92px}.dim{color:#587184;font-size:11px}.metricsArea{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}.metricsArea>div{border:1px solid #d7e7f0;background:#f9fcfd;border-radius:7px;padding:7px}.metricsArea strong{display:block;font-size:15px}.metricsArea span{font-size:10px;color:#587085}.footer{font-size:12px;color:#61788a;margin:13px 0 3px;line-height:1.5}.tip{font-size:12px;color:#486779;margin-top:7px;line-height:1.5}details{font-size:12px;line-height:1.55;color:#456579}summary{font-weight:700;cursor:pointer}@media(max-width:850px){body{padding:10px}.layout{grid-template-columns:1fr}.panel{padding:13px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}h1{font-size:21px}svg{max-height:none}}@media print{body{background:#fff}.layout{display:block}.panel:first-child,.buttonrow,.step{display:none}.canvas svg{max-height:80vh}}
+</style></head>
+<body><h1><em>HeatLoop</em> — ślimak przeciwprądowy L</h1><div class="small">TEST v1.2 · Jeden ciągły przewód: zasilanie do środka → nawrót → powrót między zwojami · podkład rysunku JPG / PNG / WEBP · offline</div>
+<div class="layout"><section class="panel">
+<h2>1. Wymiary pomieszczenia L</h2>
+<div class="two"><div><label for="w">Całkowita szerokość (m)</label><input id="w" type="number" min="1" step="0.01" value="5"></div><div><label for="h">Całkowita wysokość (m)</label><input id="h" type="number" min="1" step="0.01" value="4"></div><div><label for="nw">Wycięcie z prawej (m)</label><input id="nw" type="number" min="0.1" step="0.01" value="2"></div><div><label for="nh">Wycięcie od góry (m)</label><input id="nh" type="number" min="0.1" step="0.01" value="2"></div></div>
+<label for="rotate">Orientacja L na podglądzie (tryb ręczny)</label><select id="rotate"><option value="0">0° — wycięcie u góry po prawej</option><option value="90">90° — obrócone L</option><option value="180">180° — obrócone L</option><option value="270">270° — obrócone L</option></select><div class="dim">Obrót podglądu nie zmienia wymiarów ani długości pętli. Dla wczytanego rysunku obowiązuje jego rzeczywiste położenie.</div><h3>2. Parametry rury</h3>
+<div class="two"><div><label for="dia">Średnica zewn. (mm)</label><input id="dia" type="number" min="8" max="40" step="1" value="16"></div><div><label for="pitch">Rozstaw osiowy (cm)</label><select id="pitch"><option value="100">10 cm</option><option value="125">12,5 cm</option><option value="150">15 cm</option><option value="200" selected>20 cm</option></select></div><div><label for="wall">Ściana → krawędź rury (mm)</label><input id="wall" type="number" min="0" max="600" step="5" value="100"></div><div><label for="bend">Minimalny promień po osi (mm)</label><input id="bend" type="number" min="20" max="500" step="5" value="80"></div></div>
+<label for="feed">Rezerwa na oba dojścia do rozdzielacza (m)</label><input id="feed" type="number" min="0" max="100" step="0.5" value="4">
+<div class="hint">Maksymalna długość <b>80 mb (niezmienna)</b>. Odstęp od ściany mierzony do <b>zewnętrznej krawędzi rury</b>; odległość osi = odstęp + połowa średnicy. Rozstaw liczony oś–oś. Generator nie zagęszcza sam rur. Jeśli nie może wypełnić pomieszczenia w limicie 80 m, oznacza pozostawione pola jako wymagające oceny. <b>Uwaga:</b> rozstaw 10–15 cm może wymagać specjalnego nawrotu łezkowego, którego ta wersja jeszcze nie wyznacza, jeśli R jest zbyt duży.</div>
+<label for="variant">Orientacja układu</label><select id="variant"><option value="auto">Automatycznie — porównaj warianty</option><option value="a">Wariant A — zewnętrzny obieg od dołu</option><option value="b">Wariant B — zamienione ramiona L</option></select>
+<button class="full" id="generate">Optymalizuj ślimak przeciwprądowy</button>
+<div class="step"><b>3. Wczytaj rysunek techniczny</b><p>Dodaj zdjęcie lub skan rzutu. Wskaż dwa końce znanego wymiaru poziomego; zalecane również dwa końce pionowego. Następnie zaznacz 6 narożników L.</p>
+<label for="drawing">Plik JPG, PNG lub WEBP</label><input id="drawing" type="file" accept="image/png,image/jpeg,image/webp">
+<div class="two"><div><label for="known">Wymiar poziomy (m)</label><input id="known" type="number" min="0.01" step="0.01" value="3"></div><div><label for="opacity">Przezroczystość podkładu (%)</label><input id="opacity" type="number" min="10" max="100" step="5" value="65"></div></div>
+<label for="knownV">Wymiar pionowy (m) — opcjonalna druga kalibracja</label><input id="knownV" type="number" min="0.01" step="0.01" value="2"><div class="gridbuttons"><button id="calibrate" class="secondary" disabled>1. Poziom (2 punkty)</button><button id="calibrateV" class="secondary" disabled>2. Pion (2 punkty)</button><button id="trace" class="secondary" disabled>3. Obrys L (6 punktów)</button><button id="undo" class="ghost" disabled>Cofnij punkt</button><button id="resetTrace" class="ghost" disabled>Usuń zaznaczenie</button></div>
+<div id="calibrationInfo" class="hint" aria-live="polite">Po wczytaniu rysunku skalibruj poziom. Dla zdjęć lub rozciągniętych skanów skalibruj również pion.</div><div id="toolHint" class="tool">Wczytaj rysunek, aby rozpocząć kalibrację.</div>
+<details><summary>Kolejność zaznaczania narożników L</summary><p>Klikaj kolejno: (1) lewy górny, (2) prawy górny pionowego ramienia, (3) wewnętrzny narożnik L, (4) prawy górny poziomego ramienia, (5) prawy dolny, (6) lewy dolny. Rysunek może być obrócony, ale ściany powinny tworzyć kąty proste. Wymiary wyliczymy z kalibracji.</p></details></div>
+<div class="gridbuttons"><button class="secondary" id="saveJson">Eksport JSON</button><button class="secondary" id="saveSvg">Zapisz rysunek SVG</button></div>
+</section>
+<section class="panel"><div id="status" class="status info" role="status">Przeliczanie…</div>
+<div class="canvas"><svg id="plot" viewBox="0 0 940 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pomieszczenie L i jedna przeciwprądowa pętla"></svg></div>
+<div class="legend"><span><i class="stroke" style="background:#087eb8"></i>Zasilanie do środka</span><span><i class="stroke" style="background:#df7b24"></i>Powrót</span><span><i class="stroke" style="background:#169b72"></i>Nawrót w środku</span><span><i class="stroke" style="background:#445b71"></i>Obrys</span><span><i class="stroke" style="background:#e8c277"></i>Obszar pominięty (poglądowo)</span></div>
+<div class="metrics"><div class="metric"><strong id="area">—</strong><small>Powierzchnia L (m²)</small></div><div class="metric"><strong id="drawn">—</strong><small>Trasa narysowana (m)</small></div><div class="metric"><strong id="total">—</strong><small>Z rezerwą dojść (m)</small></div><div class="metric"><strong id="left">—</strong><small>Zapas do 80 m</small></div></div>
+<h3>Powierzchnia i kontrola limitu na bieżąco</h3><div class="metricsArea"><div><strong id="selectArea">—</strong><span>Zaznaczony obszar (m²)</span></div><div><strong id="selectEst">—</strong><span>Szacunek rury (m)</span></div><div><strong id="selectRemain">—</strong><span>Zapas do 80 m</span></div></div>
+<div class="tip" id="selectHint">Przy obrysowywaniu planu pomiar zmienia się przy każdym wskazanym punkcie oraz przy ruchu kursora. Wynik powierzchniowy jest orientacyjny.</div>
+<div class="metricsArea"><div><strong id="coverage">—</strong><span>Pokrycie geometryczne (orientacyjne)</span></div><div><strong id="variants">—</strong><span>Przeanalizowane trasy</span></div><div><strong id="chosen">—</strong><span>Wybrana orientacja</span></div></div><div class="hint">Pokrycie to orientacyjny pomiar odległości od rur, <b>nie</b> wynik obliczeń cieplnych. Niewypełnione fragmenty nie są dogęszczane. Pokazane połączenie nie zastępuje projektu hydraulicznego i dobiegu do rozdzielacza.</div><h3>Raport generatora</h3><div class="result" id="report"></div>
+<div class="buttonrow"><button class="ghost" id="preset220">Przykład: 20 cm</button><button class="ghost" id="preset150">Test: 15 cm</button><button class="ghost" id="presetNarrow">Test: 10 cm</button></div>
+<div class="warnbox"><b>Zakres testu:</b> pokazana trasa jest przeciwprądowa i ciągła w granicach pomieszczenia. Końców do rozdzielacza jeszcze nie wyznaczamy — rezerwa jest wpisywana ręcznie. Program sprawdza geometrię numerycznie, ale nie zastępuje wykonawczego projektu ani doboru cieplnego.</div>
+<div class="footer">Plik działa lokalnie, nie wysyła wczytanego rysunku na serwer. Obsługiwane podkłady to obrazy, nie PDF. Dwa kierunki kalibracji służą do korygowania nierównomiernego skalowania obrazu. Przy perspektywie fotograficznej lub pochylonych ścianach wynik może być niedokładny.</div>
+</section></div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), n=id=>Number($(id).value), ns='http://www.w3.org/2000/svg', plot=$('plot');
+const V=(x,y)=>({x,y}),add=(a,b)=>V(a.x+b.x,a.y+b.y),sub=(a,b)=>V(a.x-b.x,a.y-b.y),mul=(a,t)=>V(a.x*t,a.y*t),dot=(a,b)=>a.x*b.x+a.y*b.y,cross=(a,b)=>a.x*b.y-a.y*b.x,len=a=>Math.hypot(a.x,a.y),dist=(a,b)=>len(sub(a,b)),norm=a=>mul(a,1/len(a)),right=u=>V(-u.y,u.x),clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),fmt=x=>Number.isFinite(x)?x.toFixed(2).replace('.',','):'—';
+let imageURL='',imageData='',imageW=0,imageH=0,imageBox=null,mode='',calPts=[],calVertPts=[],corners=[],hover=null,transform=null,result=null,lastP={};
+function e(tag,attrs={},parent=plot){const x=document.createElementNS(ns,tag);for(let [k,v] of Object.entries(attrs))x.setAttribute(k,String(v));parent.appendChild(x);return x;}
+function txt(x,y,t,size=14,color='#28516d'){const el=e('text',{x,y,'font-size':size,fill:color,'font-weight':600});el.textContent=t;return el;}
+function polyPoints(points){return points.map(p=>`${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')}
+function lengthOf(points){let r=0;for(let i=1;i<points.length;i++)r+=dist(points[i-1],points[i]);return r;}
+function areaPolygon(points){let s=0;for(let i=0;i<points.length;i++){let a=points[i],b=points[(i+1)%points.length];s+=cross(a,b)}return Math.abs(s)/2;}
+function inside(p,W,H,cx,cy){return p.x>=-0.01&&p.y>=-0.01&&p.x<=W+0.01&&p.y<=H+0.01&&(p.x<=cx+0.01||p.y>=cy-0.01)}
+function segDistance(p,a,b){let v=sub(b,a),t=clamp(dot(sub(p,a),v)/dot(v,v),0,1);return dist(p,add(a,mul(v,t)))}
+function outline(W,H,cx,cy){return [V(0,0),V(cx,0),V(cx,cy),V(W,cy),V(W,H),V(0,H)]}
+function wallDistance(p,shape){return Math.min(...shape.map((q,i)=>segDistance(p,q,shape[(i+1)%shape.length])))}
+function formParams(){let W=n('w')*1000,H=n('h')*1000,NW=n('nw')*1000,NH=n('nh')*1000,d=n('dia'),s=n('pitch'),a=n('wall'),r=n('bend'),feed=n('feed'),c=a+d/2,cx=W-NW,cy=H-NH;let all=[W,H,NW,NH,d,s,a,r,feed];if(!all.every(Number.isFinite)||W<=0||H<=0||NW<=0||NH<=0||cx<=0||cy<=0||d<=0||![100,125,150,200].includes(s)||s<=d||a<0||r<d/2||feed<0||NW>=W||NH>=H)throw Error('Niepoprawne parametry wymiarów lub rury.');return {W,H,NW,NH,cx,cy,d,s,a,r,c,feed,shape:outline(W,H,cx,cy)};}
+// Kolejne kontury L prowadzą tylko zasilanie. Przeskok do następnego konturu = 2× rozstaw.
+// Drugi przebieg to offset zasilania o jeden rozstaw po jego wewnętrznej stronie.
+function makeSupply(p){let {W,H,cx,cy,s,c,r}=p,points=[],rings=[],q=c;
+const push=x=>{if(!points.length||dist(points[points.length-1],x)>.0001)points.push(x)};
+for(let k=0;k<80;k++,q+=2*s){let leftWidth=cx-2*q,bottomHeight=(H-cy)-2*q,minWidth=Math.max(s,2*r+ p.d);
+let type='',top=[];
+if(leftWidth>=minWidth&&bottomHeight>=minWidth){type='L';top=[V(q,q),V(cx-q,q),V(cx-q,cy+q),V(W-q,cy+q),V(W-q,H-q)];}
+else if(leftWidth>=minWidth){type='pionowe ramię';top=[V(q,q),V(cx-q,q),V(cx-q,H-q)];}
+else if(bottomHeight>=minWidth){type='poziome ramię';top=[V(q,cy+q),V(W-q,cy+q),V(W-q,H-q)];}
+else break;
+// Podczas przejścia z pierścienia do następnego nie wolno przecinać poprzednich odcinków.
+const prevY=k===0?H-q:H-(q-2*s);
+if(prevY<=top[0].y+r)break;
+const terminal=V(q+2*s,H-q);
+if(terminal.x>top[top.length-1].x-2*r-p.d)break;
+let backup=points.length;
+push(V(q,prevY));for(let x of top)push(x);push(terminal);
+// Jeśli ostatni zwój jest niepotrzebny lub zbyt ciasny dla powrotu, oceni to późniejsza kontrola.
+rings.push({q,type});
+}
+return {points,rings};}
+function offsetRight(points,d){const segments=[];for(let i=1;i<points.length;i++){let u=norm(sub(points[i],points[i-1])),v=add(points[i-1],mul(right(u),d));segments.push({u,v})}
+const out=[];for(let i=0;i<points.length;i++){
+if(i===0||i===points.length-1){let u=(i===0?segments[0]:segments[segments.length-1]).u;out.push(add(points[i],mul(right(u),d)));continue;}
+let a=segments[i-1],b=segments[i],det=cross(a.u,b.u);if(Math.abs(det)<1e-8){out.push(add(points[i],mul(right(a.u),d)));continue;}
+let t=cross(sub(b.v,a.v),b.u)/det;out.push(add(a.v,mul(a.u,t)));}
+return out;}
+function roundPolyline(points,r,step=14){if(points.length<2)throw Error('Nie ma trasy do zaokrąglenia.');let cuts=Array(points.length).fill(null);let bendList=[];
+for(let i=1;i<points.length-1;i++){
+let a=norm(sub(points[i],points[i-1])),b=norm(sub(points[i+1],points[i])),c=clamp(dot(a,b),-1,1),theta=Math.acos(c);
+if(theta<.001)continue;if(theta>Math.PI-.001)throw Error('Niedopuszczalny zwrot o 180° poza środkiem spirali.');
+let t=r*Math.tan(theta/2),L=dist(points[i-1],points[i]),R=dist(points[i],points[i+1]);
+if(t>L-.5||t>R-.5)throw Error('Brakuje miejsca na promień gięcia przy zakręcie '+i+'.');
+let begin=sub(points[i],mul(a,t)),end=add(points[i],mul(b,t)),turn=Math.sign(cross(a,b)),center=add(begin,mul(right(a),turn*r)),ang0=Math.atan2(begin.y-center.y,begin.x-center.x),sweep=turn*theta;
+cuts[i]={begin,end,center,ang0,sweep,t};bendList.push({index:i,turn,t});}
+for(let i=0;i<points.length-1;i++){let outT=i>0&&cuts[i]?cuts[i].t:0,inT=cuts[i+1]?cuts[i+1].t:0;if(outT+inT>dist(points[i],points[i+1])-.5)throw Error('Łuki gięcia nakładają się na segmencie '+i+'.')}
+let arr=[points[0]],push=p=>{if(dist(arr[arr.length-1],p)>1e-4)arr.push(p)};
+for(let i=1;i<points.length-1;i++){if(!cuts[i]){push(points[i]);continue}let q=cuts[i];push(q.begin);let N=Math.max(3,Math.ceil(Math.abs(q.sweep)*r/step));for(let j=1;j<=N;j++){let a=q.ang0+q.sweep*j/N;push(add(q.center,V(Math.cos(a)*r,Math.sin(a)*r)));}}
+push(points[points.length-1]);return arr;}
+function cap180(end,prior,s,step=14){let u=norm(sub(end,prior)),R=s/2,nv=right(u),center=add(end,mul(nv,R)),startA=Math.atan2(-nv.y,-nv.x),n=Math.max(16,Math.ceil(Math.PI*R/step)),pts=[];for(let i=0;i<=n;i++){let a=startA+Math.PI*i/n;pts.push(add(center,V(Math.cos(a)*R,Math.sin(a)*R)));}return pts;}
+function segmentIntersect(a,b,c,d){const r=sub(b,a),s=sub(d,c),det=cross(r,s);if(Math.abs(det)<1e-9)return false;let t=cross(sub(c,a),s)/det,u=cross(sub(c,a),r)/det;return t>1e-5&&t<1-1e-5&&u>1e-5&&u<1-1e-5;}
+function validateRoute(path,p){let worstWall=Infinity;for(let i=0;i<path.length;i++){let x=path[i];if(!inside(x,p.W,p.H,p.cx,p.cy))return {ok:false,reason:'Trasa wychodzi poza pomieszczenie.',wall:worstWall};let w=wallDistance(x,p.shape);worstWall=Math.min(worstWall,w);if(w<p.c-0.7)return {ok:false,reason:`Trasa za blisko ściany (${Math.round(w)} mm do osi, wymagane ${p.c} mm).`,wall:worstWall}}
+// Siatka przestrzenna pozwala wykryć zwarcie nie sąsiadujących części rur.
+const grid=new Map(),cell=Math.max(70,p.d*4),ignore=Math.max(2*p.r+1,p.s*.9),arcs=[0];for(let i=1;i<path.length;i++)arcs[i]=arcs[i-1]+dist(path[i-1],path[i]);
+for(let i=0;i<path.length;i++){const a=path[i],ix=Math.floor(a.x/cell),iy=Math.floor(a.y/cell);for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
+let old=grid.get(`${ix+dx},${iy+dy}`);if(!old)continue;
+for(let j of old)if(arcs[i]-arcs[j]>ignore&&dist(a,path[j])<p.d-0.5)return {ok:false,reason:'Rury nakładają się lub przecinają w trasie.',wall:worstWall};}
+let key=`${ix},${iy}`;if(!grid.has(key))grid.set(key,[]);grid.get(key).push(i)}
+return {ok:true,reason:'Kontrola obrysu i przecięć trasy zaliczona (bez podejść do rozdzielacza).',wall:worstWall};}
+function reflectParameters(p){
+ const W=p.H,H=p.W,NW=p.H-p.NH,NH=p.W-p.NW,cx=W-NW,cy=H-NH;
+ return {...p,W,H,NW,NH,cx,cy,shape:outline(W,H,cx,cy)};
+}
+function reflectPoint(a,p){return V(p.W-a.y,p.H-a.x)}
+// Pokrycie mierzymy próbkowaniem powierzchni i odległością do osi rury.
+// Nie jest to symulacja rozkładu ciepła ani gwarancja ułożenia instalacji.
+function coverageScore(path,p){
+ const cell=Math.max(55,Math.min(p.s/2,100)),bucket=new Map();
+ const key=(x,y)=>`${x},${y}`;
+ for(let i=1;i<path.length;i++){
+  const a=path[i-1],b=path[i],N=Math.max(1,Math.ceil(dist(a,b)/(cell*.35)));
+  for(let k=0;k<=N;k++){
+   let f=k/N,pt=V(a.x+(b.x-a.x)*f,a.y+(b.y-a.y)*f),ix=Math.floor(pt.x/cell),iy=Math.floor(pt.y/cell),index=key(ix,iy);
+   if(!bucket.has(index))bucket.set(index,[]);bucket.get(index).push(pt);
+  }
+ }
+ let total=0,hit=0,limit=p.s*.76;
+ for(let x=cell/2;x<p.W;x+=cell)for(let y=cell/2;y<p.H;y+=cell){
+  if(!inside(V(x,y),p.W,p.H,p.cx,p.cy))continue;
+  total++;let ix=Math.floor(x/cell),iy=Math.floor(y/cell),found=false;
+  for(let dx=-2;dx<=2&&!found;dx++)for(let dy=-2;dy<=2&&!found;dy++){
+   let data=bucket.get(key(ix+dx,iy+dy));if(!data)continue;
+   for(let pt of data){if(Math.hypot(pt.x-x,pt.y-y)<=limit){found=true;break;}}
+  }
+  if(found)hit++;
+ }
+ return total?hit/total:0;
+}
+function verifyIntersections(path,p){
+ // Każdy fragment jest sprawdzany z nieprzyległymi odcinkami w lokalnych komórkach.
+ const cell=Math.max(60,p.s/2),grid=new Map(),key=(x,y)=>`${x},${y}`;
+ let minClear=Infinity,conflicts=0;
+ let accumulated=[0];for(let i=1;i<path.length;i++)accumulated[i]=accumulated[i-1]+dist(path[i-1],path[i]);
+ for(let i=1;i<path.length;i++){
+  const a=path[i-1],b=path[i],ix0=Math.floor(Math.min(a.x,b.x)/cell)-1,ix1=Math.floor(Math.max(a.x,b.x)/cell)+1,iy0=Math.floor(Math.min(a.y,b.y)/cell)-1,iy1=Math.floor(Math.max(a.y,b.y)/cell)+1;
+  let checked=new Set();for(let ix=ix0;ix<=ix1;ix++)for(let iy=iy0;iy<=iy1;iy++){
+   for(const j of grid.get(key(ix,iy))||[]){if(checked.has(j)||i-j<=3)continue;checked.add(j);
+    if(accumulated[i-1]-accumulated[j]<Math.max(3*p.d,30))continue;
+    const c=path[j-1],d=path[j];
+    if(segmentIntersect(a,b,c,d))return {ok:false,reason:'Przecięcie osi rur (segmenty '+i+' i '+j+').'};
+    // Segmenty bardzo blisko siebie mimo braku przecięcia są niedopuszczalne.
+    const clearance=Math.min(segDistance(a,c,d),segDistance(b,c,d),segDistance(c,a,b),segDistance(d,a,b));
+    minClear=Math.min(minClear,clearance);
+    if(clearance<p.d-.6)conflicts++;
+   }
+  }
+  if(conflicts)return {ok:false,reason:'Kolizja rur: osie są bliżej niż średnica rury.'};
+  for(let ix=ix0;ix<=ix1;ix++)for(let iy=iy0;iy<=iy1;iy++){
+   let k=key(ix,iy);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);
+  }
+ }
+ return {ok:true,minClear:Number.isFinite(minClear)?minClear:null};
+}
+function buildVariant(p,count,mirror,extendY=null){
+ const p0=mirror?reflectParameters(p):p;
+ const chosen=makeSupplyLimit(p0,count);
+ const end=chosen[chosen.length-1],previous=chosen[chosen.length-2];
+ if(extendY!==null){
+  if(!(previous.x>end.x&&Math.abs(previous.y-end.y)<.001&&extendY<end.y))throw Error('Brak możliwości przedłużenia środka w tym kierunku.');
+  chosen.push(V(end.x,extendY));
+ }
+ const ret=offsetRight(chosen,p0.s),going=roundPolyline(chosen,p0.r),back=roundPolyline(ret.slice().reverse(),p0.r),cap=cap180(chosen[chosen.length-1],chosen[chosen.length-2],p0.s);
+ const conv=a=>mirror?a.map(t=>reflectPoint(t,p)):a;
+ const supply=conv(going),returnPipe=conv(back),centerCap=conv(cap);
+ const whole=supply.concat(centerCap.slice(1),returnPipe.slice(1));
+ const chk=validateRoute(whole,p);
+ if(!chk.ok)throw Error(chk.reason);
+ const intersections=verifyIntersections(whole,p);
+ if(!intersections.ok)throw Error(intersections.reason);
+ const drawn=lengthOf(whole)/1000,all=drawn+p.feed;
+ return {supply,cap:centerCap,return:returnPipe,whole,rings:Array.from({length:count},(_,i)=>({type:'warstwa '+(i+1)})),drawn,all,check:chk,passes:count,omitted:0,orientation:mirror?'B':'A',minClear:intersections.minClear,centerExtensionM:extendY===null?0:(end.y-extendY)/1000};
+}
+function createRoute(p){
+ if(p.s<2*p.r)throw Error(`Przy rozstawie ${p.s/10} cm półkolisty nawrót wymaga R ≤ ${p.s/2} mm; ustawiono R=${p.r} mm. Nawrót omega nie jest jeszcze obliczany — zmiana R może być dopuszczalna tylko według danych producenta rury.`);
+ const selected=$('variant').value,mirrors=selected==='a'?[false]:selected==='b'?[true]:[false,true];
+ let tested=0,valid=0,best=null,bestBeyond=null,failures=[];
+ for(const mirror of mirrors){const model=mirror?reflectParameters(p):p;const rings=makeSupply(model).rings.length;
+  if(!rings){failures.push('Brak miejsca na ślimak w orientacji '+(mirror?'B':'A'));continue;}
+  for(let count=1;count<=rings;count++){
+   tested++;
+   try {const candidate=buildVariant(p,count,mirror);valid++;
+    candidate.coverage=candidate.all<=80+1e-8?coverageScore(candidate.whole,p):0;
+    const score=candidate.coverage*1000+Math.min(candidate.all,80)*.0001;
+    candidate.score=score;
+    if(candidate.all<=80+1e-8){if(!best||score>best.score)best=candidate;}
+    else if(!bestBeyond||candidate.all<bestBeyond.all)bestBeyond=candidate;
+    if(candidate.all>80&&(best||candidate.all>95))break;
+   }catch(ex){if(failures.length<12)failures.push((mirror?'B':'A')+' × '+count+': '+ex.message);}
+  }
+ }
+ // Poszerzamy środkową część tylko w ramach jednej pętli i dostępnego limitu.
+ if(best&&best.coverage>=.65&&best.coverage<.997&&(p.W*p.H-p.NW*p.NH)<=25000000){
+  const mirror=best.orientation==='B',p0=mirror?reflectParameters(p):p;
+  const pts=makeSupplyLimit(p0,best.passes),end=pts[pts.length-1],prev=pts[pts.length-2];
+  if(prev.x>end.x&&Math.abs(prev.y-end.y)<.001){
+   const base=best;
+   for(let k=1;k<=12;k++){
+    let delta=k*p.s,targetY=end.y-delta;
+    if(targetY<p0.c+p0.r)break;
+    if(base.all+2*delta/1000>80+3)break;
+    tested++;
+    try{
+     let candidate=buildVariant(p,best.passes,mirror,targetY);
+     if(candidate.all>80+1e-8)continue;
+     valid++;candidate.coverage=coverageScore(candidate.whole,p);
+     candidate.score=candidate.coverage*1000+Math.min(candidate.all,80)*.0001;
+     if(candidate.score>best.score)best=candidate;
+    }catch(ex){}
+   }
+  }
+ }
+ const choice=best||bestBeyond;
+ if(!choice)throw Error('Brak prawidłowej trasy dla obu orientacji. '+failures.slice(0,2).join('; '));
+ choice.tested=tested;choice.valid=valid;choice.isWithinLimit=!!best;choice.fallback=!best;
+ choice.failures=failures;return choice;
+}
+
+function makeSupplyLimit(p,N){let {W,H,cx,cy,s,c,r}=p,pts=[];const push=x=>{if(!pts.length||dist(pts[pts.length-1],x)>0.001)pts.push(x)};
+for(let k=0;k<N;k++){let q=c+2*s*k,leftWidth=cx-2*q,bot=(H-cy)-2*q,minWidth=Math.max(s,2*r+p.d);let nodes;
+if(leftWidth>=minWidth&&bot>=minWidth)nodes=[V(q,q),V(cx-q,q),V(cx-q,cy+q),V(W-q,cy+q),V(W-q,H-q)];
+else if(leftWidth>=minWidth)nodes=[V(q,q),V(cx-q,q),V(cx-q,H-q)];
+else nodes=[V(q,cy+q),V(W-q,cy+q),V(W-q,H-q)];
+push(V(q,k===0?H-q:H-(q-2*s)));nodes.forEach(push);push(V(q+2*s,H-q));}
+return pts;}
+function viewTransform(p){const pad=45,k=Math.min((940-2*pad)/p.W,(630-2*pad)/p.H);let sx=(940-p.W*k)/2,sy=(630-p.H*k)/2;return {F:x=>V(sx+x.x*k,sy+x.y*k),from:q=>V((q.x-sx)/k,(q.y-sy)/k),k};}
+function drawLine(points,map,color,width,attrs={}){e('polyline',{points:polyPoints(points.map(map)),fill:'none',stroke:color,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',...attrs})}
+function drawBackground(){if(!imageData)return;let iw=imageW,ih=imageH,scale=Math.min(940/iw,630/ih),width=iw*scale,height=ih*scale,x=(940-width)/2,y=(630-height)/2;imageBox={x,y,width,height};e('image',{href:imageData,x,y,width,height,opacity:clamp(n('opacity')/100,.1,1),'preserveAspectRatio':'none'});}
+function dotPoint(p,color='#0c85b5',textLabel=''){e('circle',{cx:p.x,cy:p.y,r:5,stroke:'#fff','stroke-width':2,fill:color});if(textLabel)txt(p.x+9,p.y-8,textLabel,12,color);}
+function rotatePreview(a,p){const rot=Number($('rotate').value);if(rot===90)return V(p.H-a.y,a.x);if(rot===180)return V(p.W-a.x,p.H-a.y);if(rot===270)return V(a.y,p.W-a.x);return a;}
+function drawOmitted(p,route,F){
+ if(!route||route.coverage>.995)return;
+ const step=Math.max(115,p.s*.7),visible=[],limit=p.s*.76;
+ for(let x=step/2;x<p.W;x+=step)for(let y=step/2;y<p.H;y+=step){
+  const q=V(x,y);if(!inside(q,p.W,p.H,p.cx,p.cy)||wallDistance(q,p.shape)<=p.c)continue;
+  let shortest=Infinity;for(let i=1;i<route.whole.length;i++){
+   const a=route.whole[i-1],b=route.whole[i];
+   if(Math.abs(a.x-x)>p.s+Math.abs(b.x-a.x)||Math.abs(a.y-y)>p.s+Math.abs(b.y-a.y))continue;
+   shortest=Math.min(shortest,segDistance(q,a,b));if(shortest<=limit)break;
+  }
+  if(shortest>limit)visible.push(F(q));
+ }
+ if(visible.length){let d=visible.map(p=>`M ${p.x-3.3} ${p.y-3.3} h 6.6 v 6.6 h -6.6 z`).join(' ');e('path',{d,fill:'#e7b454',opacity:'.44','pointer-events':'none'});}
+}
+function currentModel(){try{return formParams()}catch(_){return null}}
+function render(){plot.replaceChildren();drawBackground();let p=currentModel(),canDraw=p&&result&&result.route;
+let F=null;
+if(transform&&transform.ux&&corners.length===6&&imageData&&p){F=x=>add(transform.origin,add(mul(transform.ux,x.x/transform.mmPerX),mul(transform.uy,x.y/transform.mmPerY)));}
+else if(!imageData&&p){const t=Number($('rotate').value),z=(t===90||t===270)?{W:p.H,H:p.W}:p;const mapper=viewTransform(z).F;F=x=>mapper(rotatePreview(x,p));}
+if(p&&F){const sh=p.shape; e('polygon',{points:polyPoints(sh.map(F)),stroke:'#324e63','stroke-width':2.2,fill:imageData?'#cfebfd':'#e4f1fc','fill-opacity':imageData?'.16':'.95','stroke-linejoin':'round'});
+if(canDraw){let r=result.route;drawOmitted(p,r,F);let k=transform?1:dist(F(V(1000,0)),F(V(0,0)));let width=clamp((transform? p.d/Math.min(transform.mmPerX,transform.mmPerY) : p.d*(k/1000)),2,5.5);
+drawLine(r.supply,F,'#067db5',width);drawLine(r.return,F,'#df7922',width);drawLine(r.cap,F,'#159f76',width);dotPoint(F(r.supply[0]),'#0b78b1','ZAS');dotPoint(F(r.return[r.return.length-1]),'#db7521','POW');}
+}
+if((mode==='cal'||mode==='calV')&&(mode==='cal'?calPts:calVertPts).length){const active=mode==='cal'?calPts:calVertPts;drawLine(active.concat(hover?[hover]:[]),x=>x,mode==='cal'?'#f1aa1f':'#8c3bb2',2,{'stroke-dasharray':'5 5'});active.forEach((p,i)=>dotPoint(p,mode==='cal'?'#c37716':'#8c3bb2',String(i+1)));}
+if(transform&&calPts.length===2){drawLine(calPts,x=>x,'#c17815',2,{'stroke-dasharray':'5 6'});}if(transform&&calVertPts.length===2){drawLine(calVertPts,x=>x,'#8c3bb2',2,{'stroke-dasharray':'5 6'});}
+if(mode==='trace'||corners.length){let pts=corners.concat(mode==='trace'&&hover?[hover]:[]);if(pts.length>1)drawLine(pts,x=>x,'#b138c4',2.3,{'stroke-dasharray':'6 4'});corners.forEach((p,i)=>dotPoint(p,'#a139b5',String(i+1)));}
+}
+function ui(status,cls='info'){let x=$('status');x.textContent=status;x.className='status '+cls;}
+function updateArea(){let p=currentModel(),points=corners.concat(mode==='trace'&&hover?[hover]:[]),area=0;
+if(points.length>=3&&transform)area=areaPolygon(points)*transform.mmPerX*transform.mmPerY/1e6;
+else if(p&&!imageData)area=(p.W*p.H-p.NW*p.NH)/1e6;
+else if(p&&transform&&corners.length===6)area=(p.W*p.H-p.NW*p.NH)/1e6;
+let est=area&&p?area/(p.s/1000)+p.feed:0,rem=80-est;
+$('selectArea').textContent=area?fmt(area):'—';$('selectEst').textContent=area&&p?fmt(est):'—';$('selectRemain').textContent=area&&p?fmt(rem):'—';
+const hint=$('selectHint');if(area&&p){let actual=result&&result.route&&(corners.length===6||!imageData)?result.route.all:null;hint.style.color=actual!==null?(actual>80?'#ab2935':'#3b687a'):rem<0?'#ab2935':rem<8?'#90620c':'#3b687a';hint.textContent=(actual!==null?`Szacunek powierzchniowy: ${fmt(est)} m, a dokładna trasa narysowana z rezerwą: ${fmt(actual)} m. ${actual>80?'Trasa przekracza limit 80 m.':'Trasa mieści się w limicie 80 m.'} `:(rem<0?`Szacunkowa długość przekracza 80 m o ${fmt(-rem)} m. `:rem<8?'Szacunek jest blisko limitu 80 m. ':'Szacunek jest poniżej 80 m. '))+`Powierzchnia ${fmt(area)} m². Podczas zaznaczania długość jest tylko szacunkiem.`}
+else {hint.style.color='#587184';hint.textContent='Po kalibracji i zaznaczeniu kolejnych narożników L powierzchnia oraz ostrzeżenia zmieniają się na bieżąco.'}}
+function calculate(){try{let p=formParams();if(imageData&&!(transform&&corners.length===6&&transform.ux)){result={route:null,error:'Wczytany rysunek wymaga kalibracji i zaznaczenia 6 narożników L. Obrys i pętla nie będą wyświetlane według przypadkowej skali.'};ui(result.error,'info');resetMetrics();render();updateArea();return}
+result={p,route:null,error:null};let route=createRoute(p);result.route=route;
+const ok=route.all<=80+1e-7;$('area').textContent=fmt((p.W*p.H-p.NW*p.NH)/1e6);$('drawn').textContent=fmt(route.drawn);$('total').textContent=fmt(route.all);$('left').textContent=fmt(80-route.all);$('coverage').textContent=fmt(route.coverage*100)+'%';$('variants').textContent=route.valid+' / '+route.tested;$('chosen').textContent=route.orientation;
+ui(ok?(route.coverage>=.85?`TEST: wariant ${route.orientation}; trasa ${fmt(route.drawn)} m; z rezerwą ${fmt(route.all)} m. Pokrycie poglądowe ${fmt(100*route.coverage)}%.`:`UWAGA: tylko ${fmt(100*route.coverage)}% poglądowego pokrycia! Długość ${fmt(route.all)} m mieści się w 80 m, ale potrzebny jest dodatkowy obwód lub korekta pola.`):`PRZEKROCZONO 80 m o ${fmt(route.all-80)} m. Ta geometria NIE może być jedną pętlą.`,ok?(route.coverage>=.85?'ok':'warn'):'bad');
+$('report').textContent=`Pomieszczenie: ${fmt(p.W/1000)} × ${fmt(p.H/1000)} m, wycięcie ${fmt(p.NW/1000)} × ${fmt(p.NH/1000)} m.\nRura: Ø${p.d} mm · rozstaw: ${p.s} mm · odsunięcie osi: ${fmt(p.c)} mm · R≥${p.r} mm.\nWariant ${route.orientation}: ${route.passes} warstw. Wariantów poprawnych geometrycznie: ${route.valid} z ${route.tested}.\nPokrycie geometryczne: ${fmt(route.coverage*100)}% (odległość próbkowana od osi rury).\nPrzedłużenie środkowego ramienia: ${fmt(route.centerExtensionM||0)} m w jedną stronę.${route.omitted?`\nPominięto ${route.omitted} wewnętrznych warstw ze względu na geometrię.`:''}\n\nZasilanie do środka: ${fmt(lengthOf(route.supply)/1000)} m\nNawrót: ${fmt(lengthOf(route.cap)/1000)} m\nPowrót między zwojami: ${fmt(lengthOf(route.return)/1000)} m\nRazem narysowane: ${fmt(route.drawn)} m\nRezerwa na dwa dojścia (bez rysowania): ${fmt(p.feed)} m\nSUMA: ${fmt(route.all)} / 80,00 m.\nKontrola ścian: min. ${Math.round(route.check.wall)} mm do osi, wymagane ${p.c} mm.\n${route.check.reason}\n${!ok?'UWAGA: Wybierz inną geometrię/rozstaw (jeśli pozwala projekt cieplny) albo podziel instalację na więcej pętli.\n':''}Nie zweryfikowano tras dojść do rozdzielacza, dylatacji, przepływów ani mocy grzewczej. Wskaźnik pokrycia nie zastępuje obliczeń cieplnych.`;
+render();updateArea();
+}catch(ex){result={p:currentModel(),route:null,error:ex.message};resetMetrics();ui('NIE MOŻNA WYGENEROWAĆ: '+ex.message,'bad');$('report').textContent='Zmień parametry lub obrys. Generator nie rysuje trasy, która nie spełnia warunków geometrycznych.';render();updateArea();}}
+function resetMetrics(){for(let id of ['area','drawn','total','left','coverage','variants','chosen'])$(id).textContent='—';}
+function rebuildFromCorners(){if(corners.length!==6||!transform)return;let {origin,ux,uy,mmPerX,mmPerY}=transform,q=corners.map(p=>V(dot(sub(p,origin),ux)*mmPerX,dot(sub(p,origin),uy)*mmPerY));let W=q[4].x,H=q[4].y,cx=q[1].x,cy=q[2].y,NW=W-cx,NH=H-cy;
+const ideal=[V(0,0),V(cx,0),V(cx,cy),V(W,cy),V(W,H),V(0,H)],tol=Math.max(100,Math.min(W,H)*.045),err=Math.max(...q.map((p,i)=>dist(p,ideal[i])));
+if(err>tol||[W,H,cx,cy,NW,NH].some(v=>v<=0))throw Error('Zaznaczony obrys nie jest prostokątnym L (odchylenie '+Math.round(err)+' mm). Użyj kolejności 1–6, dokładnie zaznaczając narożniki.');
+for(let [id,val] of Object.entries({w:W/1000,h:H/1000,nw:NW/1000,nh:NH/1000}))$(id).value=(Math.round(val*1000)/1000).toString();
+// Obrys jest idealizowany do osi prostopadłych, z pozostawieniem położenia na rysunku.
+mode='';$('toolHint').textContent='Obrys L skalibrowano i dopasowano do wymiarów. Przejrzyj wymiary oraz wynik testu.';calibrationReadout();calculate();}
+function cursorPoint(ev){let pt=plot.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;let m=plot.getScreenCTM();return m?pt.matrixTransform(m.inverse()):null}
+function pointAllowed(p){return imageBox&&p.x>=imageBox.x&&p.y>=imageBox.y&&p.x<=imageBox.x+imageBox.width&&p.y<=imageBox.y+imageBox.height}
+function calibrationReadout(){
+ const el=$('calibrationInfo');if(!imageData){el.textContent='Bez podkładu. Możesz obliczyć L z wymiarów ręcznych.';return;}
+ if(!transform){el.textContent='Brak skali. Wskaż dwa końce poziomego odcinka o znanym wymiarze (najlepiej narysowana linia wymiarowa).';return;}
+ let report=`Kalibracja pozioma: ${fmt(transform.mmPerX)} mm/jedn. SVG; poziomy odcinek: ${fmt(n('known'))} m.`;
+ if(calVertPts.length===2)report+=` Kalibracja pionowa: ${fmt(transform.mmPerY)} mm/jedn. SVG; odcinek: ${fmt(n('knownV'))} m.`;
+ else report+=' Pion używa tej samej skali — dla zdjęć i skanów wskazane jest skalibrowanie pionu osobno.';
+ if(corners.length===6){try{let p=formParams();report+=` Wynik obrysu: szer. ${fmt(p.W/1000)} m, wys. ${fmt(p.H/1000)} m, powierzchnia ${fmt((p.W*p.H-p.NW*p.NH)/1e6)} m².`}catch(_){}}
+ el.textContent=report;
+}
+function updateHint(){
+ if(mode==='cal')$('toolHint').textContent=`POZIOM: wskaż 2 końce odcinka poziomego o długości ${n('known')} m (${calPts.length}/2).`;
+ if(mode==='calV')$('toolHint').textContent=`PION: wskaż 2 końce pionowego odcinka o długości ${n('knownV')} m (${calVertPts.length}/2).`;
+ if(mode==='trace')$('toolHint').textContent=`Obrys: narożnik ${corners.length+1}/6 — kolejność od lewego górnego, zgodnie z instrukcją.`;
+}
+plot.addEventListener('pointerdown',ev=>{if(!mode||!imageData)return;ev.preventDefault();let p=cursorPoint(ev);if(!p||!pointAllowed(p))return;
+ if(mode==='cal'||mode==='calV'){
+  let horizontal=mode==='cal',points=horizontal?calPts:calVertPts,input=horizontal?'known':'knownV';points.push(V(p.x,p.y));
+  if(points.length===2){let dx=dist(points[0],points[1]);if(dx<10||!Number.isFinite(n(input))||n(input)<=0){points.splice(0);$('toolHint').textContent='Zbyt krótki odcinek lub nieprawidłowy wymiar; wybierz ponownie punkty.';}
+  else {let scale=n(input)*1000/dx;
+   if(horizontal){transform={mmPerX:scale,mmPerY:scale,origin:null,ux:null,uy:null};$('calibrateV').disabled=false;$('trace').disabled=false;}
+   else {transform={...transform,mmPerY:scale,origin:null,ux:null,uy:null};corners=[];}
+   mode='';$('toolHint').textContent=horizontal?'Poziom skalibrowano. Zalecana druga kalibracja pionu; potem zaznacz obrys.':'Pion skalibrowano oddzielnie. Teraz zaznacz 6 narożników L.';
+   ui('Kalibracja zaktualizowana. Sprawdź odczyt i zaznacz obrys L.', 'info');
+  }}
+ }else if(mode==='trace'){
+  corners.push(V(p.x,p.y));if(corners.length===2){let u=norm(sub(corners[1],corners[0]));transform={...transform,origin:corners[0],ux:u,uy:right(u)};}
+  if(corners.length===6){try{rebuildFromCorners()}catch(ex){ui(ex.message,'bad');$('toolHint').textContent=ex.message+' Cofnij ostatni punkt i wskaż poprawny.';}}
+ }
+ $('undo').disabled=!calPts.length&&!calVertPts.length&&!corners.length; if(mode)updateHint();calibrationReadout();render();updateArea();
+});
+plot.addEventListener('pointermove',ev=>{if(!mode||!imageData)return;let p=cursorPoint(ev);hover=pointAllowed(p)?V(p.x,p.y):null;render();updateArea()});
+plot.addEventListener('pointerleave',()=>{hover=null;render();updateArea()});
+$('drawing').addEventListener('change',ev=>{let f=ev.target.files?.[0];if(!f)return;if(!['image/png','image/jpeg','image/webp'].includes(f.type)){ui('Wczytaj JPG, PNG lub WEBP; PDF nie jest obsługiwany.','bad');return}let reader=new FileReader();reader.onload=()=>{let im=new Image();im.onload=()=>{imageData=String(reader.result);$('rotate').value='0';$('rotate').disabled=true;imageW=im.naturalWidth;imageH=im.naturalHeight;transform=null;calPts=[];calVertPts=[];corners=[];hover=null;mode='';$('calibrate').disabled=false;$('calibrateV').disabled=true;$('trace').disabled=true;$('undo').disabled=true;$('resetTrace').disabled=false;$('toolHint').textContent='Rysunek gotowy. Rozpocznij od kalibracji poziomej (2 punkty).';calibrationReadout();calculate()};im.onerror=()=>ui('Nie udało się wczytać obrazu.','bad');im.src=String(reader.result)};reader.readAsDataURL(f)});
+$('calibrate').addEventListener('click',()=>{if(!imageData)return;mode='cal';calPts=[];calVertPts=[];corners=[];transform=null;hover=null;$('calibrateV').disabled=true;$('trace').disabled=true;calibrationReadout();updateHint();calculate()});
+$('calibrateV').addEventListener('click',()=>{if(!transform)return;mode='calV';calVertPts=[];corners=[];hover=null;updateHint();render();updateArea()});
+$('trace').addEventListener('click',()=>{if(!transform||!Number.isFinite(transform.mmPerX)||calPts.length!==2)return;mode='trace';corners=[];hover=null;updateHint();render();updateArea()});
+$('undo').addEventListener('click',()=>{if(mode==='trace'&&corners.length){corners.pop();if(corners.length<2)transform={...transform,origin:null,ux:null,uy:null};}else if(mode==='cal'&&calPts.length)calPts.pop();else if(mode==='calV'&&calVertPts.length)calVertPts.pop();updateHint();calibrationReadout();render();updateArea()});
+$('resetTrace').addEventListener('click',()=>{mode='';transform=null;calPts=[];calVertPts=[];corners=[];hover=null;imageData='';$('rotate').disabled=false;imageW=imageH=0;imageBox=null;$('drawing').value='';$('calibrate').disabled=true;$('calibrateV').disabled=true;$('trace').disabled=true;$('undo').disabled=true;$('resetTrace').disabled=true;$('toolHint').textContent='Podkład usunięty. Możesz wczytać nowy rysunek.';calibrationReadout();calculate()});
+for(let [field,axis,points] of [['known','mmPerX',calPts],['knownV','mmPerY',calVertPts]])$(field).addEventListener('change',()=>{
+ if(!transform||points.length!==2)return;
+ const measured=dist(points[0],points[1]);if(!(n(field)>0&&measured>=10))return;
+ transform[axis]=n(field)*1000/measured;
+ if(axis==='mmPerX'&&calVertPts.length!==2)transform.mmPerY=transform.mmPerX;
+ if(corners.length===6){try{rebuildFromCorners()}catch(ex){ui('Po zmianie kalibracji: '+ex.message,'bad');corners=[];mode='trace';updateHint();calculate();}}
+ calibrationReadout();render();updateArea();
+});
+$('opacity').addEventListener('input',render);
+$('generate').addEventListener('click',calculate);
+for(let id of ['w','h','nw','nh','dia','pitch','wall','bend','feed','variant','rotate'])$(id).addEventListener('change',calculate);
+for(let [id,v] of [['preset220',[5,4,2,2,200]],['preset150',[5,4,2,2,150]],['presetNarrow',[5,4,2,2,100]]])$(id).addEventListener('click',()=>{if(imageData){$('resetTrace').click()}['w','h','nw','nh','pitch'].forEach((x,i)=>$(x).value=v[i]);$('bend').value='80';calculate()});
+$('saveJson').addEventListener('click',()=>{if(!result)return;const p=result.p,r=result.route;let data={version:'1.2-counterflow-L-test',ready_for_construction:false,parameters:p&&{width_mm:p.W,height_mm:p.H,cutout_width_mm:p.NW,cutout_height_mm:p.NH,pipe_outer_mm:p.d,spacing_axis_mm:p.s,wall_to_pipe_edge_mm:p.a,bend_radius_min_axis_mm:p.r,manifold_feed_reserve_m:p.feed,max_loop_length_m:80,orientation_selected:$('variant').value,preview_rotation_degrees:Number($('rotate').value)},drawing_calibrated:!!(transform&&transform.ux),calibration_mm_per_svg_unit:transform&&{x:transform.mmPerX,y:transform.mmPerY},calibration_vertical_independent:calVertPts.length===2,lengths_m:r&&{supply:lengthOf(r.supply)/1000,cap:lengthOf(r.cap)/1000,return:lengthOf(r.return)/1000,total_drawn:r.drawn,total_with_reserve:r.all},limit_ok:!!(r&&r.all<=80),variant_stats:r&&{orientation:r.orientation,coverage_proxy:r.coverage,variants_checked:r.tested,valid_candidates:r.valid,min_nonadjacent_clearance_mm:r.minClear,center_extension_m:r.centerExtensionM},route_mm:r&&r.whole,error:result.error};saveText('HeatLoop_L_przeciwpradowy_v12.json',JSON.stringify(data,null,2),'application/json')});
+$('saveSvg').addEventListener('click',()=>{const cp=plot.cloneNode(true);cp.setAttribute('xmlns',ns);cp.setAttribute('width','940');cp.setAttribute('height','630');saveText('HeatLoop_L_przeciwpradowy_v12.svg',new XMLSerializer().serializeToString(cp),'image/svg+xml')});
+function saveText(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
+calibrationReadout();calculate();
+})();
+</script></body></html>
