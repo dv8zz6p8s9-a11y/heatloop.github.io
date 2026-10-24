@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {polygonArea,validPolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,zonesOverlap} from '../room-editor.mjs';
+import {polygonArea,validPolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,zonesOverlap,normalizeClosedPolygon,tappedFirstPoint} from '../room-editor.mjs';
 const room=[[100,100],[600,100],[600,500],[100,500]];
 const heating=[[160,160],[420,160],[420,390],[160,390]];
 test('Room geometry is independent of heating surface',()=>{
@@ -58,4 +58,27 @@ test('Adding another heating field must not mutate earlier coordinates',()=>{
  assert.ok(insideRoom(room,second));
  assert.ok(!zonesOverlap(first,second));
  assert.equal(JSON.stringify(first),before);
+});
+
+test('Button closing polygon discards repeated starting vertex',()=>{
+ const pts=[[0,0],[100,0],[100,100],[0,100],[0,0]];
+ const closed=normalizeClosedPolygon(pts,15,4);
+ assert.equal(closed.length,4);
+ assert.equal(validPolygon(closed),true);
+});
+test('Near-start touch closes after at least three corners',()=>{
+ const pts=[[0,0],[100,0],[100,100],[0,100]];
+ assert.equal(tappedFirstPoint(pts,[6,4],15),true);
+ assert.equal(tappedFirstPoint(pts,[50,50],15),false);
+ assert.equal(tappedFirstPoint(pts.slice(0,2),[0,0],15),false);
+});
+test('Repeated last tap does not become an extra vertex',()=>{
+ const pts=[[0,0],[100,0],[100,100],[101,100],[0,100]];
+ const closed=normalizeClosedPolygon(pts,15,4);
+ assert.equal(closed.length,4);
+});
+test('Too few distinct corners cannot become valid polygon',()=>{
+ const pts=[[0,0],[100,0],[0,0]];
+ const closed=normalizeClosedPolygon(pts);
+ assert.equal(validPolygon(closed),false);
 });
