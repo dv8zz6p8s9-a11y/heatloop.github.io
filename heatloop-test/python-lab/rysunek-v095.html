@@ -358,7 +358,7 @@ for(let r of rooms){
    const tag=E('text',{x:center[0],y:center[1]+17,
      fill:'#126947','font-size':13,'text-anchor':'middle','font-weight':'bold',
      stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
-   tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m² · '+fmt(settingsFor(r,z).spacing_m*100)+' cm';
+   tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m² · '+fmt(settingsFor(r,z).spacing_m*100)+' cm'+(r.loop?.zone_results?.[zi]?.layout?.status==='schematic'?' · SZKIC':'');
    layer.append(tag);
  }
  const mx=r.points.reduce((v,p)=>v+p[0],0)/r.points.length,my=r.points.reduce((v,p)=>v+p[1],0)/r.points.length;
