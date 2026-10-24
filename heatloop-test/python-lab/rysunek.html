@@ -645,6 +645,32 @@ function renderCircuits(){
          (coverage?' Szacunek pełnego pola '+fmt(result.full_area_estimate_m)+' m przekracza 80 m.':'') ):
       'Nie przeliczono pętli. Wstępny szacunek '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
    entry.append(badge);
+   const route=routingFor(room,zone),routeBox=document.createElement('div');
+   routeBox.className='route-controls';
+   const routeTitle=document.createElement('strong');routeTitle.textContent='Początek, koniec i dojście';routeBox.append(routeTitle);
+   const routeActions=document.createElement('div');routeActions.className='buttons';
+   const action=(label,callback)=>{const btn=document.createElement('button');btn.type='button';btn.textContent=label;btn.onclick=callback;routeActions.append(btn)};
+   action('◎ Preferowany początek',()=>selectRouteTool(room,zone,'targetStart'));
+   action('◎ Preferowany koniec',()=>selectRouteTool(room,zone,'targetEnd'));
+   action(route.direction==='reverse'?'⇄ Przywróć kierunek':'⇄ Odwróć kierunek',()=>{
+     snapshot(room);assignRouting(room,zone,{direction:route.direction==='reverse'?'normal':'reverse'});renderCircuits()
+   });
+   action('┄ Wyznacz korytarz',()=>selectRouteTool(room,zone,'guidePoint'));
+   action('Usuń korytarz',()=>{snapshot(room);assignRouting(room,zone,{guide:[]});renderCircuits()});
+   routeBox.append(routeActions);
+   const widthRow=document.createElement('div');widthRow.className='field';
+   const widthLabel=document.createElement('label');widthLabel.textContent='Szerokość planowanego pasa (cm)';widthRow.append(widthLabel);
+   const widthInput=document.createElement('input');widthInput.type='number';widthInput.min='10';widthInput.max='80';widthInput.step='2.5';widthInput.value=String(route.corridorWidthM*100);
+   widthInput.onchange=()=>{snapshot(room);if(!assignRouting(room,zone,{corridorWidthM:Number(widthInput.value)/100}))editHistory.pop();renderCircuits()};
+   widthRow.append(widthInput);routeBox.append(widthRow);
+   const guideInfo=document.createElement('div');guideInfo.className='small-explain';
+   guideInfo.textContent='Cel startu: '+(route.preferredStart?'oznaczony':'auto')+
+     ' · cel końca: '+(route.preferredEnd?'oznaczony':'auto')+
+     ' · punkty trasy: '+route.guide.length+
+     ' · kierunek: '+(route.direction==='reverse'?'odwrócony':'normalny')+
+     '. Punkty docelowe jeszcze nie przenoszą fizycznych końców ślimaka.';
+   routeBox.append(guideInfo);
+   entry.append(routeBox);
    el.append(entry);
  }
 }
@@ -750,7 +776,10 @@ function tool(t){
  heatPoly:'Dodawaj punkty pola podłogówki. Następnie: Zamknij wielokąt.',
  editHeat:'Przeciągnij ZIELONY narożnik pola ogrzewania.',
  moveHeat:'Przeciągnij wnętrze zielonego pola ogrzewania.',
- placeManifold:'Dotknij na planie miejsca montażu wybranego rozdzielacza. Możesz potem zmienić jego pozycję.'
+ placeManifold:'Dotknij na planie miejsca montażu wybranego rozdzielacza. Możesz potem zmienić jego pozycję.',
+ targetStart:'Wskaż preferowane wejście rury na krawędzi pola — to wskazówka do dalszej generacji.',
+ targetEnd:'Wskaż preferowane wyjście rury na krawędzi pola — to wskazówka do dalszej generacji.',
+ guidePoint:'Dodawaj punkty trasy od rozdzielacza ku polu; zakończ przyciskiem w zakładce Pętle.'
  }[t]||'Wybierz narzędzie';
  render();
 }
@@ -838,6 +867,24 @@ function finish(){
  return ok;
 }
 function click(p){
+ if(['targetStart','targetEnd','guidePoint'].includes(tools)){
+   const t=routingTarget,room=rooms.find(x=>x.id===t?.roomId);
+   const zone=room&&t?.zoneId!=null?roomZones(room).find(z=>z.id===t.zoneId):null;
+   if(!room){status('Brak wskazanej pętli.','error');tool('select');return}
+   const routing=routingFor(room,zone);
+   if(tools==='guidePoint'){
+     if(routing.guide.length>=25){status('Limit 25 punktów korytarza. Zakończ trasę.','warn');return}
+     snapshot(room);
+     if(!assignRouting(room,zone,{guide:[...routing.guide,p]})){editHistory.pop();return}
+     status('Dodano punkt '+(routing.guide.length+1)+'. Wskaż kolejny lub kliknij „Zakończ wskazywanie trasy”.','ok');return;
+   }
+   const nearest=snapToFieldEdge(p,zone?.points||room.points,sx,sy);
+   if(!nearest){status('Wskaż bliżej granicy pola; początek i koniec zaznacza się na obrysie.','warn');return}
+   snapshot(room);
+   if(!assignRouting(room,zone,{[tools==='targetStart'?'preferredStart':'preferredEnd']:nearest})){editHistory.pop();return}
+   tool('select');showTab('loops');
+   status('Zapisano preferowany punkt. Silnik jeszcze nie przenosi końca ślimaka w to miejsce.','warn');return;
+ }
  if(tools==='placeManifold'){
    const m=selectedManifold();
    if(!m){info('Nie wybrano rozdzielacza.','error');return}
@@ -1016,7 +1063,7 @@ S.addEventListener('pointermove',ev=>{
   }else{editDragStep(drag,xy(ev))}
   return;
  }
- if(['poly','rect','heatPoly','heatRect','cx','cy','measure'].includes(tools)){
+ if(['poly','rect','heatPoly','heatRect','cx','cy','measure','guidePoint','targetStart','targetEnd'].includes(tools)){
    const p=xy(ev);hover=allowed(p)?p:null;render()
  }
 });
@@ -1130,10 +1177,14 @@ $('loopAll').onclick=()=>{
  if(!sent){status('Najpierw zaznacz pomieszczenia i pola ogrzewania.','warn');return}
  status('Generowanie ślimaków i poglądowych dojść dla '+sent+' pomieszczeń.','warn');
 };
-$('showApproaches').onchange=()=>{
- showApproachRoutes=$('showApproaches').checked;
- render();
+$('showApproaches').onchange=()=>{showApproachRoutes=$('showApproaches').checked;render()};
+$('finishGuide').onclick=()=>{
+ if(tools==='guidePoint'){
+   tool('select');renderCircuits();
+   status('Trasa pomocnicza zapisana. Wciąż nie jest automatycznie zarezerwowanym pasem rur.','warn');
+ }
 };
+$('cancelGuide').onclick=()=>{tool('select');renderCircuits();status('Zakończono wskazywanie. Punkty można usunąć przy pętli.','warn')};
 try{worker=new Worker('./rysunek-worker.js?v=095',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
