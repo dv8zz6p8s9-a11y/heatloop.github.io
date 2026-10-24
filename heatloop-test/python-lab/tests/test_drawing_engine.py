@@ -34,12 +34,12 @@ class HeatingAreaTests(unittest.TestCase):
 
     def test_reject_heating_zone_outside_room(self):
         heated=[(3,1),(6,1),(6,3),(3,3)]
-        with self.assertRaisesRegex(ValueError,"musi w całości"):
+        with self.assertRaisesRegex(ValueError,"w całości wewnątrz"):
             analyze_room(ROOM,SETTINGS,heated)
 
     def test_reject_zone_crossing_inner_corner_L(self):
         zone=[(2,1),(4.5,1),(4.5,3.5),(2,3.5)]
-        with self.assertRaisesRegex(ValueError,"musi w całości"):
+        with self.assertRaisesRegex(ValueError,"w całości wewnątrz"):
             analyze_room(L,SETTINGS,zone)
 
     def test_irregular_zone_is_only_planned(self):
