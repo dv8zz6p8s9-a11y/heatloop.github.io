@@ -103,7 +103,7 @@ test('Bad imported file rolls back without removing working project',()=>{
  assert.match(get('restoreSummary').textContent,/Dotychczasowa praca została zachowana/);
  load(JSON.stringify(fixture));
  assert.equal(controller.get().rooms.length,1);
- assert.match(get('status').textContent,/Odzyskano rysunek/);
+ assert.match(get('restoreSummary').textContent,/Odzyskano rysunek/);
 });
 test('Save and load a verified loop preview without requiring new calculation',()=>{
  const {controller,get,load}=setup();
