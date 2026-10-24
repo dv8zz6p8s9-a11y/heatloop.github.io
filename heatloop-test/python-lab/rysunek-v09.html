@@ -1,4 +1,4 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9.1</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
@@ -38,7 +38,7 @@
  #stage .chip{padding:6px;font-size:11px}
  .workflow-tabs{margin:0 -4px;padding:5px}
 }
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9 · rozdzielacze i indywidualne rozstawy pętli</small></header>
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9.1 · poprawione odzyskiwanie projektów</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit: <b>80 m na pętlę</b>, razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
 <button type="button" data-tab="drawing" class="active">Rysunek</button>
@@ -89,7 +89,12 @@
 <div id="manifoldSummary" class="chip">Nie dodano jeszcze rozdzielacza.</div>
 <div class="panel-note" style="margin-top:9px">Uwaga: położenie rozdzielacza jest poglądowe. Długości rzeczywistych dojść zasilania i powrotu wpisujesz osobno dla każdej pętli.</div>
 </section>
-<section class="panel" data-pane="project"><h2>05 · Zapis projektu</h2><div class="buttons"><button id="save">Pobierz JSON</button><button id="import">Wczytaj JSON</button><input id="jsonfile" type="file" accept=".json,application/json" hidden></div><div class="mini">Projekt i rysunek pozostają na Twoim urządzeniu; nie przesyłamy go na serwer.</div></section>
+<section class="panel" data-pane="project"><h2>05 · Zapis i wczytywanie projektu</h2>
+<div class="buttons"><button id="save" class="primary" type="button">Pobierz pełny projekt JSON</button><button id="import" type="button">Otwórz zapisany projekt JSON</button>
+<input id="jsonfile" type="file" accept=".json,application/json"></div>
+<div id="restoreSummary" class="chip warn" role="status" aria-live="polite">Wczytywanie projektu przywraca rysunek, kalibrację, pokoje, pola grzewcze, rozdzielacze i ustawienia każdej pętli.</div>
+<div class="mini">Plik JSON zawiera także podkład graficzny. Nie wybieraj tutaj JPG/PDF: JPG/PDF służy tylko do wymiany rysunku i rozpoczyna nową pracę. Projekt pozostaje na Twoim urządzeniu.</div>
+</section>
 </aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2><div class="buttons"><button id="zoomout" title="Oddal">−</button><button id="resetzoom">100%</button><button id="zoomin" title="Przybliż">+</button><button id="panTool" data-tool="pan">✋ Przesuń rysunek</button></div>
 <details class="view-more"><summary>Obrót, przesuwanie i widoczność podkładu</summary><div class="nav-actions"><button id="moveLeft" title="Przesuń rysunek w lewo" aria-label="Przesuń rysunek w lewo">← Lewo</button><button id="moveUp" title="Przesuń rysunek w górę" aria-label="Przesuń rysunek w górę">↑ Góra</button><button id="moveDown" title="Przesuń rysunek w dół" aria-label="Przesuń rysunek w dół">↓ Dół</button><button id="moveRight" title="Przesuń rysunek w prawo" aria-label="Przesuń rysunek w prawo">Prawo →</button></div>
 <div class="nav-actions"><button id="rotateLeft" title="Obróć plan o 90° przeciwnie do ruchu wskazówek zegara">↶ Obróć w lewo 90°</button><button id="rotateRight" title="Obróć plan o 90° zgodnie z ruchem wskazówek zegara">↷ Obróć w prawo 90°</button><span class="angle" id="angle">Obrót: 0°</span></div>
@@ -106,9 +111,67 @@ import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,pol
 import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap,pointDistance,normalizeClosedPolygon,tappedFirstPoint} from './room-editor.mjs?v=09';
 import {SPACINGS,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=09';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
-let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map();
+let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false;
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
 const info=(t,cls='')=>{$('drawing').textContent=t;$('drawing').className='chip '+cls};
+function validLoopPreview(preview,zoneCount) {
+ if(!preview||typeof preview!=='object'||!Array.isArray(preview.zone_results)||
+   preview.zone_results.length!==zoneCount||zoneCount<1||zoneCount>40)return false;
+ const finite=v=>typeof v==='number'&&Number.isFinite(v);
+ for(let i=0;i<preview.zone_results.length;i++){
+  const z=preview.zone_results[i];
+  if(!z||z.index!==i||!finite(z.spacing_m)||!finite(z.checked_length_m)||
+     z.checked_length_m<0||z.checked_length_m>10000||!z.layout||typeof z.layout!=='object')return false;
+  const layout=z.layout;
+  if(!['experimental','planned'].includes(layout.status))return false;
+  if(layout.status==='experimental'){
+   for(const key of ['supply','return','cap']){
+    if(!Array.isArray(layout[key])||layout[key].length>12000||
+       layout[key].some(p=>!Array.isArray(p)||p.length!==2||p.some(v=>!finite(v)||Math.abs(v)>500)))return false;
+   }
+  }
+ }
+ return true;
+}
+function countProjectParts() {
+ return {rooms:rooms.length,zones:rooms.reduce((n,r)=>n+roomZones(r).length,0),
+   manifolds:manifolds.length,
+   previews:rooms.filter(r=>r.loop&&validLoopPreview(r.loop,Math.max(1,roomZones(r).length))).length};
+}
+function reportRestore(textMessage,kind='ok'){
+ $('restoreSummary').textContent=textMessage;$('restoreSummary').className='chip '+kind;
+}
+function captureActiveProject() {
+ return {
+   bg,sx,sy,calibratedX,calibratedY,rooms,selected,next,seq,ready,
+   imageFit,calLines,calAxes,checkLine,editHistory,manifolds,manifoldSeq,
+   activeManifoldId,activeTab,rotation,zoom,panX,panY,pendingRestoration,
+   queue:new Map(queue),fields:Object.fromEntries(
+    ['spacing','diam','edge','radius','feed','back','dimX','dimY','unitX','unitY'].map(id=>[id,$(id).value]))
+ };
+}
+function restoreActiveProject(p){
+ ({bg,sx,sy,calibratedX,calibratedY,rooms,selected,next,seq,ready,
+   imageFit,calLines,calAxes,checkLine,editHistory,manifolds,manifoldSeq,
+   activeManifoldId,activeTab,rotation,zoom,panX,panY,pendingRestoration,queue}=p);
+ for(const [id,value] of Object.entries(p.fields))$(id).value=value;
+ $('angle').textContent='Obrót: '+rotation+'°';
+ scaleRead();list();render();update();redrawManifolds();showTab(activeTab);
+}
+function confirmLoadedBackground(){
+ if(!bg)return;
+ if(typeof Image!=='function')return; // browser Image preload; mocks may omit Image
+ const source=bg;
+ const img=new Image();
+ img.onload=()=>{if(bg===source)render()};
+ img.onerror=()=>{
+   if(bg!==source)return;
+   reportRestore('Zaimportowano pokoje i ustawienia, lecz przeglądarka nie odczytuje osadzonego obrazu. Zachowaj oryginalny JSON i sprawdź format JPEG/PNG.','warn');
+   status('Rysunek jest zapisany w projekcie, ale nie udało się go wyświetlić w tej przeglądarce.','error');
+ };
+ img.src=source;
+}
+
 function getKnown(kind){return parseKnownLength($(kind==='cx'?'dimX':'dimY').value,$(kind==='cx'?'unitX':'unitY').value)}
 function scaleRead(){
  const full=calibratedX&&calibratedY;
@@ -867,20 +930,46 @@ $('file').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>
 if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){try{status('Ładowanie pierwszej strony PDF…');const mod=await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');mod.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';let pdf=await mod.getDocument({data:await f.arrayBuffer()}).promise,p=await pdf.getPage(1),v=p.getViewport({scale:1.3}),c=document.createElement('canvas');c.width=v.width;c.height=v.height;await p.render({canvasContext:c.getContext('2d'),viewport:v}).promise;loadImage(c.toDataURL('image/png'))}catch(e){status('Nie udało się otworzyć PDF: '+e.message,'error')}return}
 if(!['image/png','image/jpeg','image/webp'].includes(f.type)){status('Nieobsługiwany format.','error');return}let r=new FileReader();r.onload=()=>loadImage(r.result);r.readAsDataURL(f)};
 const inputs=()=>{let n=id=>Number($(id).value);return {spacing_m:n('spacing'),diameter_m:n('diam')/1000,wall_edge_m:n('edge')/1000,radius_m:n('radius')/1000,feed_m:n('feed'),back_m:n('back')}};
-$('loop').onclick=()=>{let r=rooms.find(x=>x.id===selected);if(!r){status('Wybierz najpierw pomieszczenie.','error');return}if(!ready){status('Python jeszcze się ładuje.','warn');return}
-let args=inputs();if(!Object.values(args).every(Number.isFinite)){status('Błędne parametry rur.','error');return}
+function queueAnalysisForRoom(r,quiet=false){
+ if(!ready||!r)return false;
+ const args=inputs();
+ if(!Object.values(args).every(Number.isFinite)){
+   if(!quiet)status('Błędne parametry rur.','error');
+   return false;
+ }
  const entries=circuitRows(r);
- let zone_settings;try{zone_settings=entries.map(e=>settingsFor(r,e.zone))}
- catch(err){status(err.message,'error');return}
+ let zone_settings;
+ try{zone_settings=entries.map(e=>settingsFor(r,e.zone))}
+ catch(err){if(!quiet)status(err.message,'error');return false}
  const n=++seq;queue.set(n,{id:r.id,revision:r.revision||0});
  worker.postMessage({kind:'analyze',seq:n,roomId:r.id,payload:{
   points:pointsToMeter(r.points),
   heating_zones:roomZones(r).length?roomZones(r).map(z=>pointsToMeter(z.points)):null,
-  zone_settings,
-  settings:args
+  zone_settings,settings:args
  }});
- status('Python oblicza '+entries.length+' pętli niezależnie, każdą z jej własnym rozstawem.','warn')};
-try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+ if(!quiet)status('Python oblicza '+entries.length+' pętli wybranego pokoju.','warn');
+ return true;
+}
+function regenerateMissingSavedLoops(){
+ if(!pendingRestoration)return;
+ if(!ready){status('Projekt już przywrócony. Trwa ładowanie Pythona do odtworzenia podglądu pętli.','warn');return}
+ pendingRestoration=false;
+ let sent=0;
+ for(const r of rooms)if(!r.loop&&queueAnalysisForRoom(r,true))sent++;
+ if(sent){
+   reportRestore('Rysunek i obrysy przywrócono. Python odtwarza podglądy pętli dla '+sent+' pomieszczeń.','ok');
+ }else{
+   const counts=countProjectParts();
+   reportRestore('Przywrócono '+counts.rooms+' pomieszczenia, '+counts.zones+' pól, '+counts.manifolds+' rozdzielacze.','ok');
+ }
+}
+$('loop').onclick=()=>{
+ const room=chosenRoom();
+ if(!room){status('Wybierz najpierw pomieszczenie.','error');return}
+ if(!ready){status('Python jeszcze się ładuje.','warn');return}
+ queueAnalysisForRoom(room);
+};
+try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
  r.loop=d.result;list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
@@ -890,13 +979,27 @@ try{worker=new Worker('./rysunek-worker.js?v=09',{type:'module'});worker.onmessa
    '. Długości i rozstawy policzone osobno; szacunek łącznie '+fmt(d.result.estimate_m)+' m.'+
    (over?' UWAGA: '+over+' pętli może przekraczać 80 m.':'')+
    ' Rozdzielacze i dojścia wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
-$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:8,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
+$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:9,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
  manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
  activeManifoldId,
  defaults:{spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),
   diam: $('diam').value, edge:$('edge').value, radius:$('radius').value},
- known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings()}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
-$('import').onclick=()=>$('jsonfile').click();$('jsonfile').onchange=e=>{const f=e.target.files?.[0];if(!f)return;let fr=new FileReader();fr.onload=()=>{try{let j=JSON.parse(fr.result);if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');
+ known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings(),loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
+$('import').onclick=()=>{
+ const input=$('jsonfile');input.value='';showTab('project');input.click();
+};
+$('jsonfile').onchange=e=>{
+ const input=e.target,file=input.files?.[0];input.value=''; // same file may now be reopened
+ if(!file)return;
+ if(Number(file.size)>35e6){status('Projekt przekracza 35 MB; nie wykonano żadnych zmian.','error');return}
+ const fr=new FileReader();
+ fr.onload=()=>{
+  const previous=captureActiveProject();
+  try{
+   let j=JSON.parse(String(fr.result||'').replace(/^\uFEFF/,''));
+   if(!Number.isInteger(j.version)||j.version<1||j.version>9)
+    throw Error('Nieobsługiwana wersja JSON '+j.version+'. Otwórz projekt w zgodnej wersji HeatLoop.');
+ if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');
  const importedManifolds=Array.isArray(j.manifolds)?j.manifolds:[];
  if(importedManifolds.length>12)throw Error('Zbyt wiele rozdzielaczy w projekcie');
  const ids=new Set();
@@ -954,7 +1057,26 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
   shape:r.shape==='rect'||r.shape==='poly'?r.shape:(rect?'rect':'poly'),
   heatingZones:zones,selectedZoneId:zones.some(z=>z.id===r.selectedZoneId)?r.selectedZoneId:zones[0]?.id||null,zoneSerial:Math.max(Number(r.zoneSerial)||0,...zones.map(z=>z.id),0),
   implicitSettings:normalizeLoopSettings(r.implicitSettings||{},defaultLoopSettings(),manifolds),
-  revision:0,loop:null}
-});editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;scaleRead();list();render();update();redrawManifolds();showTab('rooms');status('Wczytano projekt z ustawieniami pętli i rozdzielaczy. Przelicz pętle ponownie.','ok')}catch(err){status('Błąd importu: '+err.message,'error')}};fr.readAsText(f)};
+  revision:0,loop:validLoopPreview(r.loopPreview,Math.max(1,zones.length))?r.loopPreview:null}
+});
+ queue.clear();editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;
+ pendingRestoration=rooms.some(r=>!r.loop);
+ scaleRead();list();render();update();redrawManifolds();showTab('rooms');
+ confirmLoadedBackground();
+ const parts=countProjectParts();
+ const summary='Odzyskano rysunek: '+(bg?'TAK':'BRAK')+' · '+parts.rooms+' pomieszczenia · '+parts.zones+
+   ' pól grzewczych · '+parts.manifolds+' rozdzielacze · '+parts.previews+' podglądy pętli.';
+ reportRestore(summary,'ok');status(summary,'ok');
+ regenerateMissingSavedLoops();
+ }catch(err){
+   try{restoreActiveProject(previous)}catch(rollbackErr){status('Błąd przywracania poprzedniego projektu: '+rollbackErr.message,'error')}
+   reportRestore('Nie udało się odczytać projektu: '+err.message+'. Dotychczasowa praca została zachowana.','error');
+   status('Import odrzucony: '+err.message+'. Bieżący projekt bez zmian.','error');
+ }
+ };
+ fr.onerror=()=>{status('Nie można odczytać wybranego pliku JSON. Bieżący projekt bez zmian.','error')};
+ fr.onabort=()=>{status('Anulowano wczytywanie. Bieżący projekt bez zmian.','warn')};
+ try{fr.readAsText(file)}catch(err){status('Odczyt JSON nie powiódł się: '+err.message,'error')}
+};
 scaleRead();render();showTab('drawing');redrawManifolds();
 </script></body></html>
