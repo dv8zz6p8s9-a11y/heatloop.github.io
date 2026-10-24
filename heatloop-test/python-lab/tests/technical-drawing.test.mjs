@@ -91,7 +91,7 @@ test('Parallel guide offsets supply and return centre lines by 10 cm',()=>{
  assert.equal(res.local_spacing_m,.10);
  // For the first 2 straight guide segments, the two lane centerlines
  // retain a distance of 10 px = 10 cm.
- assert.equal(Math.abs(res.supply[2][1]-res.return.at(-3)[1]),10);
+ assert.ok(Math.abs(Math.abs(res.supply[2][1]-res.return.at(-3)[1])-10)<1e-7);
  assert.notDeepEqual(res.supply,res.return.toReversed());
 });
 test('Narrow technical corridor fails rather than overlapping two runs',()=>{
