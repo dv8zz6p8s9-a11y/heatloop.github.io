@@ -84,14 +84,119 @@ export function previewOrthogonalRoute(a,b,options){
  return{status:'draft',points:chosen.points,length_m:chosen.length_m,
   reason:'Trasa poglądowa: bez kontroli ścian, drzwi, kolizji innych rur i promieni gięcia.'};
 }
+/** A guide is a technician-drawn CENTER LINE, not two validated parallel pipes.
+ * The preview follows its waypoints and marks any failure instead of crossing
+ * known heating zones. It does not yet reserve space in the Python spiral.
+ */
+export function previewGuidedRoute(a,b,guide,options){
+ if(!Array.isArray(guide)||guide.length>25||guide.some(p=>!finitePoint(p)))
+  return {status:'invalid',reason:'Nieprawidłowe punkty trasy pomocniczej.',points:[],length_m:null};
+ const points=[a,...guide,b];
+ let joined=[],total=0;
+ for(let i=1;i<points.length;i++){
+  const part=previewOrthogonalRoute(points[i-1],points[i],options);
+  if(part.status!=='draft')
+   return {status:'blocked',reason:'Wyznaczony korytarz przecina inne pole grzewcze lub nie da się połączyć punktów.',
+     points:[],length_m:null};
+  joined=joined.concat(i===1?part.points:part.points.slice(1));
+  total+=part.length_m;
+ }
+ return {status:'draft',points:simplify(joined),length_m:total,
+  reason:'Przebieg na podstawie punktów pomocniczych. Brak kontroli przegród i wzajemnego odstępu zasilania/powrotu.'};
+}
+/** Split a technician-drawn corridor into TWO distinct parallel pipe lanes.
+ * The separation is 10 cm centre-to-centre by default, an early preview
+ * that may have to be recalculated near fittings and doorways.
+ * All calculations are in metres; anisotropic image scale is respected.
+ */
+function crossing(a,b){return a[0]*b[1]-a[1]*b[0]}
+function offsetMetricPolyline(pts,delta){
+ if(pts.length<2)return[];
+ const dirs=[];
+ for(let i=1;i<pts.length;i++){
+  const dx=pts[i][0]-pts[i-1][0],dy=pts[i][1]-pts[i-1][1];
+  const mag=Math.hypot(dx,dy);
+  if(mag<1e-7)return[];
+  dirs.push([dx/mag,dy/mag]);
+ }
+ const normals=dirs.map(u=>[-u[1]*delta,u[0]*delta]);
+ const result=[];
+ for(let i=0;i<pts.length;i++){
+  let v;
+  if(i===0)v=normals[0];
+  else if(i===pts.length-1)v=normals.at(-1);
+  else{
+   const u=dirs[i-1],w=dirs[i];
+   const a=[pts[i][0]+normals[i-1][0],pts[i][1]+normals[i-1][1]];
+   const b=[pts[i][0]+normals[i][0],pts[i][1]+normals[i][1]];
+   const den=crossing(u,w);
+   if(Math.abs(den)<1e-7){
+    if(u[0]*w[0]+u[1]*w[1]<-.95)return [];
+    v=normals[i];
+   }else{
+    const t=crossing([b[0]-a[0],b[1]-a[1]],w)/den;
+    v=[a[0]+u[0]*t-pts[i][0],a[1]+u[1]*t-pts[i][1]];
+    if(Math.hypot(...v)>Math.abs(delta)*3+1e-7)return[];
+   }
+  }
+  result.push([pts[i][0]+v[0],pts[i][1]+v[1]]);
+ }
+ return result;
+}
+export function previewParallelGuide(manifold,inlet,outlet,guide,options){
+ const {sx,sy,obstacles=[],corridorWidthM=.20,localSpacingM=.10}=options||{};
+ if(!finitePoint(manifold)||!finitePoint(inlet)||!finitePoint(outlet)||
+    !(sx>0&&sy>0)||!guide.length||guide.some(p=>!finitePoint(p)))
+  return {status:'invalid',reason:'Błędny punkt dojścia.',supply:[],return:[]};
+ if(corridorWidthM<localSpacingM+.016+.03)
+  return {status:'blocked',reason:'Pas zbyt wąski na dwie rury o rozstawie 10 cm i wymagane marginesy.',supply:[],return:[]};
+ const stem=simplify([manifold,...guide]);
+ if(stem.length<2)return {status:'blocked',reason:'Korytarz nie ma długości.',supply:[],return:[]};
+ const metres=stem.map(p=>[p[0]*sx,p[1]*sy]);
+ const left=offsetMetricPolyline(metres,localSpacingM/2);
+ const right=offsetMetricPolyline(metres,-localSpacingM/2);
+ if(!left.length||!right.length)return {status:'blocked',reason:'Za ciasny nawrót lub odwrócony odcinek korytarza.',supply:[],return:[]};
+ const lp=left.map(p=>[p[0]/sx,p[1]/sy]),rp=right.map(p=>[p[0]/sx,p[1]/sy]);
+ // Reject plans that cut through another heating field, including the
+ // diagonal/miter section of a corner.
+ for(const lane of [lp,rp]){
+  for(let i=1;i<lane.length;i++){
+   if(obstacles.some(poly=>segmentInsideForbidden(lane[i-1],lane[i],poly)))
+    return {status:'blocked',reason:'Jedna z dwóch rur przechodzi przez inne pole grzewcze.',supply:[],return:[]};
+  }
+ }
+ const joinIn=previewOrthogonalRoute(lp.at(-1),inlet,{sx,sy,obstacles});
+ const joinOut=previewOrthogonalRoute(outlet,rp.at(-1),{sx,sy,obstacles});
+ if(joinIn.status!=='draft'||joinOut.status!=='draft')
+  return {status:'blocked',reason:'Nie można połączyć obu rur z polem grzewczym bez przecięcia innego pola.',supply:[],return:[]};
+ const supply=simplify([manifold,...lp,...joinIn.points.slice(1)]);
+ const ret=simplify([...joinOut.points,...rp.slice().reverse().slice(1),manifold]);
+ const lenS=metricPolylineLength(supply,sx,sy);
+ const lenR=metricPolylineLength(ret,sx,sy);
+ return {status:'draft',guided:true,parallel:true,supply,return:ret,
+  supply_m:Number(lenS.toFixed(3)),return_m:Number(lenR.toFixed(3)),
+  local_spacing_m:localSpacingM,
+  reason:'DWIE oddzielne rury prowadzone wstępnie co 10 cm w pasie technicznym. Narożniki, ściany i połączenia przy rozdzielaczu wymagają walidacji.'};
+}
+
 export function generateLoopApproaches(layout,manifold,options){
- const {sx,sy,obstacles=[]}=options||{};
+ const {sx,sy,obstacles=[],guide=[],direction='normal'}=options||{};
  if(!['experimental','schematic'].includes(layout?.status))return{status:'no-loop',reason:'Brak zweryfikowanej geometrii samej pętli.',supply:[],return:[]};
  if(!Array.isArray(layout.supply)||!layout.supply.length||!Array.isArray(layout.return)||!layout.return.length)
   return{status:'no-loop',reason:'Pętla nie ma obu końców.',supply:[],return:[]};
  if(!manifold||!finitePoint(manifold.point))return{status:'no-manifold',reason:'Przypisz i ustaw rozdzielacz na rysunku.',supply:[],return:[]};
  const inlet=layout.supply[0],outlet=layout.return[layout.return.length-1];
- const a=[inlet[0]/sx,inlet[1]/sy],b=[outlet[0]/sx,outlet[1]/sy];
+ const origA=[inlet[0]/sx,inlet[1]/sy],origB=[outlet[0]/sx,outlet[1]/sy];
+ const reversed=direction==='reverse';
+ const a=reversed?origB:origA,b=reversed?origA:origB;
+ if(guide.length){
+  const duo=previewParallelGuide(manifold.point,a,b,guide,{sx,sy,obstacles,
+    corridorWidthM:options?.corridorWidthM??.20,
+    localSpacingM:.10});
+  if(duo.status!=='draft')return {...duo,manifold_id:manifold.id};
+  return {...duo,manifold_id:manifold.id,reversed,
+    start_point:a,end_point:b};
+ }
  const from=previewOrthogonalRoute(manifold.point,a,{sx,sy,obstacles});
  const back=previewOrthogonalRoute(b,manifold.point,{sx,sy,obstacles});
  if(from.status!=='draft'||back.status!=='draft')return {
@@ -99,7 +204,10 @@ export function generateLoopApproaches(layout,manifold,options){
   supply:[],return:[],supply_m:null,return_m:null,
  };
  return {
-  status:'draft',reason:'Dojścia poglądowe — wymagają sprawdzenia ścian, przejść i kolizji rur.',
+  status:'draft',reason:guide.length?
+     'Dojścia idą po korytarzu pomocniczym; NIE ma kontroli odstępu między rurami ani automatycznej rezerwacji pasa.':
+     'Dojścia poglądowe — wymagają sprawdzenia ścian, przejść i kolizji rur.',
+  guided:guide.length>0,reversed,
   supply:from.points,return:back.points,
   supply_m:Number(from.length_m.toFixed(3)),return_m:Number(back.length_m.toFixed(3)),
   start_point:a,end_point:b,manifold_id:manifold.id,

@@ -1,4 +1,4 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v0.9.5</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.0-RC1</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
@@ -38,7 +38,25 @@
  #stage .chip{padding:6px;font-size:11px}
  .workflow-tabs{margin:0 -4px;padding:5px}
 }
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 0.9.5 · naprawione rysowanie pętli · poprawione odzyskiwanie projektów</small></header>
+
+/* Drawing legend and print-preview layers (drafted from reference layout) */
+.tech-tools{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:7px 0}
+.tech-tools button{min-height:37px}
+.tech-note{font-size:11px;line-height:1.55;color:#6f624b;background:#fff8e7;border:1px solid #ead7a9;padding:9px;border-radius:8px;margin:8px 0}
+.route-controls{margin-top:9px;padding:9px;background:#f5f9fc;border:1px solid #dbe7ef;border-radius:9px}
+.route-controls .buttons{margin:5px 0}
+.route-controls button{font-size:11px}
+.route-controls label{font-size:11px;color:#567282;font-weight:650}
+.route-controls input{max-width:100px;padding:7px;width:100%}
+.small-explain{font-size:11px;color:#526e80;line-height:1.5;margin-top:6px}
+#stage.print-preview{background:#fff;color:#18313c}
+#stage.print-preview #plan{background:white}
+@media print {
+ #controls,.notice,header,#stage>.buttons,#stage>.tech-tools,#stage>#hint,#stage>#status,#stage>.view-more{display:none!important}
+ main,.grid,#stage{display:block;max-width:none;margin:0;padding:0;box-shadow:none;border:0;overflow:visible;position:static}
+ #plan{max-height:none!important;page-break-inside:avoid}
+}
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.0-RC1 · ślimak od przyłącza i osobne dojścia · poprawione odzyskiwanie projektów</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit: <b>80 m na pętlę</b>, razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
 <button type="button" data-tab="drawing" class="active">Rysunek</button>
@@ -86,6 +104,8 @@
 <button id="loopAll">Generuj pętle i dojścia całego projektu (TEST)</button>
 </div>
 <label class="panel-note" style="display:flex;align-items:center;gap:7px;margin:10px 0"><input type="checkbox" id="showApproaches" checked> Pokaż dojścia na rzucie</label>
+<div class="tech-note"><b>Planowanie dojść przed generowaniem:</b> zaznacz punkty docelowe startu/końca, wskaż korytarz od rozdzielacza i dopiero przelicz. Obecny silnik zapisuje te wskazówki i rysuje szkic, ale <b>nie wycina jeszcze pasa technicznego z pętli</b>.</div>
+<div class="buttons"><button id="finishGuide" type="button">Zakończ wskazywanie trasy</button><button id="cancelGuide" type="button">Anuluj wskazywanie</button></div>
 <div id="routeSummary" class="chip warn">Po obliczeniu pętli wyświetlimy poglądowe dojścia do rozdzielaczy. Niezweryfikowane trasy są przerywane.</div>
 <div id="engine" class="chip warn">Uruchamianie Python + Shapely…</div></section>
 <section class="panel" data-pane="manifolds"><h2>04 · Rozdzielacze</h2>
@@ -101,11 +121,17 @@
 <div id="restoreSummary" class="chip warn" role="status" aria-live="polite">Wczytywanie projektu przywraca rysunek, kalibrację, pokoje, pola grzewcze, rozdzielacze i ustawienia każdej pętli.</div>
 <div class="mini">Plik JSON zawiera także podkład graficzny. Nie wybieraj tutaj JPG/PDF: JPG/PDF służy tylko do wymiany rysunku i rozpoczyna nową pracę. Projekt pozostaje na Twoim urządzeniu.</div>
 </section>
-</aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2><div class="buttons"><button id="zoomout" title="Oddal">−</button><button id="resetzoom">100%</button><button id="zoomin" title="Przybliż">+</button><button id="panTool" data-tool="pan">✋ Przesuń rysunek</button></div>
+</aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2>
+<div class="tech-tools">
+ <button id="technicalView">Widok techniczny</button>
+ <button id="workingView" class="active">Widok roboczy</button>
+ <button id="exportSvg">Eksport rzutu SVG (TEST)</button>
+</div>
+<div class="buttons"><button id="zoomout" title="Oddal">−</button><button id="resetzoom">100%</button><button id="zoomin" title="Przybliż">+</button><button id="panTool" data-tool="pan">✋ Przesuń rysunek</button></div>
 <details class="view-more"><summary>Obrót, przesuwanie i widoczność podkładu</summary><div class="nav-actions"><button id="moveLeft" title="Przesuń rysunek w lewo" aria-label="Przesuń rysunek w lewo">← Lewo</button><button id="moveUp" title="Przesuń rysunek w górę" aria-label="Przesuń rysunek w górę">↑ Góra</button><button id="moveDown" title="Przesuń rysunek w dół" aria-label="Przesuń rysunek w dół">↓ Dół</button><button id="moveRight" title="Przesuń rysunek w prawo" aria-label="Przesuń rysunek w prawo">Prawo →</button></div>
 <div class="nav-actions"><button id="rotateLeft" title="Obróć plan o 90° przeciwnie do ruchu wskazówek zegara">↶ Obróć w lewo 90°</button><button id="rotateRight" title="Obróć plan o 90° zgodnie z ruchem wskazówek zegara">↷ Obróć w prawo 90°</button><span class="angle" id="angle">Obrót: 0°</span></div>
 <div class="nav-help">Po powiększeniu wybierz „✋ Przesuń rysunek” i przeciągaj myszą lub palcem. W trybie wyboru pomieszczenia można także przeciągać powiększony plan. Strzałki umożliwiają przesuwanie w pionie i poziomie. Obrót obejmuje podkład, obrysy, kalibrację i rury — bez zmiany wymiarów.</div>
-<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · <span style="color:#087ba9">┄</span> dojście testowe · fiolet: obrys · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg><div id="hint">Wczytaj plan lub użyj „Rysunek przykładowy”.</div><div class="stat" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · <span style="color:#087ba9">┄</span> dojście testowe · fiolet: obrys · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg><div id="technicalLegend" style="display:none;margin-top:10px"></div><div id="hint">Wczytaj plan lub użyj „Rysunek przykładowy”.</div><div class="stat" style="grid-template-columns:repeat(2,minmax(0,1fr))">
  <div><strong id="area">—</strong><small>Powierzchnia pomieszczenia m²</small></div>
  <div><strong id="heatArea">—</strong><small>Pole podłogówki m²</small></div>
  <div><strong id="excluded">—</strong><small>Bez ogrzewania m²</small></div>
@@ -116,9 +142,10 @@
 import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=09';
 import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap,pointDistance,normalizeClosedPolygon,tappedFirstPoint} from './room-editor.mjs?v=09';
 import {SPACINGS,spacingAllowed,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=092';
-import {generateLoopApproaches} from './approach-routing.mjs?v=095';
+import {generateLoopApproaches} from './approach-routing.mjs?v=096';
+import {DRAWING_COLORS,cleanRouting,effectiveEndpoints,getZoneTag,plannedCorridorPolyline,snapToFieldEdge,guideMetricLength} from './technical-drawing.mjs?v=096';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
-let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true;
+let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true,technicalView=false,routingTarget=null;
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
 const info=(t,cls='')=>{$('drawing').textContent=t;$('drawing').className='chip '+cls};
 function validLoopPreview(preview,zoneCount) {
@@ -261,7 +288,12 @@ function refreshApproaches(){
    const obstacles=[];
    for(const otherRoom of rooms)for(const [j,otherZone] of roomZones(otherRoom).entries())
     if(otherRoom!==room||j!==i)obstacles.push(otherZone.points);
-   result.approach=generateLoopApproaches(result.layout,manifold,{sx,sy,obstacles});
+   const pref=routingFor(room,zone);
+   result.approach=generateLoopApproaches(result.layout,manifold,{
+     sx,sy,obstacles,guide:pref.guide,corridorWidthM:pref.corridorWidthM,
+     // Python now uses the preferred direction to orient the actual loop.
+     direction:result.layout?.direction==='reverse'?'normal':pref.direction
+   });
    result.visual_total_m=null;result.visual_heating_m=null;result.visual_over_80m=null;
    const approach=result.approach;
    if(approach.status==='draft'){
@@ -282,7 +314,7 @@ function refreshApproaches(){
   ' · bez gotowej geometrii pętli: '+noLoop+' · zablokowane: '+blocked+
   (tooLong?' · przebieg ponad 80 m: '+tooLong:'')+
   (warningCount?' · ostrzeżenia o pełnym pokryciu: '+warningCount:'')+
-  '. Nie sprawdzono ścian, przejść, promieni gięcia ani kolizji innych rur.';
+  '. Dwie linie w ręcznym korytarzu prowadzone są wstępnie co 10 cm. Nie sprawdzono ścian, przejść, promieni gięcia i kolizji wszystkich rur.';
  el.className='chip '+(blocked||tooLong||warningCount?'error':'warn');
 }
 function drawApproaches(result){
@@ -339,47 +371,76 @@ function render(){
  layer=E('g');const t=sceneTransform();if(t)layer.setAttribute('transform',t);
  S.append(layer);
  layer.append(E('rect',{x:-W*8,y:-H*8,width:W*17,height:H*17,fill:'#fff'}));
- if(bg)layer.append(E('image',{href:bg,x:imageFit.x,y:imageFit.y,width:imageFit.width,height:imageFit.height,opacity,preserveAspectRatio:'xMidYMid meet'}));
+ if(bg)layer.append(E('image',{href:bg,x:imageFit.x,y:imageFit.y,width:imageFit.width,height:imageFit.height,opacity:technicalView?Math.min(opacity,.58):opacity,preserveAspectRatio:'xMidYMid meet'}));
  else for(let x=0;x<=W;x+=50)layer.append(E('line',{x1:x,y1:0,x2:x,y2:H,stroke:'#e6eef4'}));
 for(let r of rooms){
  const sel=r.id===selected;
- layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':sel?.17:.06,stroke:sel?'#167cba':'#9a53cf','stroke-width':sel?3.5:2,'stroke-dasharray':sel?'':'7 4'}));
+ layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':technicalView?.01:(sel?.17:.06),
+ stroke:technicalView?'#7a8589':(sel?'#167cba':'#9a53cf'),
+ 'stroke-width':technicalView?1.3:(sel?3.5:2),'stroke-dasharray':sel&&!technicalView?'':'7 4'}));
 
  const zones=r.heatingZones||[];
  for(let zi=0;zi<zones.length;zi++){
    const z=zones[zi],isActive=sel&&r.selectedZoneId===z.id;
    layer.append(E('polygon',{
      points:z.points.map(p=>p.join(',')).join(' '),
-     fill:isActive?'#1aba7f':'#48b67f','fill-opacity':isActive?.31:.19,
-     stroke:isActive?'#05794b':'#0c9662','stroke-width':isActive?4.3:2.7,
-     'stroke-dasharray':isActive?'':'8 4','stroke-linejoin':'round'
+     fill:isActive?'#1aba7f':'#48b67f','fill-opacity':technicalView?.01:(isActive?.31:.19),
+     stroke:technicalView?'#2e8e79':(isActive?'#05794b':'#0c9662'),
+     'stroke-width':technicalView?1.4:(isActive?4.3:2.7),
+     'stroke-dasharray':technicalView?'5 5':(isActive?'':'8 4'),'stroke-linejoin':'round'
    }));
    const center=z.points.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/z.points.length);
    const tag=E('text',{x:center[0],y:center[1]+17,
      fill:'#126947','font-size':13,'text-anchor':'middle','font-weight':'bold',
      stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
    tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m² · '+fmt(settingsFor(r,z).spacing_m*100)+' cm'+(r.loop?.zone_results?.[zi]?.layout?.status==='schematic'?' · SZKIC':'');
-   layer.append(tag);
+   if(!technicalView)layer.append(tag);
  }
  const mx=r.points.reduce((v,p)=>v+p[0],0)/r.points.length,my=r.points.reduce((v,p)=>v+p[1],0)/r.points.length;
  const title=E('text',{x:mx,y:my,fill:'#24526e','font-size':17,'text-anchor':'middle',
    'font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
- title.textContent=r.name;layer.append(title);
-  if(r.loop?.zone_results?.length){
+ title.textContent=r.name;if(!technicalView)layer.append(title);
+ for(const [zi,zone] of (r.heatingZones.length?r.heatingZones:[{id:0,points:r.points,routing:r.implicitRouting}]).entries()){
+   const routing=routingFor(r,r.heatingZones.length?zone:null);
+   const manifold=manifolds.find(m=>m.id===settingsFor(r,r.heatingZones.length?zone:null).manifold_id);
+   const line=plannedCorridorPolyline(manifold?.point,routing);
+   if(line.length>1){
+     const pts=line.map(p=>p.join(',')).join(' ');
+     const width=routing.corridorWidthM/Math.max(.00001,Math.sqrt(sx*sy));
+     layer.append(E('polyline',{points:pts,fill:'none',stroke:'#ecbe76',
+       'stroke-width':width,opacity:technicalView?.15:.25,'stroke-linecap':'round','stroke-linejoin':'round'}));
+     layer.append(E('polyline',{points:pts,fill:'none',stroke:'#b47625',
+       'stroke-width':technicalView?1.6:2.5,'stroke-dasharray':'7 5',
+       'vector-effect':'non-scaling-stroke'}));
+   }
+   for(const [name,point,color] of [['S',routing.preferredStart,'#087ab2'],['K',routing.preferredEnd,'#dd7c34']]){
+     if(!point)continue;
+     layer.append(E('circle',{cx:point[0],cy:point[1],r:8,fill:'#fff',
+       stroke:color,'stroke-width':2.2,'stroke-dasharray':'3 3','vector-effect':'non-scaling-stroke'}));
+     const hint=E('text',{x:point[0]+10,y:point[1]-9,'font-size':12,fill:color,
+       'font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+     hint.textContent=name+'?';layer.append(hint);
+   }
+ }
+ if(r.loop?.zone_results?.length){
    let drawn=0;
    const colors=['#128ab5','#654bc2','#2f8d79','#bc4b7e','#7a88a5'];
    for(const z of r.loop.zone_results){
      const l=z.layout;
      if(!['experimental','schematic'].includes(l?.status))continue;
      drawn++;
-     const palette=colors[z.index%colors.length];
-     for(const [key,color] of [['supply',palette],['return','#d78330'],['cap','#1b997b']]){
+     const reverse=routingFor(r,roomZones(r)[z.index]||null).direction==='reverse'&&l.direction!=='reverse';
+     const palette=technicalView?DRAWING_COLORS.supply:colors[z.index%colors.length];
+     for(const [key,color] of [
+       ['supply',reverse?DRAWING_COLORS.return:palette],
+       ['return',reverse?DRAWING_COLORS.supply:DRAWING_COLORS.return],
+       ['cap',DRAWING_COLORS.turn]]){
        const pts=l[key].map(p=>[p[0]/sx,p[1]/sy]);
        if(l.status==='schematic'){
          layer.append(E('polyline',{points:pts.map(p=>p.join(',')).join(' '),
             fill:'none',stroke:color,'stroke-width':3.3,'stroke-dasharray':'12 3',
             'stroke-linecap':'round','stroke-linejoin':'round','vector-effect':'non-scaling-stroke'}));
-       }else polyline(pts,color,3);
+       }else polyline(pts,color,technicalView?2.1:3);
      }
      drawApproaches(z);
    }
@@ -412,7 +473,8 @@ for(const m of manifolds){
  diamond.textContent='M';layer.append(diamond);
  const label=E('text',{x,y:y-18,'font-size':15,'font-weight':700,'text-anchor':'middle',
    fill:'#a85812',stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
- label.textContent=m.name;layer.append(label);
+ label.textContent=technicalView?'R'+m.id+' · '+manifoldQuantities(rooms,m).sections+' sekc.':m.name;
+ layer.append(label);
 }
 if(['rect','heatRect'].includes(tools)&&temp){
  const b=hover||temp;
@@ -427,7 +489,61 @@ if(pts.length){
    heat?'#11976e':tools==='poly'?'#b047be':'#d18a1e',2.5);
  for(const p of pts)layer.append(E('circle',{cx:p[0],cy:p[1],r:4,fill:heat?'#11976e':'#b14aaa'}));
 }
+if(technicalView){
+ for(const r of rooms){
+  const fields=roomZones(r).length?roomZones(r):[{points:r.points}];
+  for(let i=0;i<fields.length;i++){
+    const zone=roomZones(r)[i]||null;
+    const settings=settingsFor(r,zone),manifold=manifolds.find(m=>m.id===settings.manifold_id);
+    const tag=getZoneTag(r,zone,i,r.loop?.zone_results?.[i]?.layout,settings,manifold,sx,sy);
+    const x=tag.x,y=tag.y;
+    const width=90,height=26;
+    layer.append(E('rect',{x,y,width,height,rx:5,fill:'#fff','fill-opacity':.95,
+      stroke:'#aabecb','stroke-width':1}));
+    layer.append(E('rect',{x,y,width:5,height,fill:'#087ab2'}));
+    const label=E('text',{x:x+11,y:y+16,'font-size':12,'font-weight':'bold',fill:'#173d51'});
+    label.textContent=tag.id+' · '+fmt(settings.spacing_m*100)+' cm';layer.append(label);
+  }
+ }
+}
 drawCalLines();
+ if(technicalView){
+   const mark=E('text',{x:W/2,y:H-9,'text-anchor':'middle',
+     fill:'#bb4f36','font-weight':700,'font-size':17,stroke:'#fff',
+     'stroke-width':4,'paint-order':'stroke'});
+   mark.textContent='HEATLOOP TEST · RYSUNEK POGLĄDOWY · NIE PROJEKT WYKONAWCZY';
+   S.append(mark);
+ }
+ renderTechnicalLegend();
+}
+function renderTechnicalLegend(){
+ const el=$('technicalLegend');if(!el)return;
+ el.style.display=technicalView?'block':'none';
+ if(!technicalView)return;
+ el.innerHTML='';
+ const lead=document.createElement('h3');lead.textContent='Zestawienie pętli · podgląd techniczny';el.append(lead);
+ const warning=document.createElement('div');warning.className='tech-note';
+ warning.textContent='TEST: schematy, promienie gięcia, przejścia przez ściany i równoległe dojścia wymagają sprawdzenia. Preferowane punkty wejścia/wyjścia nie przemieszczają jeszcze geometrii rur.';
+ el.append(warning);
+ for(const room of rooms){
+   const fields=roomZones(room).length?roomZones(room):[{points:room.points}];
+   for(let i=0;i<fields.length;i++){
+     const zone=roomZones(room)[i]||null;
+     const settings=settingsFor(room,zone),manifold=manifolds.find(m=>m.id===settings.manifold_id);
+     const result=room.loop?.zone_results?.[i];
+     const tag=getZoneTag(room,zone,i,result?.layout,settings,manifold,sx,sy);
+     const item=document.createElement('div');item.className='circuit-entry';
+     const title=document.createElement('strong');title.textContent=tag.id+' · '+tag.title;item.append(title);
+     const desc=document.createElement('div');desc.className='circuit-meta';
+     desc.textContent=tag.lines.join(' · ')+(result?' · suma z dojściami: '+fmt(previewLength(result))+' m':'');
+     item.append(desc);
+     if(result?.layout?.status==='schematic'||result?.coverage_warning){
+       const w=document.createElement('div');w.className='mini';
+       w.textContent='Ostrzeżenie: geometria i pokrycie pola nie są zweryfikowane.';item.append(w)
+     }
+     el.append(item)
+   }
+ }
 }
 function chosenRoom(){return rooms.find(r=>r.id===selected)||null}
 function roomZones(room){return room?.heatingZones||[]}
@@ -435,8 +551,34 @@ function activeZone(room){const z=roomZones(room);return z.find(x=>x.id===room?.
 function heatingAreaPx(room){const zones=roomZones(room);return !room?0:zones.length?zones.reduce((sum,z)=>sum+polygonArea(z.points),0):polygonArea(room.points)}
 function copyZones(zones){return zones.map(z=>({
  id:z.id,shape:z.shape,points:copyPoints(z.points),
- settings:z.settings?{...z.settings}:undefined
+ settings:z.settings?{...z.settings}:undefined,
+ routing:cleanRouting(z.routing||{})
 }))}
+function routingFor(room,zone=null){
+ return cleanRouting((zone?zone.routing:room?.implicitRouting)||{});
+}
+function assignRouting(room,zone,patch,redraw=true){
+ if(!room)return false;
+ try{
+  const next=cleanRouting({...routingFor(room,zone),...patch});
+  if(zone)zone.routing=next;
+  else room.implicitRouting=next;
+  if(room.loop)refreshApproaches();
+  if(redraw){render();update();}
+  return true;
+ }catch(e){status('Nie zapisano prowadzenia: '+e.message,'error');return false}
+}
+function selectRouteTool(room,zone,mode){
+ if(!room)return;
+ const manifold=manifolds.find(m=>m.id===settingsFor(room,zone).manifold_id);
+ if(mode==='guidePoint'&&(!manifold||!manifold.point)){
+  status('Najpierw przypisz pętlę do rozdzielacza i zaznacz jego lokalizację.','warn');return
+ }
+ selected=room.id;
+ if(zone)room.selectedZoneId=zone.id;
+ routingTarget={roomId:room.id,zoneId:zone?.id??null};
+ tool(mode);showTab('loops');update();
+}
 function defaultLoopSettings(){return {spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),manifold_id:null}}
 function settingsFor(room,zone=null){
  let stored=zone?zone.settings:room?.implicitSettings;
@@ -590,6 +732,50 @@ function renderCircuits(){
          (coverage?' Szacunek pełnego pola '+fmt(result.full_area_estimate_m)+' m przekracza 80 m.':'') ):
       'Nie przeliczono pętli. Wstępny szacunek '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
    entry.append(badge);
+   if(result?.geometric_coverage_pct!=null){
+     const coverageEl=document.createElement('div');
+     coverageEl.className='chip '+(result.coverage_incomplete?'error':'warn');
+     coverageEl.textContent='Pokrycie geometryczne obrysem rur: '+
+       fmt(result.geometric_coverage_pct)+'% użytecznej powierzchni · wskaźnik poglądowy, NIE wynik obliczeń cieplnych.'+
+       (result.coverage_incomplete?' Uwaga: pozostały fragmenty wymagające korekty.':'');
+     entry.append(coverageEl)
+   }
+   if(result?.layout?.entrance_selected){
+     const metrics=document.createElement('div');metrics.className='chip warn';
+     const ds=result.layout.preferred_start_error_m,de=result.layout.preferred_end_error_m;
+     metrics.textContent='Generator wybrał kierunek ślimaka na podstawie wskazań'+
+       (ds!=null?' · odchylenie początku '+fmt(ds)+' m':'')+
+       (de!=null?' · odchylenie końca '+fmt(de)+' m':'')+
+       (result.layout.corridor_considered?' · uwzględniono zarezerwowany pas':'')+
+       '. S?/K? to cele z możliwym odchyleniem; ocena promieni nadal obowiązkowa.';
+     entry.append(metrics)
+   }
+   const route=routingFor(room,zone),routeBox=document.createElement('div');
+   routeBox.className='route-controls';
+   const routeTitle=document.createElement('strong');routeTitle.textContent='Początek, koniec i dojście';routeBox.append(routeTitle);
+   const routeActions=document.createElement('div');routeActions.className='buttons';
+   const action=(label,callback)=>{const btn=document.createElement('button');btn.type='button';btn.textContent=label;btn.onclick=callback;routeActions.append(btn)};
+   action('◎ Preferowany początek',()=>selectRouteTool(room,zone,'targetStart'));
+   action('◎ Preferowany koniec',()=>selectRouteTool(room,zone,'targetEnd'));
+   action(route.direction==='reverse'?'⇄ Przywróć kierunek':'⇄ Odwróć kierunek',()=>{
+     snapshot(room);assignRouting(room,zone,{direction:route.direction==='reverse'?'normal':'reverse'});renderCircuits()
+   });
+   action('┄ Wyznacz korytarz',()=>selectRouteTool(room,zone,'guidePoint'));
+   action('Usuń korytarz',()=>{snapshot(room);assignRouting(room,zone,{guide:[]});renderCircuits()});
+   routeBox.append(routeActions);
+   const widthRow=document.createElement('div');widthRow.className='field';
+   const widthLabel=document.createElement('label');widthLabel.textContent='Szerokość planowanego pasa (cm)';widthRow.append(widthLabel);
+   const widthInput=document.createElement('input');widthInput.type='number';widthInput.min='10';widthInput.max='80';widthInput.step='2.5';widthInput.value=String(route.corridorWidthM*100);
+   widthInput.onchange=()=>{snapshot(room);if(!assignRouting(room,zone,{corridorWidthM:Number(widthInput.value)/100}))editHistory.pop();renderCircuits()};
+   widthRow.append(widthInput);routeBox.append(widthRow);
+   const guideInfo=document.createElement('div');guideInfo.className='small-explain';
+   guideInfo.textContent='Cel startu: '+(route.preferredStart?'oznaczony':'auto')+
+     ' · cel końca: '+(route.preferredEnd?'oznaczony':'auto')+
+     ' · punkty trasy: '+route.guide.length+
+     ' · kierunek: '+(route.direction==='reverse'?'odwrócony':'normalny')+
+     '. Przy wskazaniu rozdzielacza i punktów wejścia generator wybierze orientację ślimaka po ponownym przeliczeniu.';
+   routeBox.append(guideInfo);
+   entry.append(routeBox);
    el.append(entry);
  }
 }
@@ -695,14 +881,18 @@ function tool(t){
  heatPoly:'Dodawaj punkty pola podłogówki. Następnie: Zamknij wielokąt.',
  editHeat:'Przeciągnij ZIELONY narożnik pola ogrzewania.',
  moveHeat:'Przeciągnij wnętrze zielonego pola ogrzewania.',
- placeManifold:'Dotknij na planie miejsca montażu wybranego rozdzielacza. Możesz potem zmienić jego pozycję.'
+ placeManifold:'Dotknij na planie miejsca montażu wybranego rozdzielacza. Możesz potem zmienić jego pozycję.',
+ targetStart:'Wskaż preferowane wejście rury na krawędzi pola — to wskazówka do dalszej generacji.',
+ targetEnd:'Wskaż preferowane wyjście rury na krawędzi pola — to wskazówka do dalszej generacji.',
+ guidePoint:'Dodawaj punkty trasy od rozdzielacza ku polu; zakończ przyciskiem w zakładce Pętle.'
  }[t]||'Wybierz narzędzie';
  render();
 }
 function validDrawing(points){return validPolygon(points,Math.max(1,.01/(sx*sy))) && points.every(allowed)}
 function snapshot(room){
  editHistory.push({id:room.id,points:copyPoints(room.points),shape:room.shape,
-   heatingZones:copyZones(roomZones(room)),selectedZoneId:room.selectedZoneId,zoneSerial:room.zoneSerial});
+   heatingZones:copyZones(roomZones(room)),selectedZoneId:room.selectedZoneId,zoneSerial:room.zoneSerial,
+   implicitRouting:cleanRouting(room.implicitRouting||{})});
  if(editHistory.length>35)editHistory.shift();
 }
 function setRoomGeometry(room,points,shape=room.shape,heatingOverride){
@@ -718,7 +908,7 @@ function setRoomGeometry(room,points,shape=room.shape,heatingOverride){
 function setHeating(room,points,shape='poly'){
  if(!room){info('Najpierw wybierz pomieszczenie.','warn');return false}
  const existing=roomZones(room);
- const candidate={id:(room.zoneSerial||0)+1,points:copyPoints(points),shape,settings:defaultLoopSettings()};
+ const candidate={id:(room.zoneSerial||0)+1,points:copyPoints(points),shape,settings:defaultLoopSettings(),routing:cleanRouting({})};
  if(!validZones(room.points,[...existing,candidate])){
    info('Pole musi być wewnątrz pomieszczenia i nie może nakładać się na istniejące zielone pola.','error');
    return false;
@@ -733,7 +923,8 @@ function addRoom(points,shape='poly'){
  if(!(sx>0&&sy>0)){info('Najpierw wykonaj kalibrację.','error');return false}
  if(!validDrawing(points)){info('Zaznacz poprawny obrys bez przecięć, wewnątrz podkładu.','error');return false}
  if(rooms.length>=100){info('Przekroczono limit 100 pomieszczeń.','error');return false}
- const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingZones:[],selectedZoneId:null,zoneSerial:0,implicitSettings:defaultLoopSettings(),loop:null,revision:0};
+ const id=next++,r={id,name:'Pomieszczenie '+id,points:copyPoints(points),shape,heatingZones:[],selectedZoneId:null,zoneSerial:0,
+ implicitSettings:defaultLoopSettings(),implicitRouting:cleanRouting({}),loop:null,revision:0};
  rooms.push(r);selected=id;
  info('Dodano '+r.name+' · '+fmt(polygonArea(points)*sx*sy)+' m².','ok');
  list();render();update();redrawManifolds();return true
@@ -781,6 +972,24 @@ function finish(){
  return ok;
 }
 function click(p){
+ if(['targetStart','targetEnd','guidePoint'].includes(tools)){
+   const t=routingTarget,room=rooms.find(x=>x.id===t?.roomId);
+   const zone=room&&t?.zoneId!=null?roomZones(room).find(z=>z.id===t.zoneId):null;
+   if(!room){status('Brak wskazanej pętli.','error');tool('select');return}
+   const routing=routingFor(room,zone);
+   if(tools==='guidePoint'){
+     if(routing.guide.length>=25){status('Limit 25 punktów korytarza. Zakończ trasę.','warn');return}
+     snapshot(room);
+     if(!assignRouting(room,zone,{guide:[...routing.guide,p]})){editHistory.pop();return}
+     status('Dodano punkt '+(routing.guide.length+1)+'. Wskaż kolejny lub kliknij „Zakończ wskazywanie trasy”.','ok');return;
+   }
+   const nearest=snapToFieldEdge(p,zone?.points||room.points,sx,sy);
+   if(!nearest){status('Wskaż bliżej granicy pola; początek i koniec zaznacza się na obrysie.','warn');return}
+   snapshot(room);
+   if(!assignRouting(room,zone,{[tools==='targetStart'?'preferredStart':'preferredEnd']:nearest})){editHistory.pop();return}
+   tool('select');showTab('loops');
+   status('Zapisano preferowany punkt. Silnik jeszcze nie przenosi końca ślimaka w to miejsce.','warn');return;
+ }
  if(tools==='placeManifold'){
    const m=selectedManifold();
    if(!m){info('Nie wybrano rozdzielacza.','error');return}
@@ -959,7 +1168,7 @@ S.addEventListener('pointermove',ev=>{
   }else{editDragStep(drag,xy(ev))}
   return;
  }
- if(['poly','rect','heatPoly','heatRect','cx','cy','measure'].includes(tools)){
+ if(['poly','rect','heatPoly','heatRect','cx','cy','measure','guidePoint','targetStart','targetEnd'].includes(tools)){
    const p=xy(ev);hover=allowed(p)?p:null;render()
  }
 });
@@ -990,6 +1199,7 @@ $('undoEdit').onclick=()=>{
  const room=rooms.find(r=>r.id===prev.id);if(!room){info('Pomieszczenie usunięto.','error');return}
  room.points=copyPoints(prev.points);room.shape=prev.shape;
  room.heatingZones=copyZones(prev.heatingZones);room.selectedZoneId=prev.selectedZoneId;room.zoneSerial=prev.zoneSerial;
+ room.implicitRouting=cleanRouting(prev.implicitRouting||{});
  invalidate(room);selected=room.id;list();render();update();info('Cofnięto ostatnią edycję. Przelicz pętlę ponownie.','ok');
 };
 for(const nav of document.querySelectorAll('#workflowTabs [data-tab]'))nav.onclick=()=>showTab(nav.dataset.tab);
@@ -1035,8 +1245,24 @@ function queueAnalysisForRoom(r,quiet=false){
  }
  const entries=circuitRows(r);
  let zone_settings;
- try{zone_settings=entries.map(e=>settingsFor(r,e.zone))}
- catch(err){if(!quiet)status(err.message,'error');return false}
+ try{
+   zone_settings=entries.map(e=>{
+     const settings=settingsFor(r,e.zone);
+     const routing=routingFor(r,e.zone);
+     const manifold=manifolds.find(m=>m.id===settings.manifold_id);
+     return{...settings,routing:{
+       direction:routing.direction,
+       preferred_start_m:routing.preferredStart?
+         [routing.preferredStart[0]*sx,routing.preferredStart[1]*sy]:null,
+       preferred_end_m:routing.preferredEnd?
+         [routing.preferredEnd[0]*sx,routing.preferredEnd[1]*sy]:null,
+       manifold_point_m:manifold?.point?
+         [manifold.point[0]*sx,manifold.point[1]*sy]:null,
+       guide_m:routing.guide.map(p=>[p[0]*sx,p[1]*sy]),
+       corridor_width_m:routing.corridorWidthM
+     }};
+   });
+ }catch(err){if(!quiet)status(err.message,'error');return false}
  const n=++seq;queue.set(n,{id:r.id,revision:r.revision||0});
  worker.postMessage({kind:'analyze',seq:n,roomId:r.id,payload:{
   points:pointsToMeter(r.points),
@@ -1072,10 +1298,41 @@ $('loopAll').onclick=()=>{
  if(!sent){status('Najpierw zaznacz pomieszczenia i pola ogrzewania.','warn');return}
  status('Generowanie ślimaków i poglądowych dojść dla '+sent+' pomieszczeń.','warn');
 };
-$('showApproaches').onchange=()=>{
- showApproachRoutes=$('showApproaches').checked;
+$('showApproaches').onchange=()=>{showApproachRoutes=$('showApproaches').checked;render()};
+function setTechnicalView(v){
+ technicalView=!!v;
+ $('stage').classList.toggle('print-preview',technicalView);
+ $('technicalView').classList.toggle('active',technicalView);
+ $('workingView').classList.toggle('active',!technicalView);
  render();
+}
+$('technicalView').onclick=()=>setTechnicalView(true);
+$('workingView').onclick=()=>setTechnicalView(false);
+$('exportSvg').onclick=()=>{
+ // Export only the current SVG plan with embedded raster and labels.
+ const original=technicalView;
+ try{
+   setTechnicalView(true);
+   const clone=S.cloneNode(true);
+   clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+   clone.setAttribute('width','1650');
+   clone.setAttribute('height','1125');
+   clone.setAttribute('aria-label','HeatLoop — eksperymentalny rysunek techniczny');
+   const source='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
+   const b=new Blob([source],{type:'image/svg+xml;charset=utf-8'}),link=document.createElement('a');
+   link.href=URL.createObjectURL(b);link.download='heatloop_rzut_techniczny_TEST.svg';
+   link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1200);
+   status('Wyeksportowano rzut SVG TEST. To nie jest zatwierdzony projekt wykonawczy.','warn');
+ }catch(e){status('Nie udało się wyeksportować SVG: '+e.message,'error')}
+ finally{setTechnicalView(original)}
 };
+$('finishGuide').onclick=()=>{
+ if(tools==='guidePoint'){
+   tool('select');renderCircuits();
+   status('Trasa pomocnicza zapisana. Wciąż nie jest automatycznie zarezerwowanym pasem rur.','warn');
+ }
+};
+$('cancelGuide').onclick=()=>{tool('select');renderCircuits();status('Zakończono wskazywanie. Punkty można usunąć przy pętli.','warn')};
 try{worker=new Worker('./rysunek-worker.js?v=095',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
@@ -1090,12 +1347,14 @@ try{worker=new Worker('./rysunek-worker.js?v=095',{type:'module'});worker.onmess
    '. Rozstawy pętli są niezależne.'+
    (over?' UWAGA: '+over+' pętli może przekraczać 80 m!':'')+
    ' Schematy nie oznaczają sprawdzonych promieni gięcia. Dojścia także wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
-$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:9,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
+$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:10,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
  manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
  activeManifoldId,
  defaults:{spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),
   diam: $('diam').value, edge:$('edge').value, radius:$('radius').value},
- known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings(),loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
+ known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings(),
+ implicitRouting:routingFor(r,null),
+ loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
 $('import').onclick=()=>{
  const input=$('jsonfile');input.value='';showTab('settings');input.click();
 };
@@ -1108,7 +1367,7 @@ $('jsonfile').onchange=e=>{
   const previous=captureActiveProject();
   try{
    let j=JSON.parse(String(fr.result||'').replace(/^\uFEFF/,''));
-   if(!Number.isInteger(j.version)||j.version<1||j.version>9)
+   if(!Number.isInteger(j.version)||j.version<1||j.version>10)
     throw Error('Nieobsługiwana wersja JSON '+j.version+'. Otwórz projekt w zgodnej wersji HeatLoop.');
  if(j.format!=='HeatLoop-Drawing-LAB'||!Array.isArray(j.rooms)||j.rooms.length>100)throw Error('Nieznany projekt');for(const r of j.rooms)if(!Array.isArray(r.points)||r.points.length<3||r.points.length>200||r.points.some(p=>!Array.isArray(p)||p.length!==2||p.some(z=>typeof z!=='number'||!Number.isFinite(z))))throw Error('Błędne punkty');if(j.background&&(!j.background.startsWith('data:image/')||j.background.length>24e6))throw Error('Błędny obraz');
  const importedManifolds=Array.isArray(j.manifolds)?j.manifolds:[];
@@ -1154,11 +1413,13 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
    id:Number.isInteger(z.id)&&z.id>0?z.id:j+1,
    shape:['rect','poly'].includes(z.shape)?z.shape:'poly',
    points:copyPoints(z.points),
-   settings:normalizeLoopSettings(z.settings||{},defaultLoopSettings(),manifolds)
+   settings:normalizeLoopSettings(z.settings||{},defaultLoopSettings(),manifolds),
+   routing:cleanRouting(z.routing||{})
  })):r.heatingPoints?[{
    id:1,shape:['rect','poly'].includes(r.heatingShape)?r.heatingShape:'poly',
    points:copyPoints(r.heatingPoints),
-   settings:normalizeLoopSettings({},defaultLoopSettings(),manifolds)
+   settings:normalizeLoopSettings({},defaultLoopSettings(),manifolds),
+   routing:cleanRouting({})
  }]:[];
  const minArea=Math.max(1,.01/(Math.max(sx,1e-9)*Math.max(sy,1e-9)));
  if(!validPolygon(points,minArea))throw Error('Niepoprawny obrys w projekcie: '+(i+1));
@@ -1168,6 +1429,7 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
   shape:r.shape==='rect'||r.shape==='poly'?r.shape:(rect?'rect':'poly'),
   heatingZones:zones,selectedZoneId:zones.some(z=>z.id===r.selectedZoneId)?r.selectedZoneId:zones[0]?.id||null,zoneSerial:Math.max(Number(r.zoneSerial)||0,...zones.map(z=>z.id),0),
   implicitSettings:normalizeLoopSettings(r.implicitSettings||{},defaultLoopSettings(),manifolds),
+  implicitRouting:cleanRouting(r.implicitRouting||{}),
   revision:0,loop:validLoopPreview(r.loopPreview,Math.max(1,zones.length))?r.loopPreview:null}
 });
  queue.clear();editHistory=[];next=rooms.length+1;selected=rooms[0]?.id||null;

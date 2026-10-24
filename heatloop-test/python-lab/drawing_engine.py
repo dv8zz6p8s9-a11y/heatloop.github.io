@@ -155,6 +155,156 @@ def schematic_rectangle(room, s, clearance, radius, feed, back, rejected_reason)
         "installation_ready":False,
     }
 
+def _valid_xy(value):
+    return (isinstance(value,(list,tuple)) and len(value)==2
+            and all(isinstance(x,(int,float)) and isfinite(x) for x in value))
+
+
+def _rotate_reflect_point(point,center,turns,reflect=False,inverse=False):
+    """Quarter-turn + reflection: exact isometry, preserves spacing/length."""
+    x=point[0]-center[0]
+    y=point[1]-center[1]
+    k=(4-turns)%4 if inverse else turns
+    if inverse:
+        x,y=[(x,y),(-y,x),(-x,-y),(y,-x)][k]
+        if reflect:x=-x
+    else:
+        if reflect:x=-x
+        x,y=[(x,y),(-y,x),(-x,-y),(y,-x)][k]
+    return (x+center[0],y+center[1])
+
+
+def _turn_layout(layout,center,turns,reflect):
+    result=dict(layout)
+    for key in ("supply","return","cap"):
+        result[key]=[
+            _rotate_reflect_point(p,center,turns,reflect,True)
+            for p in layout[key]
+        ]
+    return result
+
+
+def _valid_route_routing(routing,field):
+    if routing is None:return {}
+    if not isinstance(routing,dict):
+        raise ValueError("Nieprawidłowe dane wejścia i wyjścia pętli")
+    result={}
+    for key in ("preferred_start_m","preferred_end_m","manifold_point_m"):
+        point=routing.get(key)
+        if point is not None:
+            if not _valid_xy(point):raise ValueError("Błędny punkt "+key)
+            result[key]=tuple(point)
+    guide=routing.get("guide_m",[])
+    if not isinstance(guide,list) or len(guide)>25 or not all(_valid_xy(p) for p in guide):
+        raise ValueError("Nieprawidłowe punkty dojścia")
+    result["guide_m"]=[tuple(p) for p in guide]
+    width=routing.get("corridor_width_m",.20)
+    if not isinstance(width,(int,float)) or not isfinite(width) or not .10<=width<=.80:
+        raise ValueError("Szerokość pasa technicznego musi wynosić 10-80 cm")
+    result["corridor_width_m"]=width
+    result["direction"]="reverse" if routing.get("direction")=="reverse" else "normal"
+    for key in ("preferred_start_m","preferred_end_m"):
+        if key in result and field.boundary.distance(
+            __import__("shapely").geometry.Point(result[key]))>.80:
+            raise ValueError("Preferowany początek lub koniec jest zbyt daleko od pola")
+    return result
+
+
+def _turn_candidates(field,s,clearance,radius,feed,back,routing):
+    """Score 8 isometric layouts by marked endpoints and manifold approach.
+
+    The generated inlet/outlet change with the loop orientation; the chosen
+    points are measured against preferences, never silently snapped or moved.
+    """
+    from shapely.geometry import Point
+    center=tuple(field.centroid.coords[0])
+    widths=field.bounds
+    manifold=routing.get("manifold_point_m")
+    start_target=routing.get("preferred_start_m")
+    end_target=routing.get("preferred_end_m")
+    guide=routing.get("guide_m",[])
+    reversed_flow=routing.get("direction")=="reverse"
+    corridor=None
+    if manifold is not None and guide:
+        # The user-drawn polyline becomes a protected *preliminary* corridor.
+        corridor=LineString([manifold]+guide).buffer(
+            routing.get("corridor_width_m",.20)/2+clearance/4,
+            cap_style=2,join_style=2
+        )
+    scored=[]
+    duplicates=set()
+    for turns in range(4):
+        for reflect in (False,True):
+            transformed=Polygon([
+                _rotate_reflect_point(p,center,turns,reflect)
+                for p in list(field.exterior.coords)[:-1]
+            ])
+            try:
+                layout=rectangle(transformed,s,clearance,radius,feed,back)
+            except ValueError as strict_error:
+                try:
+                    layout=schematic_rectangle(
+                        transformed,s,clearance,radius,feed,back,str(strict_error)
+                    )
+                except ValueError:
+                    continue
+            layout=_turn_layout(layout,center,turns,reflect)
+            if reversed_flow:
+                outgoing=layout["supply"]
+                returning=layout["return"]
+                layout["supply"]=list(reversed(returning))
+                layout["return"]=list(reversed(outgoing))
+                layout["cap"]=list(reversed(layout["cap"]))
+            inlet=layout["supply"][0] if layout["supply"] else None
+            outlet=layout["return"][-1] if layout["return"] else None
+            if inlet is None or outlet is None:continue
+            identity=(round(inlet[0],5),round(inlet[1],5),
+                      round(outlet[0],5),round(outlet[1],5))
+            if identity in duplicates:continue
+            duplicates.add(identity)
+            if corridor is not None:
+                pipe=LineString(layout["supply"]+
+                    layout["cap"][1:]+layout["return"][1:])
+                near=Point(inlet).buffer(max(.15,s*1.5)).union(
+                    Point(outlet).buffer(max(.15,s*1.5)))
+                blocked=pipe.intersection(corridor.difference(near))
+                if blocked.length>.025:continue
+            preference=0
+            if start_target:preference+=hypot(*minus(inlet,start_target))
+            if end_target:preference+=hypot(*minus(outlet,end_target))
+            if not start_target and manifold:
+                preference+=.6*hypot(*minus(inlet,manifold))
+            if not end_target and manifold:
+                preference+=.6*hypot(*minus(outlet,manifold))
+            if guide:
+                preference+=.4*hypot(*minus(inlet,guide[-1]))
+                preference+=.4*hypot(*minus(outlet,guide[-1]))
+            # The preferred entrance affects orientation; length/coverage
+            # remains a secondary goal (not the other way round).
+            scored.append((preference,-layout["drawn_m"],turns,reflect,layout))
+    if not scored:return None
+    scored.sort(key=lambda item:(item[0],item[1],item[2],item[3]))
+    _,_,turns,reflect,chosen=scored[0]
+    chosen["orientation_turns"]=turns
+    chosen["orientation_reflect"]=reflect
+    chosen["direction"]=routing.get("direction","normal")
+    chosen["actual_start_m"]=list(chosen["supply"][0])
+    chosen["actual_end_m"]=list(chosen["return"][-1])
+    chosen["preferred_start_error_m"]=(
+        round(hypot(*minus(chosen["supply"][0],start_target)),3)
+        if start_target else None
+    )
+    chosen["preferred_end_error_m"]=(
+        round(hypot(*minus(chosen["return"][-1],end_target)),3)
+        if end_target else None
+    )
+    chosen["entrance_selected"]=bool(start_target or end_target or manifold)
+    chosen["corridor_considered"]=corridor is not None
+    if chosen["status"]=="schematic":
+        chosen["warning"]+=" Wybrano orientację względem wejścia; S?/K? są preferencjami, nie gwarancją styku."
+    return chosen
+
+
 def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_settings=None):
     """Analyze multiple independently configured heating fields.
 
@@ -212,17 +362,47 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
         if not (0<=feed<=100 and 0<=back<=100):
             raise ValueError("Długości dojść do rozdzielacza muszą być nieujemne")
         estimate=field.area/spacing+feed+back
-        try:
-            layout=rectangle(field,spacing,edge+diameter/2,radius,feed,back)
-        except ValueError as e:
-            try:
-                layout=schematic_rectangle(
-                    field,spacing,edge+diameter/2,radius,feed,back,str(e)
-                )
-            except ValueError as preview_error:
+        route=_valid_route_routing(zone.get("routing"),field)
+        if route:
+            layout=_turn_candidates(field,spacing,edge+diameter/2,
+                                    radius,feed,back,route)
+        else:
+            layout=None
+        if layout is None:
+            if route and route.get("guide_m") and route.get("manifold_point_m"):
+                # No safe approach corridor for the requested routing.
                 layout={"status":"planned","kind":"none",
-                        "message":str(e)+"; "+str(preview_error),
+                        "message":"Wskazany pas dojścia koliduje z układem rur. Zmień trasę lub pole grzewcze.",
                         "installation_ready":False}
+            else:
+                try:
+                    layout=rectangle(field,spacing,edge+diameter/2,radius,feed,back)
+                except ValueError as e:
+                    try:
+                        layout=schematic_rectangle(
+                            field,spacing,edge+diameter/2,radius,feed,back,str(e)
+                        )
+                    except ValueError as preview_error:
+                        layout={"status":"planned","kind":"none",
+                                "message":str(e)+"; "+str(preview_error),
+                                "installation_ready":False}
+        # Geometric proxy only: tube centerline buffered by half the pitch,
+        # intersected with the usable heating region. Not a thermal simulation.
+        if layout["status"] in ("experimental","schematic"):
+            try:
+                pipe=LineString(layout["supply"]+
+                                layout["cap"][1:]+layout["return"][1:])
+                usable=field.buffer(-(edge+diameter/2))
+                occupied=pipe.buffer(spacing/2,resolution=8).intersection(usable)
+                covered=occupied.area
+                usable_area=usable.area
+                ratio=min(1.,covered/usable_area) if usable_area>.00001 else 0.
+                layout["geometric_coverage_pct"]=round(100*ratio,1)
+                layout["geometric_coverage_m2"]=round(covered,3)
+                layout["usable_area_m2"]=round(usable_area,3)
+                layout["coverage_method"]="buffered-centerline-proxy"
+            except Exception:
+                layout["geometric_coverage_pct"]=None
         layouts.append(layout)
         checked_length=layout.get("total_m",estimate)
         # A shortened schematic can fit within 80 m while the area/spacing
@@ -240,6 +420,11 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
             "over_80m":checked_length>80+1e-7 or coverage_warning,
             "coverage_warning":coverage_warning,
             "full_area_estimate_m":round(estimate,2),
+            "geometric_coverage_pct":layout.get("geometric_coverage_pct"),
+            "coverage_incomplete":(
+                layout.get("geometric_coverage_pct") is not None and
+                layout["geometric_coverage_pct"]<90
+            ),
             "length_is_estimate":layout["status"]!="experimental",
             "layout":layout,
         })
