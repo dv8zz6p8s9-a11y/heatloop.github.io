@@ -59,3 +59,29 @@ export function plannedCorridorPolyline(manifoldPoint,routing){
  if(!finite(manifoldPoint)||r.guide.length===0)return [];
  return [copy(manifoldPoint),...r.guide.map(copy)];
 }
+
+/** Project the user's pointer onto a heating-field edge; returns null if far away. */
+export function snapToFieldEdge(point,polygon,sx,sy,maxDistanceM=.80){
+ if(!finite(point)||!Array.isArray(polygon)||polygon.length<3||!(sx>0&&sy>0))return null;
+ let best=null,distance=Infinity;
+ for(let i=0;i<polygon.length;i++){
+  const a=polygon[i],b=polygon[(i+1)%polygon.length];
+  const ax=a[0]*sx,ay=a[1]*sy,bx=b[0]*sx,by=b[1]*sy;
+  const px=point[0]*sx,py=point[1]*sy;
+  const dx=bx-ax,dy=by-ay;
+  const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy||1)));
+  const x=ax+t*dx,y=ay+t*dy;
+  const d=Math.hypot(px-x,py-y);
+  if(d<distance){distance=d;best=[x/sx,y/sy]}
+ }
+ return distance<=maxDistanceM?best:null;
+}
+export function guideMetricLength(manifold,routing,sx,sy){
+ const pts=plannedCorridorPolyline(manifold,routing);
+ if(pts.length<2||!(sx>0&&sy>0))return null;
+ let length=0;
+ for(let i=1;i<pts.length;i++){
+  length+=Math.hypot((pts[i][0]-pts[i-1][0])*sx,(pts[i][1]-pts[i-1][1])*sy);
+ }
+ return length;
+}
