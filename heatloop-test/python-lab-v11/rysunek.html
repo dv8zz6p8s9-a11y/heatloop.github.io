@@ -592,6 +592,17 @@ if(technicalView){
   }
  }
 }
+// Room outlines always stay above heating fields, route previews and SVG graphics.
+// They are view-only: never intercept clicks used for drawing or selecting rooms.
+for(const room of rooms){
+ layer.append(E('polygon',{
+  points:room.points.map(p=>p.join(',')).join(' '),
+  fill:'none',stroke:room.id===selected?'#086c9f':'#475f73',
+  'stroke-width':room.id===selected?2.6:2,
+  'stroke-linejoin':'round','vector-effect':'non-scaling-stroke',
+  'pointer-events':'none'
+ }));
+}
 drawCalLines();
  if(technicalView){
    const mark=E('text',{x:W/2,y:H-9,'text-anchor':'middle',
