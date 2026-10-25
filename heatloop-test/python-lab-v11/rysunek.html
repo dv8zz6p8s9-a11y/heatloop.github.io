@@ -1331,8 +1331,24 @@ $('file').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>
 if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){try{status('Ładowanie pierwszej strony PDF…');const mod=await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');mod.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';let pdf=await mod.getDocument({data:await f.arrayBuffer()}).promise,p=await pdf.getPage(1),v=p.getViewport({scale:1.3}),c=document.createElement('canvas');c.width=v.width;c.height=v.height;await p.render({canvasContext:c.getContext('2d'),viewport:v}).promise;loadImage(c.toDataURL('image/png'))}catch(e){status('Nie udało się otworzyć PDF: '+e.message,'error')}return}
 if(!['image/png','image/jpeg','image/webp'].includes(f.type)){status('Nieobsługiwany format.','error');return}let r=new FileReader();r.onload=()=>loadImage(r.result);r.readAsDataURL(f)};
 const inputs=()=>{let n=id=>Number($(id).value);return {spacing_m:n('spacing'),diameter_m:n('diam')/1000,wall_edge_m:n('edge')/1000,radius_m:n('radius')/1000,feed_m:n('feed'),back_m:n('back')}};
+function validateGeneration(targetRooms,quiet=false){
+ const fail=message=>{if(!quiet)status(message,'warn');return false;};
+ if(!bg||!(sx>0&&sy>0))return fail('Krok 1: wczytaj i skalibruj rysunek.');
+ if(!Array.isArray(targetRooms)||!targetRooms.length)return fail('Krok 2: oznacz pomieszczenia.');
+ if(targetRooms.some(r=>!roomZones(r).length))
+  return fail('Krok 3: zaznacz pole grzewcze w każdym pomieszczeniu objętym generowaniem.');
+ if(!manifolds.length||!manifolds.some(m=>Array.isArray(m.point)))
+  return fail('Krok 4: dodaj i ustaw rozdzielacz na rysunku.');
+ for(const r of targetRooms)for(const item of circuitRows(r)){
+   const assigned=settingsFor(r,item.zone).manifold_id;
+   const m=manifolds.find(x=>x.id===assigned);
+   if(!m||!Array.isArray(m.point))
+     return fail('Krok 4: przypisz każdą pętlę do ustawionego rozdzielacza. Sprawdź '+r.name+'.');
+ }
+ return true;
+}
 function queueAnalysisForRoom(r,quiet=false){
- if(!ready||!r)return false;
+ if(!ready||!r||!validateGeneration([r],quiet))return false;
  const args=inputs();
  if(!Object.values(args).every(Number.isFinite)){
    if(!quiet)status('Błędne parametry rur.','error');
@@ -1388,9 +1404,10 @@ $('loop').onclick=()=>{
 };
 $('loopAll').onclick=()=>{
  if(!ready){status('Python jeszcze się ładuje.','warn');return}
+ if(!validateGeneration(rooms))return;
  let sent=0;
  for(const r of rooms)if(queueAnalysisForRoom(r,true))sent++;
- if(!sent){status('Najpierw zaznacz pomieszczenia i pola ogrzewania.','warn');return}
+ if(!sent){status('Generowanie zablokowane: sprawdź pola i rozdzielacze.','warn');return}
  status('Generowanie ślimaków i poglądowych dojść dla '+sent+' pomieszczeń.','warn');
 };
 $('showApproaches').onchange=()=>{showApproachRoutes=$('showApproaches').checked;render()};
@@ -1428,7 +1445,7 @@ $('finishGuide').onclick=()=>{
  }
 };
 $('cancelGuide').onclick=()=>{tool('select');renderCircuits();status('Zakończono wskazywanie. Punkty można usunąć przy pętli.','warn')};
-try{worker=new Worker('./rysunek-worker.js?v=095',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+try{worker=new Worker('./rysunek-worker.js?v=111',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
  r.loop=d.result;refreshApproaches();list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
@@ -1547,4 +1564,9 @@ $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
  try{fr.readAsText(file)}catch(err){status('Odczyt JSON nie powiódł się: '+err.message,'error')}
 };
 scaleRead();render();showTab('drawing');redrawManifolds();
+if(typeof ResizeObserver==='function'){
+ new ResizeObserver(()=>updateMapScaleBar()).observe(S);
+}else if(typeof window!=='undefined'&&window.addEventListener){
+ window.addEventListener('resize',updateMapScaleBar);
+}
 </script></body></html>
