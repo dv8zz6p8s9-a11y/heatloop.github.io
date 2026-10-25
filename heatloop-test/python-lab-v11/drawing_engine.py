@@ -3,6 +3,8 @@ from math import hypot,cos,sin,pi,atan2,tan,acos,isfinite
 from shapely.geometry import Polygon,LineString
 
 SPACINGS=[.10,.125,.15,.20]
+MAX_LOOP_M=100.0
+WARN_LOOP_M=90.0
 def validate_room(pts):
     if not 3<=len(pts)<=200 or any(len(p)!=2 or not all(isfinite(v) for v in p) for p in pts):
         raise ValueError("Nieprawidłowe punkty obrysu")
@@ -77,12 +79,12 @@ def rectangle(room,s,clearance,radius,feed,back):
         try:
             go=rounded(path,radius);ret=rounded(list(reversed(offset(path,-s))),radius);turn=cap(path,s)
             whole=go+turn[1:]+ret[1:];line=LineString(whole);total=line.length+feed+back
-            if room.buffer(-clearance).buffer(1e-7).covers(line) and line.is_simple and total<=80+1e-7:
+            if room.buffer(-clearance).buffer(1e-7).covers(line) and line.is_simple and total<=MAX_LOOP_M+1e-7:
                 candidates.append((count,line.length,go,ret,turn,total))
         except (ValueError,ZeroDivisionError):continue
-    if not candidates:raise ValueError("Nie znaleziono bezkolizyjnego ślimaka w limicie 80 m")
+    if not candidates:raise ValueError("Nie znaleziono bezkolizyjnego ślimaka w limicie 100 m")
     turns,drawn,go,ret,turn,total=max(candidates,key=lambda x:(x[0],x[1]))
-    return {"status":"experimental","kind":"counterflow-rectangle","supply":go,"return":ret,"cap":turn,"drawn_m":round(drawn,3),"total_m":round(total,3),"margin_m":round(80-total,3),"turns":turns,"installation_ready":False}
+    return {"status":"experimental","kind":"counterflow-rectangle","supply":go,"return":ret,"cap":turn,"drawn_m":round(drawn,3),"total_m":round(total,3),"margin_m":round(MAX_LOOP_M-total,3),"turns":turns,"installation_ready":False}
 def schematic_rectangle(room, s, clearance, radius, feed, back, rejected_reason):
     """Clearly marked geometric PREVIEW, never a verified installation route.
 
@@ -133,12 +135,12 @@ def schematic_rectangle(room, s, clearance, radius, feed, back, rejected_reason)
             if not line.is_simple:
                 continue
             total=line.length+feed+back
-            if total<=80+1e-7:
+            if total<=MAX_LOOP_M+1e-7:
                 candidates.append((turns,line.length,go,ret,turn,total))
         except (ValueError,ZeroDivisionError):
             continue
     if not candidates:
-        raise ValueError("Nie ma miejsca na uproszczony podgląd w limicie 80 m")
+        raise ValueError("Nie ma miejsca na uproszczony podgląd w limicie 100 m")
     turns,drawn,go,ret,turn,total=candidates[-1]
     return {
         "status":"schematic",
@@ -148,7 +150,7 @@ def schematic_rectangle(room, s, clearance, radius, feed, back, rejected_reason)
         "cap":turn,
         "drawn_m":round(drawn,3),
         "total_m":round(total,3),
-        "margin_m":round(80-total,3),
+        "margin_m":round(MAX_LOOP_M-total,3),
         "turns":turns,
         "warning":"SZKIC – promienie narożników i nawrotu omega nie są zatwierdzone do montażu.",
         "generator_rejection":str(rejected_reason)[:350],
@@ -405,9 +407,9 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
                 layout["geometric_coverage_pct"]=None
         layouts.append(layout)
         checked_length=layout.get("total_m",estimate)
-        # A shortened schematic can fit within 80 m while the area/spacing
-        # estimate for a fully heated field still exceeds that limit.
-        coverage_warning=(layout["status"]=="schematic" and estimate>80+1e-7)
+        # A shortened preview may fit the 100 m maximum while the estimated
+        # full-area coverage is longer, so explicitly warn the installer.
+        coverage_warning=(layout["status"]=="schematic" and estimate>MAX_LOOP_M+1e-7)
         zone_results.append({
             "index":index,
             "area_m2":round(field.area,4),
@@ -417,7 +419,10 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
             "manifold_id":zone.get("manifold_id"),
             "estimate_m":round(estimate,2),
             "checked_length_m":round(checked_length,3),
-            "over_80m":checked_length>80+1e-7 or coverage_warning,
+            "max_loop_m":MAX_LOOP_M,
+            "warning_90m":WARN_LOOP_M<=checked_length<=MAX_LOOP_M+1e-7,
+            "over_limit":checked_length>MAX_LOOP_M+1e-7 or coverage_warning,
+            "over_80m":checked_length>MAX_LOOP_M+1e-7 or coverage_warning,  # legacy alias, now evaluated at 100 m
             "coverage_warning":coverage_warning,
             "full_area_estimate_m":round(estimate,2),
             "geometric_coverage_pct":layout.get("geometric_coverage_pct"),
@@ -452,7 +457,9 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
         "zone_results":zone_results,
         "perimeter_m":round(room.length,4),
         "estimate_m":round(estimated_total,2),
-        "estimate_over_limit":any(item["over_80m"] for item in zone_results),
+        "max_loop_m":MAX_LOOP_M,
+        "warning_threshold_m":WARN_LOOP_M,
+        "estimate_over_limit":any(item["over_limit"] for item in zone_results),
         "axis_offset_m":edge+diameter/2,
         "custom_heating_area":heating_points is not None or heating_zones is not None,
         "layout":total_layout,
