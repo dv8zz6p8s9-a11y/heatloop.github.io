@@ -71,7 +71,7 @@
 #drawingViewport #plan{width:100%}
 #controls #workflowHint{padding:8px 10px;border-radius:8px;background:#f0f6fa;border:1px solid #cddce5}
 </style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.1.3-RC1 · kompaktowe rozdzielacze · skalówka i uporządkowane etapy · poprawione odzyskiwanie projektów</small></header>
-<main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit HeatLoop: <b>100 m na pętlę</b> (część grzewcza + dwa dojścia). Od 90 m ostrzeżenie., razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
+<main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit HeatLoop: <b>80 m na pętlę</b> (część grzewcza + zasilanie i powrót). Od 72 m ostrzeżenie.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
 <button type="button" data-tab="drawing" class="active">1. Rysunek</button>
 <button type="button" data-tab="rooms">2. Pokoje</button>
@@ -180,7 +180,7 @@
  <div><strong id="heatArea">—</strong><small>Pole podłogówki m²</small></div>
  <div><strong id="excluded">—</strong><small>Bez ogrzewania m²</small></div>
  <div><strong id="length">—</strong><small>Suma długości pętli (m)</small></div>
- <div><strong id="left">—</strong><small>Najmniejszy wstępny zapas pętli do 100 m</small></div>
+ <div><strong id="left">—</strong><small>Najmniejszy wstępny zapas pętli do 80 m</small></div>
  </div><div id="status" class="chip">Zacznij od rysunku i kalibracji.</div></section></div></main>
 <script type="module">
 import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=09';
@@ -190,7 +190,7 @@ import {generateLoopApproaches,manifoldConnectionPorts} from './approach-routing
 import {DRAWING_COLORS,cleanRouting,effectiveEndpoints,getZoneTag,plannedCorridorPolyline,snapToFieldEdge,guideMetricLength} from './technical-drawing.mjs?v=096';
 import {getScaleBarFromMatrix} from './map-scale.mjs?v=111';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;
-const MAX_LOOP_M=100,WARN_LOOP_M=90;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
+const MAX_LOOP_M=80,WARN_LOOP_M=72;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
 let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true,technicalView=false,routingTarget=null,showMeasurements=false;
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
 const info=(t,cls='')=>{$('drawing').textContent=t;$('drawing').className='chip '+cls};
@@ -361,7 +361,7 @@ function refreshApproaches(){
  const el=$('routeSummary');
  el.textContent='Dojścia (szkice): '+draft+' · bez rozdzielacza: '+noManifold+
   ' · bez gotowej geometrii pętli: '+noLoop+' · zablokowane: '+blocked+
-  (tooLong?' · przebieg ponad 100 m: '+tooLong:'')+
+  (tooLong?' · przebieg ponad 80 m: '+tooLong:'')+
   (warningCount?' · ostrzeżenia o pełnym pokryciu: '+warningCount:'')+
   '. Dwie linie w ręcznym korytarzu prowadzone są wstępnie co 10 cm. Nie sprawdzono ścian, przejść, promieni gięcia i kolizji wszystkich rur.';
  el.className='chip '+(blocked||tooLong||warningCount?'error':'warn');
@@ -688,7 +688,8 @@ function updateZoneRoomSelector(){
 function chooseRoomForHeating(room){
  if(!room){status('Nie znaleziono pomieszczenia — wybierz je ponownie.','error');return false}
  selected=room.id;
- tool('heatRect');
+ const keepPolygon=tools==='heatPoly';
+ tool(keepPolygon?'heatPoly':'heatRect');
  list();update();showTab('zones');
  status('Wybrano '+room.name+'. Narysuj pole grzewcze lub kliknij „Następne pomieszczenie”.','ok');
  return true;
@@ -930,14 +931,14 @@ function renderCircuits(){
         (result.layout.status==='schematic'?'SCHEMAT NIEZWERYFIKOWANY':'PĘTLA TESTOWA')+
         ': pętla '+fmt(result.visual_heating_m)+' m + zasilanie '+fmt(result.approach.supply_m)+
         ' m + powrót '+fmt(result.approach.return_m)+' m = '+fmt(total)+' m'+
-        (over?' · ponad 100 m!':near?' · blisko limitu 100 m':' · wstępny zapas '+fmt(MAX_LOOP_M-total)+' m')+
+        (over?' · ponad 80 m!':near?' · blisko limitu 80 m':' · wstępny zapas '+fmt(MAX_LOOP_M-total)+' m')+
         (coverage?' · UWAGA: szacunek pełnego pokrycia '+fmt(result.full_area_estimate_m)+
           ' m przekracza limit — nie uznawaj szkicu za całkowite pokrycie pola.':''):
         (result.layout.status==='experimental'?'Ślimak testowy. ':
          result.layout.status==='schematic'?'Widoczny schemat ślimaka — promienie gięcia niezweryfikowane. ':
          'Trasa grzewcza tylko planowana. ')+
         fmt(result.checked_length_m)+' m (z ręcznymi dojściami). '+(result.approach?.reason||'')+
-         (coverage?' Szacunek pełnego pola '+fmt(result.full_area_estimate_m)+' m przekracza 100 m.':'') ):
+         (coverage?' Szacunek pełnego pola '+fmt(result.full_area_estimate_m)+' m przekracza 80 m.':'') ):
       'Nie przeliczono pętli. Wstępny szacunek '+fmt(polygonArea(item.points)*sx*sy/settings.spacing_m+settings.feed_m+settings.back_m)+' m.';
    entry.append(badge);
    if(result?.geometric_coverage_pct!=null){
@@ -1462,12 +1463,17 @@ $('moveLeft').onclick=()=>shiftPlan(-1,0);$('moveRight').onclick=()=>shiftPlan(1
 $('moveUp').onclick=()=>shiftPlan(0,-1);$('moveDown').onclick=()=>shiftPlan(0,1);
 $('rotateLeft').onclick=()=>turnPlan(-90);$('rotateRight').onclick=()=>turnPlan(90);
 $('alpha').oninput=()=>{opacity=Number($('alpha').value)/100;$('opacityValue').textContent=$('alpha').value+'%';render()};
-function sample(){manifolds=[];manifoldSeq=0;activeManifoldId=null;const src='<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="750"><rect width="1100" height="750" fill="white"/><path d="M130 130 H600 V340 H830 V670 H130 Z" stroke="#263d4d" stroke-width="12" fill="#f8fbfe"/><text x="300" y="110" font-size="22">4,70 m</text><text x="60" y="450" font-size="22">5,40 m</text><text x="255" y="260" font-size="19" fill="#647785">Pomieszczenie L</text></svg>';bg='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src);sx=sy=.01;calibratedX=calibratedY=true;calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];showMeasurements=false;$('showMeasurements').checked=false;imageFit={x:0,y:0,width:W,height:H};rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Wczytano rzut demonstracyjny. Możesz zaznaczać pomieszczenia.','ok')}
+function confirmReplaceDrawing(){
+ if(!rooms.length&&!manifolds.length)return true;
+ return window.confirm('Zmiana podkładu usunie obecne pomieszczenia, pola grzewcze i rozdzielacze. Przed kontynuacją zapisz projekt do JSON. Czy na pewno kontynuować?');
+}
+function sample(){if(!confirmReplaceDrawing())return;manifolds=[];manifoldSeq=0;activeManifoldId=null;const src='<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="750"><rect width="1100" height="750" fill="white"/><path d="M130 130 H600 V340 H830 V670 H130 Z" stroke="#263d4d" stroke-width="12" fill="#f8fbfe"/><text x="300" y="110" font-size="22">4,70 m</text><text x="60" y="450" font-size="22">5,40 m</text><text x="255" y="260" font-size="19" fill="#647785">Pomieszczenie L</text></svg>';bg='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src);sx=sy=.01;calibratedX=calibratedY=true;calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];showMeasurements=false;$('showMeasurements').checked=false;imageFit={x:0,y:0,width:W,height:H};rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Wczytano rzut demonstracyjny. Możesz zaznaczać pomieszczenia.','ok')}
 $('sample').onclick=sample;$('clear').onclick=()=>{if(!window.confirm('Czy chcesz utworzyć nowy projekt? Wszystkie wprowadzone dane zostaną utracone.'))return;manifolds=[];manifoldSeq=0;activeManifoldId=null;bg='';sx=sy=0;calibratedX=calibratedY=false;imageFit={x:0,y:0,width:W,height:H};calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];showMeasurements=false;$('showMeasurements').checked=false;rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Utworzono nowy, pusty projekt.');showTab('drawing')};
 function loadImage(src){
- manifolds=[];manifoldSeq=0;activeManifoldId=null;
  const im=new Image();
  im.onload=()=>{
+ if(!confirmReplaceDrawing())return;
+ manifolds=[];manifoldSeq=0;activeManifoldId=null;
  const k=Math.min(W/im.naturalWidth,H/im.naturalHeight),width=im.naturalWidth*k,height=im.naturalHeight*k;
  imageFit={x:(W-width)/2,y:(H-height)/2,width,height};
  bg=src; // zachowujemy oryginalny obraz i proporcje, bez konwersji na płótno 1100×750
