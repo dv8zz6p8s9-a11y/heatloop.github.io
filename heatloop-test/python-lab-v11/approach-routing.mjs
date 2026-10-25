@@ -143,9 +143,33 @@ function offsetMetricPolyline(pts,delta){
  }
  return result;
 }
+/** Nominal supply and return departure points on an oriented manifold.
+ * Positions are a drafting aid, not manufacturer-specific connector geometry.
+ * The deltas are converted in metres so a nonuniformly scaled plan remains
+ * physically consistent when turning the manifold.
+ */
+export function manifoldConnectionPorts(manifold,sx,sy){
+ if(!finitePoint(manifold?.point)||!(sx>0&&sy>0))return null;
+ const angle=Number(manifold.angle??0);
+ if(![0,90,180,270].includes(angle))return null;
+ const r=angle*Math.PI/180,cos=Math.round(Math.cos(r)),sin=Math.round(Math.sin(r));
+ const rotate=(x,y)=>[
+  manifold.point[0]+(x*cos-y*sin)/sx,
+  manifold.point[1]+(x*sin+y*cos)/sy
+ ];
+ return{
+   supply:rotate(-.05,.08),
+   return:rotate(.05,.08),
+   facing:angle,
+   center:[...manifold.point]
+ };
+}
+
 export function previewParallelGuide(manifold,inlet,outlet,guide,options){
- const {sx,sy,obstacles=[],corridorWidthM=.20,localSpacingM=.10}=options||{};
+ const {sx,sy,obstacles=[],corridorWidthM=.20,localSpacingM=.10,
+   supplyPort=manifold,returnPort=manifold}=options||{};
  if(!finitePoint(manifold)||!finitePoint(inlet)||!finitePoint(outlet)||
+    !finitePoint(supplyPort)||!finitePoint(returnPort)||
     !(sx>0&&sy>0)||!guide.length||guide.some(p=>!finitePoint(p)))
   return {status:'invalid',reason:'Błędny punkt dojścia.',supply:[],return:[]};
  if(corridorWidthM<localSpacingM+.016+.03)
@@ -169,8 +193,12 @@ export function previewParallelGuide(manifold,inlet,outlet,guide,options){
  const joinOut=previewOrthogonalRoute(outlet,rp.at(-1),{sx,sy,obstacles});
  if(joinIn.status!=='draft'||joinOut.status!=='draft')
   return {status:'blocked',reason:'Nie można połączyć obu rur z polem grzewczym bez przecięcia innego pola.',supply:[],return:[]};
- const supply=simplify([manifold,...lp,...joinIn.points.slice(1)]);
- const ret=simplify([...joinOut.points,...rp.slice().reverse().slice(1),manifold]);
+ const supply=simplify([supplyPort,...lp,...joinIn.points.slice(1)]);
+ const ret=simplify([...joinOut.points,...rp.slice().reverse().slice(1),returnPort]);
+ for(const points of [supply,ret])for(let i=1;i<points.length;i++){
+  if(obstacles.some(poly=>segmentInsideForbidden(points[i-1],points[i],poly)))
+    return {status:'blocked',reason:'Port rozdzielacza lub łącznik do kanału przecina inne pole.',supply:[],return:[]};
+ }
  const lenS=metricPolylineLength(supply,sx,sy);
  const lenR=metricPolylineLength(ret,sx,sy);
  return {status:'draft',guided:true,parallel:true,supply,return:ret,
@@ -185,6 +213,8 @@ export function generateLoopApproaches(layout,manifold,options){
  if(!Array.isArray(layout.supply)||!layout.supply.length||!Array.isArray(layout.return)||!layout.return.length)
   return{status:'no-loop',reason:'Pętla nie ma obu końców.',supply:[],return:[]};
  if(!manifold||!finitePoint(manifold.point))return{status:'no-manifold',reason:'Przypisz i ustaw rozdzielacz na rysunku.',supply:[],return:[]};
+ const ports=manifoldConnectionPorts(manifold,sx,sy);
+ if(!ports)return{status:'no-manifold',reason:'Brak poprawnej orientacji rozdzielacza.',supply:[],return:[]};
  const inlet=layout.supply[0],outlet=layout.return[layout.return.length-1];
  const origA=[inlet[0]/sx,inlet[1]/sy],origB=[outlet[0]/sx,outlet[1]/sy];
  const reversed=direction==='reverse';
@@ -192,13 +222,14 @@ export function generateLoopApproaches(layout,manifold,options){
  if(guide.length){
   const duo=previewParallelGuide(manifold.point,a,b,guide,{sx,sy,obstacles,
     corridorWidthM:options?.corridorWidthM??.20,
-    localSpacingM:.10});
+    localSpacingM:.10,supplyPort:ports.supply,returnPort:ports.return});
   if(duo.status!=='draft')return {...duo,manifold_id:manifold.id};
   return {...duo,manifold_id:manifold.id,reversed,
+    manifold_angle:ports.facing,ports,
     start_point:a,end_point:b};
  }
- const from=previewOrthogonalRoute(manifold.point,a,{sx,sy,obstacles});
- const back=previewOrthogonalRoute(b,manifold.point,{sx,sy,obstacles});
+ const from=previewOrthogonalRoute(ports.supply,a,{sx,sy,obstacles});
+ const back=previewOrthogonalRoute(b,ports.return,{sx,sy,obstacles});
  if(from.status!=='draft'||back.status!=='draft')return {
   status:'blocked',reason:'Co najmniej jedno dojście nie może ominąć innych pól w prostym trasowaniu.',
   supply:[],return:[],supply_m:null,return_m:null,
@@ -208,6 +239,7 @@ export function generateLoopApproaches(layout,manifold,options){
      'Dojścia idą po korytarzu pomocniczym; NIE ma kontroli odstępu między rurami ani automatycznej rezerwacji pasa.':
      'Dojścia poglądowe — wymagają sprawdzenia ścian, przejść i kolizji rur.',
   guided:guide.length>0,reversed,
+  manifold_angle:ports.facing,ports,
   supply:from.points,return:back.points,
   supply_m:Number(from.length_m.toFixed(3)),return_m:Number(back.length_m.toFixed(3)),
   start_point:a,end_point:b,manifold_id:manifold.id,
