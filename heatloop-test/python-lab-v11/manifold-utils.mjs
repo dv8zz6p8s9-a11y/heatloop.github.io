@@ -2,6 +2,19 @@
  * These are configuration/quantity helpers, not hydraulic sizing approvals.
  */
 export const SPACINGS=[0.10,0.125,0.15,0.20];
+export const MANIFOLD_ANGLES=[0,90,180,270];
+export function normalizeManifoldAngle(angle){
+ const value=Number(angle);
+ if(!Number.isFinite(value)||!Number.isInteger(value)||!MANIFOLD_ANGLES.includes(value))
+   throw Error('Obrót rozdzielacza: dozwolone 0°, 90°, 180° albo 270°.');
+ return value;
+}
+export function rotateManifoldBy(manifold,step){
+ const a=normalizeManifoldAngle(manifold?.angle??0);
+ if(!Number.isInteger(step)||Math.abs(step)!==90)
+  throw Error('Można obracać tylko o 90°.');
+ return (a+step+360)%360;
+}
 export function spacingAllowed(spacing) {
  return typeof spacing==='number'&&Number.isFinite(spacing)&&SPACINGS.some(s=>Math.abs(s-spacing)<1e-8);
 }
@@ -44,5 +57,5 @@ export function manifoldQuantities(rooms,manifold) {
  };
 }
 export function createManifold(id) {
- return {id,name:'Rozdzielacz '+id,point:null,requestedSections:0,type:'flowmeters',pumpGroup:false};
+ return {id,name:'Rozdzielacz '+id,point:null,angle:0,requestedSections:0,type:'flowmeters',pumpGroup:false};
 }
