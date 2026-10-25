@@ -543,20 +543,19 @@ for(const m of manifolds){
  const tip=E('title');
  tip.textContent=m.name+' · '+angle+'° · niebieski: zasilanie · pomarańczowy: powrót';
  g.append(tip);
- g.append(E('rect',{x:-17,y:-9,width:34,height:18,rx:2.5,
-   fill:m.id===activeManifoldId?'#fff1ed':'#fffdfb',
-   'fill-opacity':.92,
-   stroke:m.id===activeManifoldId?'#c62323':'#d73532',
-   'stroke-width':1.7,'vector-effect':'non-scaling-stroke'}));
+ g.append(E('rect',{x:-11,y:-6,width:22,height:12,rx:2,
+   fill:'#fffaf7','fill-opacity':.70,
+   stroke:m.id===activeManifoldId?'#bc342b':'#ab6750',
+   'stroke-width':1.15,'vector-effect':'non-scaling-stroke'}));
  layer.append(g);
- // Text remains horizontal after rotation, readable in both working and technical views.
- const label=E('text',{x,y:y+4.1,'font-size':12,'font-weight':800,
-   'text-anchor':'middle',fill:'#a32925','stroke-width':0});
+ // The label stays horizontal. Symbol is a compact plan marker, not a scaled product drawing.
+ const label=E('text',{x,y:y+3.1,'font-size':9,'font-weight':750,
+   'text-anchor':'middle',fill:'#8f342b','stroke-width':0,'pointer-events':'none'});
  label.textContent='R'+m.id;layer.append(label);
  if(ports){
    for(const [kind,pt,color] of [
      ['supply',ports.supply,'#087ab2'],['return',ports.return,'#da7b2f']]){
-     layer.append(E('circle',{cx:pt[0],cy:pt[1],r:2.6,
+     layer.append(E('circle',{cx:pt[0],cy:pt[1],r:1.7,
        fill:color,stroke:'#fff','stroke-width':.9,
        'data-manifold-port':kind,'data-manifold-id':String(m.id)}));
    }
