@@ -103,3 +103,35 @@ test('manifold quantity defaults have not regressed',()=>{
  assert.equal(q.sections,3);assert.equal(q.cabinetSections,5);
  assert.equal(q.euroconus,6);assert.equal(q.isolatingValves,2);
 });
+
+test('manifold icon occupies a compact 34x18 footprint instead of a large 76x38 cover',()=>{
+ const begin=code.indexOf('// Compact red-outline manifold.');
+ const end=code.indexOf("if(['rect','heatRect'].includes(tools)&&temp)",begin);
+ assert.ok(begin>0&&end>begin);
+ const block=code.slice(begin,end);
+ assert.match(block,/x:-17,y:-9,width:34,height:18/);
+ assert.doesNotMatch(block,/width:76|height:38|font-size':19/);
+ assert.match(block,/label\.textContent='R'\+m\.id/);
+ assert.doesNotMatch(block,/label\.textContent=.*m\.name/);
+ const reduction=1-(34*18)/(76*38);
+ assert.ok(reduction>.75);
+});
+test('manifold visual port coordinates are sourced from exact routing geometry',()=>{
+ const begin=code.indexOf('// Compact red-outline manifold.');
+ const end=code.indexOf("if(['rect','heatRect'].includes(tools)&&temp)",begin);
+ const block=code.slice(begin,end);
+ assert.match(block,/manifoldConnectionPorts\(m,sx,sy\)/);
+ assert.match(block,/\['supply',ports\.supply/);
+ assert.match(block,/\['return',ports\.return/);
+ assert.match(block,/cx:pt\[0\],cy:pt\[1\]/);
+ assert.match(block,/scale\(\$\{1\/sx\} \$\{1\/sy\}\) rotate/);
+});
+test('all four manifold orientations retain actual 10 cm port separation under nonuniform scale',()=>{
+ for(const angle of [0,90,180,270]){
+  const ports=manifoldConnectionPorts({id:2,point:[820,240],angle},.0125,.02);
+  assert.ok(ports);
+  const dx=(ports.supply[0]-ports.return[0])*.0125;
+  const dy=(ports.supply[1]-ports.return[1])*.02;
+  assert.ok(Math.abs(Math.hypot(dx,dy)-.10)<1e-9);
+ }
+});
