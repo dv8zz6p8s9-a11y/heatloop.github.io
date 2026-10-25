@@ -1,4 +1,4 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.1-RC1</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.1.1-RC1</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
@@ -69,7 +69,7 @@
 #drawingViewport{position:relative;width:100%}
 #drawingViewport #plan{width:100%}
 #controls #workflowHint{padding:8px 10px;border-radius:8px;background:#f0f6fa;border:1px solid #cddce5}
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.1-RC1 · skalówka i uporządkowane etapy · poprawione odzyskiwanie projektów</small></header>
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.1.1-RC1 · kompaktowe rozdzielacze · skalówka i uporządkowane etapy · poprawione odzyskiwanie projektów</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit HeatLoop: <b>100 m na pętlę</b> (część grzewcza + dwa dojścia). Od 90 m ostrzeżenie., razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
 <button type="button" data-tab="drawing" class="active">1. Rysunek</button>
@@ -513,25 +513,39 @@ for(let r of rooms){
    }
  }
 }
-// Large rotatable manifold symbol with two schematic outlet marks.
+// Compact red-outline manifold. Label stays INSIDE symbol so no pipe is hidden by a caption.
+// The two little colored dots are anchored to the very same metric ports as the route generator.
 for(const m of manifolds){
  if(!m.point)continue;
  const [x,y]=m.point,angle=normalizeManifoldAngle(m.angle??0);
- const g=E('g',{transform:`translate(${x} ${y}) rotate(${angle})`});
- g.append(E('rect',{x:-38,y:-19,width:76,height:38,rx:5,
-   fill:m.id===activeManifoldId?'#fff1ee':'#fffaf7',
-   stroke:m.id===activeManifoldId?'#cb2525':'#d73532',
-   'stroke-width':technicalView?2.8:3.8,
-   'vector-effect':'non-scaling-stroke'}));
- const txt=E('text',{x:0,y:6,'font-size':19,'font-weight':800,'text-anchor':'middle',fill:'#9e2d2a'});
- txt.textContent='R'+m.id;g.append(txt);
- g.append(E('circle',{cx:-19,cy:18,r:5,fill:'#087ab2',stroke:'#fff','stroke-width':1.7}));
- g.append(E('circle',{cx:19,cy:18,r:5,fill:'#da7b2f',stroke:'#fff','stroke-width':1.7}));
+ const ports=manifoldConnectionPorts(m,sx,sy);
+ // Correct rotation for independently calibrated X and Y: rotate in metric space.
+ const correction=sx>0&&sy>0
+   ?`scale(${1/sx} ${1/sy}) rotate(${angle}) scale(${sx} ${sy})`
+   :`rotate(${angle})`;
+ const g=E('g',{transform:`translate(${x} ${y}) ${correction}`,
+   'data-manifold-id':String(m.id),'data-manifold-angle':String(angle)});
+ const tip=E('title');
+ tip.textContent=m.name+' · '+angle+'° · niebieski: zasilanie · pomarańczowy: powrót';
+ g.append(tip);
+ g.append(E('rect',{x:-17,y:-9,width:34,height:18,rx:2.5,
+   fill:m.id===activeManifoldId?'#fff1ed':'#fffdfb',
+   'fill-opacity':.92,
+   stroke:m.id===activeManifoldId?'#c62323':'#d73532',
+   'stroke-width':1.7,'vector-effect':'non-scaling-stroke'}));
  layer.append(g);
- const label=E('text',{x,y:y-29,'font-size':12,'font-weight':700,'text-anchor':'middle',
-   fill:'#9e2d2a',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
- label.textContent=(technicalView?'Rozdzielacz '+m.id+' · '+manifoldQuantities(rooms,m).sections+' sekc.':m.name)+' · '+angle+'°';
- layer.append(label);
+ // Text remains horizontal after rotation, readable in both working and technical views.
+ const label=E('text',{x,y:y+4.1,'font-size':12,'font-weight':800,
+   'text-anchor':'middle',fill:'#a32925','stroke-width':0});
+ label.textContent='R'+m.id;layer.append(label);
+ if(ports){
+   for(const [kind,pt,color] of [
+     ['supply',ports.supply,'#087ab2'],['return',ports.return,'#da7b2f']]){
+     layer.append(E('circle',{cx:pt[0],cy:pt[1],r:2.6,
+       fill:color,stroke:'#fff','stroke-width':.9,
+       'data-manifold-port':kind,'data-manifold-id':String(m.id)}));
+   }
+ }
 }
 if(['rect','heatRect'].includes(tools)&&temp){
  const b=hover||temp;
