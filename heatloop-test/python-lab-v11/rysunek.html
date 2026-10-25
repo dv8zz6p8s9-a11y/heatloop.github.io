@@ -148,6 +148,7 @@
 <div class="tech-note"><b>Planowanie dojść przed generowaniem:</b> zaznacz punkty docelowe startu/końca, wskaż korytarz od rozdzielacza i dopiero przelicz. Obecny silnik zapisuje te wskazówki i rysuje szkic, ale <b>nie wycina jeszcze pasa technicznego z pętli</b>.</div>
 <div class="buttons"><button id="finishGuide" type="button">Zakończ wskazywanie trasy</button><button id="cancelGuide" type="button">Anuluj wskazywanie</button></div>
 <div id="routeSummary" class="chip warn">Po obliczeniu pętli wyświetlimy poglądowe dojścia do rozdzielaczy. Niezweryfikowane trasy są przerywane.</div>
+<div id="generationFeedback" class="chip warn" role="status" aria-live="polite">Przed generowaniem ustaw rozdzielacz i przypisz do niego pętle.</div>
 <div id="engine" class="chip warn">Uruchamianie Python + Shapely…</div></section>
 <section class="panel" data-pane="settings"><h2>Ustawienia projektu</h2>
 <div class="field"><label for="projectSaveName">Nazwa projektu</label><input id="projectSaveName" maxlength="100" value="heatloop_projekt_rysunek" placeholder="Nazwa pliku"></div><div class="mini">W Chrome/Edge można wskazać folder zapisu. W Safari/Firefox plik pobierze się do folderu pobierania.</div><div class="buttons"><button id="save" class="primary" type="button">Zapisz projekt jako…</button><button id="import" type="button">Otwórz projekt</button><button id="clear" type="button">Nowy projekt</button>
@@ -1487,7 +1488,7 @@ if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){try{status
 if(!['image/png','image/jpeg','image/webp'].includes(f.type)){status('Nieobsługiwany format.','error');return}let r=new FileReader();r.onload=()=>loadImage(r.result);r.readAsDataURL(f)};
 const inputs=()=>{let n=id=>Number($(id).value);return {spacing_m:n('spacing'),diameter_m:n('diam')/1000,wall_edge_m:n('edge')/1000,radius_m:n('radius')/1000,feed_m:n('feed'),back_m:n('back')}};
 function validateGeneration(targetRooms,quiet=false){
- const fail=message=>{if(!quiet)status(message,'warn');return false;};
+ const fail=message=>{if(!quiet){status(message,'warn');$('generationFeedback').textContent=message;$('generationFeedback').className='chip warn';showTab('loops')}return false;};
  if(!bg||!(sx>0&&sy>0))return fail('Krok 1: wczytaj i skalibruj rysunek.');
  if(!Array.isArray(targetRooms)||!targetRooms.length)return fail('Krok 2: oznacz pomieszczenia.');
  if(targetRooms.some(r=>!roomZones(r).length))
@@ -1535,7 +1536,7 @@ function queueAnalysisForRoom(r,quiet=false){
   heating_zones:roomZones(r).length?roomZones(r).map(z=>pointsToMeter(z.points)):null,
   zone_settings,settings:args
  }});
- if(!quiet)status('Python oblicza '+entries.length+' pętli wybranego pokoju.','warn');
+ if(!quiet){status('Python oblicza '+entries.length+' pętli wybranego pokoju.','warn');$('generationFeedback').textContent='Obliczanie '+r.name+' — '+entries.length+' pól.';}
  return true;
 }
 function regenerateMissingSavedLoops(){
@@ -1554,7 +1555,7 @@ function regenerateMissingSavedLoops(){
 $('loop').onclick=()=>{
  const room=chosenRoom();
  if(!room){status('Wybierz najpierw pomieszczenie.','error');return}
- if(!ready){status('Python jeszcze się ładuje.','warn');return}
+ if(!ready){const message=$('engine').textContent.includes('Błąd')?'Silnik Python zgłosił błąd. Sprawdź komunikat poniżej.':'Python jeszcze się ładuje. Sprawdź połączenie internetowe i status silnika poniżej.';status(message,'warn');$('generationFeedback').textContent=message;return}
  queueAnalysisForRoom(room);
 };
 $('loopAll').onclick=()=>{
@@ -1626,7 +1627,7 @@ $('finishGuide').onclick=()=>{
  }
 };
 $('cancelGuide').onclick=()=>{tool('select');renderCircuits();status('Zakończono wskazywanie. Punkty można usunąć przy pętli.','warn')};
-try{worker=new Worker('./rysunek-worker.js?v=111',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');return}if(d.kind==='result'){
+try{worker=new Worker('./rysunek-worker.js?v=111',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){ready=false;$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';$('generationFeedback').textContent='Nie można uruchomić generatora: '+d.message;return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');$('generationFeedback').textContent='Błąd obliczania: '+d.message;$('generationFeedback').className='chip error';return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
  r.loop=d.result;refreshApproaches();list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
