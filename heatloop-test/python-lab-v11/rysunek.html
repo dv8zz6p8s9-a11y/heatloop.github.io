@@ -1,4 +1,4 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.1.1-RC1</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.1.2-RC1</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
@@ -69,7 +69,7 @@
 #drawingViewport{position:relative;width:100%}
 #drawingViewport #plan{width:100%}
 #controls #workflowHint{padding:8px 10px;border-radius:8px;background:#f0f6fa;border:1px solid #cddce5}
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.1.1-RC1 · kompaktowe rozdzielacze · skalówka i uporządkowane etapy · poprawione odzyskiwanie projektów</small></header>
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.1.2-RC1 · kompaktowe rozdzielacze · skalówka i uporządkowane etapy · poprawione odzyskiwanie projektów</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit HeatLoop: <b>100 m na pętlę</b> (część grzewcza + dwa dojścia). Od 90 m ostrzeżenie., razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
 <button type="button" data-tab="drawing" class="active">1. Rysunek</button>
@@ -105,7 +105,15 @@
 <div class="handle-tip">Wybierz pomieszczenie z listy, następnie narzędzie. Dotknij i przeciągnij niebieskie punkty. Prostokąt zachowuje kształt; wielokąt ma niezależne narożniki.</div>
 <div id="drawing" class="chip">Wybierz narzędzie. Pole jest obliczane podczas zaznaczania.</div><h3>Pomieszczenia</h3><div id="rooms" class="mini">Nie dodano pomieszczeń.</div></section>
 <section class="panel" data-pane="zones"><h2>03 · Zaznacz pola grzewcze</h2>
-<div class="chip">Najpierw zaznacz i wybierz pomieszczenie w kroku 2. Każdy obszar może mieć inny rozstaw.</div>
+<div class="chip">Najpierw wybierz pokój poniżej lub wskaż go na rzucie. Po wybraniu pokoju możesz od razu rysować pole grzewcze.</div>
+<div class="field" style="margin:10px 0 7px">
+ <label for="zoneRoomSelect">Pomieszczenie, w którym chcesz narysować pole grzewcze</label>
+ <select id="zoneRoomSelect" aria-label="Wybierz pomieszczenie do ogrzewania podłogowego"></select>
+</div>
+<div class="buttons">
+ <button type="button" id="pickZoneRoom">◎ Wskaż pomieszczenie na rzucie</button>
+</div>
+<div id="zoneRoomStatus" class="chip warn" role="status">Nie wybrano jeszcze pomieszczenia.</div>
 <div class="buttons"><button id="finishZone" class="primary">Zamknij wielokąt pola</button><button id="cancelZone">Anuluj rysowanie</button></div>
 <h3>Pole ogrzewania podłogowego</h3>
 <div class="edit-btns">
@@ -425,9 +433,9 @@ function render(){
  else for(let x=0;x<=W;x+=50)layer.append(E('line',{x1:x,y1:0,x2:x,y2:H,stroke:'#e6eef4'}));
 for(let r of rooms){
  const sel=r.id===selected;
- layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':technicalView?.005:(sel?.055:.02),
+ layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':technicalView?.005:(sel&&activeTab==='zones'?.11:sel?.055:.02),
  stroke:technicalView?'#778c95':(sel?'#287c9e':'#8a9baa'),
- 'stroke-width':technicalView?.9:(sel?1.8:1.1),'stroke-dasharray':sel&&!technicalView?'':'7 4'}));
+ 'stroke-width':technicalView?.9:(sel&&activeTab==='zones'?2.2:sel?1.8:1.1),'stroke-dasharray':sel&&!technicalView?'':'7 4'}));
 
  const zones=r.heatingZones||[];
  for(let zi=0;zi<zones.length;zi++){
@@ -618,6 +626,35 @@ function renderTechnicalLegend(){
  }
 }
 function chosenRoom(){return rooms.find(r=>r.id===selected)||null}
+function updateZoneRoomSelector(){
+ const chooser=$('zoneRoomSelect'),indicator=$('zoneRoomStatus');
+ if(!chooser||!indicator)return;
+ const active=chosenRoom();
+ chooser.innerHTML='';
+ const placeholder=document.createElement('option');
+ placeholder.value='';placeholder.textContent=rooms.length?'— Wybierz pomieszczenie —':'— Najpierw oznacz pokoje w kroku 2 —';
+ chooser.append(placeholder);
+ for(const r of rooms){
+  const opt=document.createElement('option');
+  opt.value=String(r.id);
+  opt.textContent=r.name+' · '+fmt(polygonArea(r.points)*sx*sy)+' m²';
+  chooser.append(opt);
+ }
+ chooser.value=active?String(active.id):'';
+ indicator.textContent=active?
+  'Aktywne pomieszczenie: '+active.name+' · teraz zaznacz prostokąt lub wielokąt pola grzewczego.':
+  'Nie wybrano pomieszczenia. Wybierz je z listy albo kliknij w pokój na planie.';
+ indicator.className='chip '+(active?'ok':'warn');
+}
+function chooseRoomForHeating(room){
+ if(!room){info('Nie znaleziono pomieszczenia — wybierz je ponownie.','error');return false}
+ selected=room.id;
+ list();update();
+ tool('heatRect');
+ showTab('zones');
+ status('Wybrano '+room.name+'. Narysuj teraz pole grzewcze dwoma kliknięciami albo wybierz wielokąt.','ok');
+ return true;
+}
 function roomZones(room){return room?.heatingZones||[]}
 function activeZone(room){const z=roomZones(room);return z.find(x=>x.id===room?.selectedZoneId)||z[0]||null}
 function heatingAreaPx(room){const zones=roomZones(room);return !room?0:zones.length?zones.reduce((sum,z)=>sum+polygonArea(z.points),0):polygonArea(room.points)}
@@ -684,6 +721,7 @@ function showTab(name){
  document.querySelectorAll('#controls [data-pane]').forEach(el=>el.classList.toggle('active-pane',el.dataset.pane===name));
  if(name==='loops')renderCircuits();
  if(name==='manifolds')redrawManifolds();
+ if(name==='zones')updateZoneRoomSelector();
 }
 function selectedManifold(){return manifolds.find(m=>m.id===activeManifoldId)||null}
 function redrawManifolds(){
@@ -929,7 +967,8 @@ function update(){
  const smallest=rows?.length?Math.min(...rows.map(z=>MAX_LOOP_M-(previewLength(z)||0))):null;
  $('length').textContent=Number.isFinite(total)?fmt(total):'—';
  $('left').textContent=Number.isFinite(smallest)?fmt(smallest):'—';
- notifyHeat();if(activeTab==='loops')renderCircuits();if(activeTab==='manifolds')redrawManifolds();
+ notifyHeat();updateZoneRoomSelector();
+ if(activeTab==='loops')renderCircuits();if(activeTab==='manifolds')redrawManifolds();
 }
 function list(){
  const el=$('rooms');el.innerHTML='';
@@ -950,9 +989,13 @@ function list(){
   roomZones(r).length>1?'Wiele pól: wstępnie '+fmt(r.loop.estimate_m)+' m rur łącznie; trasy niezweryfikowane':
   'Pętla planowana: szac. '+fmt(r.loop.estimate_m)+' m'):'Brak przeliczonej pętli';
    n.append(sm);
-   for(const [caption,kind] of [['Wybierz','select'],['Edytuj','editRoom'],['Pole','heatPoly']]){
+   for(const [caption,kind] of [['Wybierz','select'],['Edytuj','editRoom'],['Pole','heatRect']]){
      const b=document.createElement('button');b.textContent=caption;
-     b.onclick=()=>{selected=r.id;list();update();tool(kind)};
+     b.onclick=()=>{
+       if(caption==='Pole'){chooseRoomForHeating(r);return}
+       selected=r.id;list();update();tool(kind);
+       status('Wybrano '+r.name+'. Aby dodać ogrzewanie, otwórz krok 3 „Pola grzewcze”.','ok');
+     };
      n.append(b);
    }
    const rem=document.createElement('button');rem.textContent='Usuń';
@@ -1101,7 +1144,14 @@ function click(p){
  }
  if(tools==='select'){
    const hit=[...rooms].reverse().find(r=>insidePolygon(p,r.points));
-   if(hit){selected=hit.id;list();render();update()}return
+   if(hit){
+     if(activeTab==='zones'){chooseRoomForHeating(hit);return}
+     selected=hit.id;list();render();update();
+     status('Wybrano '+hit.name+'. W kroku 3 zaznacz jego pole grzewcze.','ok');
+   }else if(activeTab==='zones'){
+     status('Nie trafiono w pomieszczenie. Kliknij wewnątrz obrysu pokoju albo użyj listy w kroku 3.','warn');
+   }
+   return;
  }
  if(['cx','cy','measure'].includes(tools)){
    pts.push(p);if(pts.length!==2){render();return}
@@ -1296,7 +1346,18 @@ S.addEventListener('dblclick',ev=>{
 });
 for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>tool(b.dataset.tool);$('finish').onclick=finish;
 $('finishZone').onclick=finish;
-$('cancelZone').onclick=()=>tool('select');$('undo').onclick=()=>{if(['rect','heatRect'].includes(tools))temp=null;else pts.pop();syncFinishButton();render()};$('cancel').onclick=()=>tool('select');
+$('cancelZone').onclick=()=>tool('select');
+$('zoneRoomSelect').onchange=()=>{
+ const id=Number($('zoneRoomSelect').value);
+ const room=rooms.find(r=>r.id===id);
+ if(room)chooseRoomForHeating(room);
+ else if(rooms.length)status('Wybierz pomieszczenie z listy.','warn');
+};
+$('pickZoneRoom').onclick=()=>{
+ if(!rooms.length){status('Najpierw obrysuj pomieszczenia w kroku 2.','warn');showTab('rooms');return}
+ showTab('zones');tool('select');
+ status('Kliknij wewnątrz pokoju na rzucie. Po wyborze włączę automatycznie rysowanie prostokątnego pola.','warn');
+};$('undo').onclick=()=>{if(['rect','heatRect'].includes(tools))temp=null;else pts.pop();syncFinishButton();render()};$('cancel').onclick=()=>tool('select');
 $('resetHeat').onclick=()=>{
  const room=chosenRoom();if(!room)return;
  if(!roomZones(room).length){info('Całe pomieszczenie jest już ogrzewane.','warn');return}
