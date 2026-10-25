@@ -220,7 +220,7 @@ function captureActiveProject() {
  return {
    bg,sx,sy,calibratedX,calibratedY,rooms,selected,next,seq,ready,
    imageFit,calLines,calAxes,checkLine,editHistory,manifolds,manifoldSeq,
-   activeManifoldId,activeTab,rotation,zoom,panX,panY,pendingRestoration,
+   activeManifoldId,activeTab,rotation,zoom,panX,panY,pendingRestoration,showMeasurements,
    queue:new Map(queue),fields:Object.fromEntries(
     ['spacing','diam','edge','radius','feed','back','dimX','dimY','unitX','unitY'].map(id=>[id,$(id).value]))
  };
@@ -228,7 +228,8 @@ function captureActiveProject() {
 function restoreActiveProject(p){
  ({bg,sx,sy,calibratedX,calibratedY,rooms,selected,next,seq,ready,
    imageFit,calLines,calAxes,checkLine,editHistory,manifolds,manifoldSeq,
-   activeManifoldId,activeTab,rotation,zoom,panX,panY,pendingRestoration,queue}=p);
+   activeManifoldId,activeTab,rotation,zoom,panX,panY,pendingRestoration,showMeasurements,queue}=p);
+ $('showMeasurements').checked=showMeasurements;
  for(const [id,value] of Object.entries(p.fields))$(id).value=value;
  $('angle').textContent='Obrót: '+rotation+'°';
  scaleRead();list();render();update();redrawManifolds();showTab(activeTab);
@@ -270,6 +271,7 @@ function recomputeScale(){
  scaleRead();list();update();
 }
 function drawCalLines(){
+ if(showMeasurements||tools==='cx'||tools==='cy'){
  for(const [type,color,dim] of [['cx','#d68a22','dimX'],['cy','#914bc1','dimY']]){
    const pp=calLines[type];if(pp.length!==2)continue;
    layer.append(E('line',{x1:pp[0][0],y1:pp[0][1],x2:pp[1][0],y2:pp[1][1],stroke:color,'stroke-width':3,'stroke-dasharray':'8 5','vector-effect':'non-scaling-stroke'}));
@@ -277,13 +279,14 @@ function drawCalLines(){
    const txt=E('text',{x:(pp[0][0]+pp[1][0])/2+7,y:(pp[0][1]+pp[1][1])/2-10,'font-size':15,fill:color,'font-weight':'bold',stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
    txt.textContent=$(dim).value+' '+$(type==='cx'?'unitX':'unitY').value;layer.append(txt);
  }
+ }
  const active=tools==='measure'||tools==='cx'||tools==='cy';
  if(active&&pts.length){
    const color=tools==='measure'?'#159b85':tools==='cx'?'#d68a22':'#914bc1';
    const to=hover||pts[0];layer.append(E('line',{x1:pts[0][0],y1:pts[0][1],x2:to[0],y2:to[1],stroke:color,'stroke-width':2,'stroke-dasharray':'5 4','vector-effect':'non-scaling-stroke'}));
    layer.append(E('circle',{cx:pts[0][0],cy:pts[0][1],r:4,fill:color}));
  }
- if(checkLine.length===2){
+ if(checkLine.length===2&&(showMeasurements||tools==='measure')){
    const [a,b]=checkLine;
    layer.append(E('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'#119b80','stroke-width':3,'stroke-dasharray':'7 4','vector-effect':'non-scaling-stroke'}));
    const t=E('text',{x:(a[0]+b[0])/2+5,y:(a[1]+b[1])/2-14,'font-size':16,fill:'#078369','font-weight':700,stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
@@ -291,7 +294,7 @@ function drawCalLines(){
  }
 }
 function drawRoomDimensions(room){
- if(room.id!==selected||!(sx>0&&sy>0))return;
+ if(!showMeasurements||room.id!==selected||!(sx>0&&sy>0))return;
  const edgeInfo=polygonEdges(room.points,sx,sy);
  for(const e of edgeInfo){
    const p=room.points[e.index],q=room.points[(e.index+1)%room.points.length];
@@ -369,6 +372,22 @@ function inside(p,r){let v=r.points,c=false;for(let i=0,j=v.length-1;i<v.length;
 function polyline(ps,color,width=3){let el=E('polyline',{points:ps.map(p=>p.join(',')).join(' '),fill:'none',stroke:color,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round','vector-effect':'non-scaling-stroke'});layer.append(el)}
 function applyView(){
  S.setAttribute('viewBox',`${(W-W/zoom)/2-panX} ${(H-H/zoom)/2-panY} ${W/zoom} ${H/zoom}`);
+ updateMapScaleBar();
+}
+function updateMapScaleBar(){
+ const box=$('mapScale');
+ const matrix=layer?.getScreenCTM?.();
+ const model=getScaleBarFromMatrix({sx,sy,rotation,matrix,
+   targetPixels:125,minPixels:45,maxPixels:150});
+ if(!model||!(model.pixels>0)||!Number.isFinite(model.pixels)){
+   box.hidden=true;return;
+ }
+ box.hidden=false;
+ box.style.setProperty('--bar-width',model.pixels.toFixed(2)+'px');
+ $('mapScaleHalf').textContent=model.halfLabel;
+ $('mapScaleFull').textContent=model.label;
+ $('mapScaleAxis').textContent=model.isDistorted
+   ?'Oś ekranu: '+model.sourceAxis+' (skale X/Y różne)':'Odległość rzeczywista';
 }
 function sceneTransform(){
  if(rotation===0)return '';
@@ -546,6 +565,7 @@ drawCalLines();
    S.append(mark);
  }
  renderTechnicalLegend();
+ updateMapScaleBar();
 }
 function renderTechnicalLegend(){
  const el=$('technicalLegend');if(!el)return;
@@ -1058,6 +1078,7 @@ function click(p){
      if(calLines[other].length===2&&calAxes[other]===sourceAxis)calLines[other]=[];
      recomputeScale();checkLine=[];
      $('measureResult').textContent='Skala ustawiona na podstawie '+fmt(value)+' m w osi '+sourceAxis.toUpperCase()+'.';
+     showMeasurements=false;$('showMeasurements').checked=false;
      info('Wymiar skalibrowany poprawnie.','ok');tool('select')
    }catch(err){info(err.message,'error');pts=[];render()}return
  }
@@ -1142,6 +1163,9 @@ function turnPlan(delta){
  status('Obrócono plan o 90°. Widoczne pola wymiarów X/Y zamieniły się miejscami, ale rzeczywista skala oraz powierzchnie nie uległy zmianie.','ok');
 }
 for(const fld of ['dimX','dimY','unitX','unitY'])$(fld).addEventListener('change',()=>{if(calLines.cx.length===2||calLines.cy.length===2){try{recomputeScale();checkLine=[];render();status('Zmieniono wymiar; obrysy pozostały na miejscu, a pętle wymagają ponownego przeliczenia.','warn')}catch(err){status(err.message,'error')}}});
+$('showMeasurements').onchange=()=>{
+ showMeasurements=$('showMeasurements').checked;render();
+};
 $('clearCalibration').onclick=()=>{sx=sy=0;calibratedX=calibratedY=false;calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];for(const r of rooms)r.loop=null;scaleRead();list();update();tool('select');status('Kalibracja usunięta. Obrysy pozostają na rysunku, ale ich wymiary są chwilowo nieznane.','warn')};
 function editDragStep(d,p){
  const room=rooms.find(r=>r.id===d.roomId);if(!room||!allowed(p))return;
@@ -1258,8 +1282,8 @@ $('moveLeft').onclick=()=>shiftPlan(-1,0);$('moveRight').onclick=()=>shiftPlan(1
 $('moveUp').onclick=()=>shiftPlan(0,-1);$('moveDown').onclick=()=>shiftPlan(0,1);
 $('rotateLeft').onclick=()=>turnPlan(-90);$('rotateRight').onclick=()=>turnPlan(90);
 $('alpha').oninput=()=>{opacity=Number($('alpha').value)/100;$('opacityValue').textContent=$('alpha').value+'%';render()};
-function sample(){manifolds=[];manifoldSeq=0;activeManifoldId=null;const src='<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="750"><rect width="1100" height="750" fill="white"/><path d="M130 130 H600 V340 H830 V670 H130 Z" stroke="#263d4d" stroke-width="12" fill="#f8fbfe"/><text x="300" y="110" font-size="22">4,70 m</text><text x="60" y="450" font-size="22">5,40 m</text><text x="255" y="260" font-size="19" fill="#647785">Pomieszczenie L</text></svg>';bg='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src);sx=sy=.01;calibratedX=calibratedY=true;calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];imageFit={x:0,y:0,width:W,height:H};rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Wczytano rzut demonstracyjny. Możesz zaznaczać pomieszczenia.','ok')}
-$('sample').onclick=sample;$('clear').onclick=()=>{if(!window.confirm('Czy chcesz utworzyć nowy projekt? Wszystkie wprowadzone dane zostaną utracone.'))return;manifolds=[];manifoldSeq=0;activeManifoldId=null;bg='';sx=sy=0;calibratedX=calibratedY=false;imageFit={x:0,y:0,width:W,height:H};calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Utworzono nowy, pusty projekt.');showTab('drawing')};
+function sample(){manifolds=[];manifoldSeq=0;activeManifoldId=null;const src='<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="750"><rect width="1100" height="750" fill="white"/><path d="M130 130 H600 V340 H830 V670 H130 Z" stroke="#263d4d" stroke-width="12" fill="#f8fbfe"/><text x="300" y="110" font-size="22">4,70 m</text><text x="60" y="450" font-size="22">5,40 m</text><text x="255" y="260" font-size="19" fill="#647785">Pomieszczenie L</text></svg>';bg='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src);sx=sy=.01;calibratedX=calibratedY=true;calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];showMeasurements=false;$('showMeasurements').checked=false;imageFit={x:0,y:0,width:W,height:H};rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Wczytano rzut demonstracyjny. Możesz zaznaczać pomieszczenia.','ok')}
+$('sample').onclick=sample;$('clear').onclick=()=>{if(!window.confirm('Czy chcesz utworzyć nowy projekt? Wszystkie wprowadzone dane zostaną utracone.'))return;manifolds=[];manifoldSeq=0;activeManifoldId=null;bg='';sx=sy=0;calibratedX=calibratedY=false;imageFit={x:0,y:0,width:W,height:H};calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];showMeasurements=false;$('showMeasurements').checked=false;rooms=[];selected=null;next=1;editHistory=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';tool('select');scaleRead();list();update();status('Utworzono nowy, pusty projekt.');showTab('drawing')};
 function loadImage(src){
  manifolds=[];manifoldSeq=0;activeManifoldId=null;
  const im=new Image();
@@ -1268,7 +1292,7 @@ function loadImage(src){
  imageFit={x:(W-width)/2,y:(H-height)/2,width,height};
  bg=src; // zachowujemy oryginalny obraz i proporcje, bez konwersji na płótno 1100×750
  rooms=[];selected=null;next=1;editHistory=[];sx=sy=0;calibratedX=calibratedY=false;
- calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';
+ calLines={cx:[],cy:[]};calAxes={cx:'x',cy:'y'};checkLine=[];showMeasurements=false;$('showMeasurements').checked=false;zoom=1;panX=panY=0;rotation=0;$('angle').textContent='Obrót: 0°';
  scaleRead();list();tool('select');update();status('Rysunek wczytany bez deformacji. Wskaż dwa końce znanego wymiaru.','ok')
  };
  im.onerror=()=>status('Nie udało się odczytać obrazu.','error');im.src=src
@@ -1442,7 +1466,7 @@ $('jsonfile').onchange=e=>{
 imageFit=j.imageFit&&[j.imageFit.x,j.imageFit.y,j.imageFit.width,j.imageFit.height].every(Number.isFinite)&&j.imageFit.width>0&&j.imageFit.height>0?j.imageFit:{x:0,y:0,width:W,height:H};
 calLines=j.calLines&&['cx','cy'].every(t=>Array.isArray(j.calLines[t])&&j.calLines[t].length<=2&&j.calLines[t].every(p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)))?j.calLines:{cx:[],cy:[]};
 calAxes=j.calAxes&&['cx','cy'].every(k=>['x','y'].includes(j.calAxes[k]))?j.calAxes:{cx:'x',cy:'y'};
-checkLine=[];
+checkLine=[];showMeasurements=false;$('showMeasurements').checked=false;
 sx=Number(j.sx)||0;sy=Number(j.sy)||0;
 if(j.known){$('dimX').value=String(j.known.x??'4,70');$('dimY').value=String(j.known.y??'5,40');$('unitX').value=['m','cm','mm'].includes(j.known.unitX)?j.known.unitX:'m';$('unitY').value=['m','cm','mm'].includes(j.known.unitY)?j.known.unitY:'m'}
 else { for(const kind of ['cx','cy'])if(calLines[kind].length===2){const axis=calAxes[kind],i=axis==='x'?0:1,scale=axis==='x'?sx:sy;const measured=Math.abs(calLines[kind][1][i]-calLines[kind][0][i])*scale;if(measured>0){$(kind==='cx'?'dimX':'dimY').value=measured.toFixed(4).replace('.',',');$(kind==='cx'?'unitX':'unitY').value='m'}} }
