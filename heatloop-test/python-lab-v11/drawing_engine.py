@@ -3,8 +3,8 @@ from math import hypot,cos,sin,pi,atan2,tan,acos,isfinite
 from shapely.geometry import Polygon,LineString
 
 SPACINGS=[.10,.125,.15,.20]
-MAX_LOOP_M=100.0
-WARN_LOOP_M=90.0
+MAX_LOOP_M=80.0
+WARN_LOOP_M=72.0
 def validate_room(pts):
     if not 3<=len(pts)<=200 or any(len(p)!=2 or not all(isfinite(v) for v in p) for p in pts):
         raise ValueError("Nieprawidłowe punkty obrysu")
@@ -82,7 +82,7 @@ def rectangle(room,s,clearance,radius,feed,back):
             if room.buffer(-clearance).buffer(1e-7).covers(line) and line.is_simple and total<=MAX_LOOP_M+1e-7:
                 candidates.append((count,line.length,go,ret,turn,total))
         except (ValueError,ZeroDivisionError):continue
-    if not candidates:raise ValueError("Nie znaleziono bezkolizyjnego ślimaka w limicie 100 m")
+    if not candidates:raise ValueError("Nie znaleziono bezkolizyjnego ślimaka w limicie 80 m")
     turns,drawn,go,ret,turn,total=max(candidates,key=lambda x:(x[0],x[1]))
     return {"status":"experimental","kind":"counterflow-rectangle","supply":go,"return":ret,"cap":turn,"drawn_m":round(drawn,3),"total_m":round(total,3),"margin_m":round(MAX_LOOP_M-total,3),"turns":turns,"installation_ready":False}
 def schematic_rectangle(room, s, clearance, radius, feed, back, rejected_reason):
@@ -140,7 +140,7 @@ def schematic_rectangle(room, s, clearance, radius, feed, back, rejected_reason)
         except (ValueError,ZeroDivisionError):
             continue
     if not candidates:
-        raise ValueError("Nie ma miejsca na uproszczony podgląd w limicie 100 m")
+        raise ValueError("Nie ma miejsca na uproszczony podgląd w limicie 80 m")
     turns,drawn,go,ret,turn,total=candidates[-1]
     return {
         "status":"schematic",
@@ -407,7 +407,7 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
                 layout["geometric_coverage_pct"]=None
         layouts.append(layout)
         checked_length=layout.get("total_m",estimate)
-        # A shortened preview may fit the 100 m maximum while the estimated
+        # A shortened preview may fit the 80 m maximum while the estimated
         # full-area coverage is longer, so explicitly warn the installer.
         coverage_warning=(layout["status"]=="schematic" and estimate>MAX_LOOP_M+1e-7)
         zone_results.append({
@@ -422,7 +422,7 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
             "max_loop_m":MAX_LOOP_M,
             "warning_90m":WARN_LOOP_M<=checked_length<=MAX_LOOP_M+1e-7,
             "over_limit":checked_length>MAX_LOOP_M+1e-7 or coverage_warning,
-            "over_80m":checked_length>MAX_LOOP_M+1e-7 or coverage_warning,  # legacy alias, now evaluated at 100 m
+            "over_80m":checked_length>MAX_LOOP_M+1e-7 or coverage_warning,  # legacy alias, evaluated at 80 m
             "coverage_warning":coverage_warning,
             "full_area_estimate_m":round(estimate,2),
             "geometric_coverage_pct":layout.get("geometric_coverage_pct"),
