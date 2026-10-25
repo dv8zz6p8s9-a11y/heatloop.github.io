@@ -663,7 +663,8 @@ function updateZoneRoomSelector(){
    if(liveOptions[i+1].textContent!==title)liveOptions[i+1].textContent=title;
  }
  const expected=active?String(active.id):'';
- if(chooser.value!==expected)chooser.value=expected;
+ // During a native dropdown interaction do not override the user's pending choice.
+ if(document.activeElement!==chooser && chooser.value!==expected)chooser.value=expected;
  const ix=active?rooms.findIndex(r=>r.id===active.id):-1;
  indicator.textContent=active?
   'Aktywne pomieszczenie '+(ix+1)+' z '+rooms.length+': '+active.name+
@@ -1169,7 +1170,7 @@ function finish(){
    ok=setHeating(room,polygon,'poly');
    if(!ok)editHistory.pop();
  }
- if(ok){tool('select');status('Zamknięto wielokąt i zapisano '+(polygon.length)+' wierzchołki.','ok')}
+ if(ok){const wasHeat=tools==='heatPoly';tool(wasHeat?'heatPoly':'select');status('Zamknięto wielokąt i zapisano '+(polygon.length)+' wierzchołki. '+(wasHeat?'Możesz wybrać kolejne pomieszczenie.':''),'ok')}
  return ok;
 }
 function click(p){
@@ -1410,7 +1411,7 @@ $('nextZoneRoom').onclick=()=>cycleHeatingRoom(1);
 $('zoneRoomSelect').onchange=()=>{
  const id=Number($('zoneRoomSelect').value);
  const room=rooms.find(r=>r.id===id);
- if(room)chooseRoomForHeating(room);
+ if(room){chooseRoomForHeating(room);$('zoneRoomSelect').value=String(room.id);}
  else if(rooms.length)status('Wybierz pomieszczenie z listy.','warn');
 };
 $('pickZoneRoom').onclick=()=>{
