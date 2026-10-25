@@ -70,13 +70,13 @@ class Blob{constructor(items){Blob.saved=String(items[0])}}
 class FileReader{readAsText(file){this.result=file.text;this.onload?.()}}
 class Image{set src(value){this.naturalWidth=1100;this.naturalHeight=750;this.onload?.()}}
 class XMLSerializer{serializeToString(){return'<svg/>'}}
-const URL={createObjectURL:()=>'/dummy',revokeObjectURL(){}};
+const fileUrls={createObjectURL:()=>'/dummy',revokeObjectURL(){}};
 const args=[
  'document','Worker','Blob','FileReader','URL','setTimeout','window','Image',
  'XMLSerializer','ResizeObserver',...Object.keys(imports)
 ];
 const values=[
- document,Worker,Blob,FileReader,URL,()=>{},
+ document,Worker,Blob,FileReader,fileUrls,()=>{},
  {confirm:()=>true,addEventListener(){}},Image,XMLSerializer,undefined,
  ...Object.values(imports)
 ];
