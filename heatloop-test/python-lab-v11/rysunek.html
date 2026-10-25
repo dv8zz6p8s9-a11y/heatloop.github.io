@@ -1245,7 +1245,7 @@ function click(p){
      if(addRoom(polygon,'rect'))tool('select')
    }else{
      const room=chosenRoom();
-     if(room){snapshot(room);if(setHeating(room,polygon,'rect'))tool('select');else editHistory.pop()}
+     if(room){snapshot(room);if(setHeating(room,polygon,'rect')){tool('heatRect');status('Zapisano pole grzewcze. Wybierz następne pomieszczenie, aby kontynuować.','ok')}else editHistory.pop()}
    }
    temp=null;render();return
  }
