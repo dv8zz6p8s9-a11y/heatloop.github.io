@@ -47,3 +47,12 @@ To **oddzielna wersja testowa**. Nie zastępuje `heatloop-test/python-lab-v10` a
 5. Zapisz projekt pod nową nazwą, otwórz go ponownie i porównaj położenie rozdzielacza oraz pola.
 
 Automatyczne testy obejmują wybór dwóch pokoi, dwa pola, kliknięcie ustawienia rozdzielacza poza rasterem zdjęcia, anulowanie, zapis i odczyt JSON.
+
+## Korekta v1.1.3 — wybór następnych pomieszczeń
+
+- Stabilna lista „Pomieszczenie, w którym chcesz narysować pole grzewcze” **nie jest już przebudowywana** po każdym odrysowaniu; to zapobiega resetowaniu opcji w natywnym menu Firefox/Safari/Chrome.
+- W kroku **3. Pola grzewcze** są przyciski **← Poprzednie pomieszczenie** oraz **Następne pomieszczenie →**. Przejście automatycznie wybiera następny pokój, zaznacza go i aktywuje rysowanie prostokątnego pola.
+- Na etapie 3 można również wskazać pomieszczenie na planie lub wybrać dowolny pokój z listy.
+- Po ukończeniu jednego pola dane innych pokojów **nie są usuwane**. Można także dodać kilka pól w tym samym pokoju.
+- Sprawdzenie automatyczne: osiem pokojów, dziewięć pól, wielokrotna zmiana pokoju, niezmienność opcji `select`, zapis JSON. Wersja pliku projektu pozostaje `JSON v11`.
+- Kopia bezpieczeństwa sprzed korekty: `backup/python-lab-v112-before-room-selector-stability-20261025`.
