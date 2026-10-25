@@ -154,7 +154,7 @@
 <details class="view-more"><summary>Obrót, przesuwanie i widoczność podkładu</summary><div class="nav-actions"><button id="moveLeft" title="Przesuń rysunek w lewo" aria-label="Przesuń rysunek w lewo">← Lewo</button><button id="moveUp" title="Przesuń rysunek w górę" aria-label="Przesuń rysunek w górę">↑ Góra</button><button id="moveDown" title="Przesuń rysunek w dół" aria-label="Przesuń rysunek w dół">↓ Dół</button><button id="moveRight" title="Przesuń rysunek w prawo" aria-label="Przesuń rysunek w prawo">Prawo →</button></div>
 <div class="nav-actions"><button id="rotateLeft" title="Obróć plan o 90° przeciwnie do ruchu wskazówek zegara">↶ Obróć w lewo 90°</button><button id="rotateRight" title="Obróć plan o 90° zgodnie z ruchem wskazówek zegara">↷ Obróć w prawo 90°</button><span class="angle" id="angle">Obrót: 0°</span></div>
 <div class="nav-help">Po powiększeniu wybierz „✋ Przesuń rysunek” i przeciągaj myszą lub palcem. W trybie wyboru pomieszczenia można także przeciągać powiększony plan. Strzałki umożliwiają przesuwanie w pionie i poziomie. Obrót obejmuje podkład, obrysy, kalibrację i rury — bez zmiany wymiarów.</div>
-<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · <span style="color:#087ba9">┄</span> dojście testowe · fiolet: obrys · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><div id="drawingViewport"><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg>
+<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · <span style="color:#087ba9">┄</span> dojście testowe · szary: pokoje · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><div id="drawingViewport"><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg>
 <div id="mapScale" class="map-scale" aria-label="Podziałka liniowa rysunku" role="img" hidden>
  <div class="map-scale-caption">Skala na ekranie</div>
  <div class="map-scale-top"><span id="mapScaleZero">0</span><span id="mapScaleHalf">—</span><span id="mapScaleFull">—</span></div>
@@ -425,29 +425,29 @@ function render(){
  else for(let x=0;x<=W;x+=50)layer.append(E('line',{x1:x,y1:0,x2:x,y2:H,stroke:'#e6eef4'}));
 for(let r of rooms){
  const sel=r.id===selected;
- layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':technicalView?.01:(sel?.17:.06),
- stroke:technicalView?'#7a8589':(sel?'#167cba':'#9a53cf'),
- 'stroke-width':technicalView?1.3:(sel?3.5:2),'stroke-dasharray':sel&&!technicalView?'':'7 4'}));
+ layer.append(E('polygon',{points:r.points.map(p=>p.join(',')).join(' '),fill:'#2ca3cf','fill-opacity':technicalView?.005:(sel?.055:.02),
+ stroke:technicalView?'#778c95':(sel?'#287c9e':'#8a9baa'),
+ 'stroke-width':technicalView?.9:(sel?1.8:1.1),'stroke-dasharray':sel&&!technicalView?'':'7 4'}));
 
  const zones=r.heatingZones||[];
  for(let zi=0;zi<zones.length;zi++){
    const z=zones[zi],isActive=sel&&r.selectedZoneId===z.id;
    layer.append(E('polygon',{
      points:z.points.map(p=>p.join(',')).join(' '),
-     fill:isActive?'#1aba7f':'#48b67f','fill-opacity':technicalView?.01:(isActive?.31:.19),
-     stroke:technicalView?'#2e8e79':(isActive?'#05794b':'#0c9662'),
-     'stroke-width':technicalView?1.4:(isActive?4.3:2.7),
+     fill:isActive?'#1aba7f':'#48b67f','fill-opacity':technicalView?.005:(isActive?.08:.035),
+     stroke:technicalView?'#2e8e79':(isActive?'#10836a':'#52a486'),
+     'stroke-width':technicalView?1.05:(isActive?1.85:1.2),
      'stroke-dasharray':technicalView?'5 5':(isActive?'':'8 4'),'stroke-linejoin':'round'
    }));
    const center=z.points.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map(v=>v/z.points.length);
    const tag=E('text',{x:center[0],y:center[1]+17,
-     fill:'#126947','font-size':13,'text-anchor':'middle','font-weight':'bold',
+     fill:'#126947','font-size':12,'text-anchor':'middle','font-weight':'bold',
      stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
    tag.textContent='Pole '+(zi+1)+' · '+fmt(polygonArea(z.points)*sx*sy)+' m² · '+fmt(settingsFor(r,z).spacing_m*100)+' cm'+(r.loop?.zone_results?.[zi]?.layout?.status==='schematic'?' · SZKIC':'');
    if(!technicalView)layer.append(tag);
  }
  const mx=r.points.reduce((v,p)=>v+p[0],0)/r.points.length,my=r.points.reduce((v,p)=>v+p[1],0)/r.points.length;
- const title=E('text',{x:mx,y:my,fill:'#24526e','font-size':17,'text-anchor':'middle',
+ const title=E('text',{x:mx,y:my,fill:'#24526e','font-size':15,'text-anchor':'middle',
    'font-weight':'bold',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
  title.textContent=r.name;if(!technicalView)layer.append(title);
  for(const [zi,zone] of (r.heatingZones.length?r.heatingZones:[{id:0,points:r.points,routing:r.implicitRouting}]).entries()){
