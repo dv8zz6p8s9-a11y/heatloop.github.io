@@ -1627,10 +1627,15 @@ $('finishGuide').onclick=()=>{
  }
 };
 $('cancelGuide').onclick=()=>{tool('select');renderCircuits();status('Zakończono wskazywanie. Punkty można usunąć przy pętli.','warn')};
-try{worker=new Worker('./rysunek-worker.js?v=111',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){ready=false;$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';$('generationFeedback').textContent='Nie można uruchomić generatora: '+d.message;return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');$('generationFeedback').textContent='Błąd obliczania: '+d.message;$('generationFeedback').className='chip error';return}if(d.kind==='result'){
+try{worker=new Worker('./rysunek-worker.js?v=113',{type:'module'});worker.onmessage=e=>{const d=e.data;if(d.kind==='progress'){$('engine').textContent=d.message;return}if(d.kind==='ready'){ready=true;$('engine').textContent='Python / Shapely gotowy · '+d.versions;$('engine').className='chip ok';regenerateMissingSavedLoops();return}if(d.kind==='error'){ready=false;$('engine').textContent='Błąd: '+d.message;$('engine').className='chip error';$('generationFeedback').textContent='Nie można uruchomić generatora: '+d.message;return}if(d.kind==='eval-error'){queue.delete(d.seq);status(d.message,'error');$('generationFeedback').textContent='Błąd obliczania: '+d.message;$('generationFeedback').className='chip error';return}if(d.kind==='result'){
  let ref=queue.get(d.seq);queue.delete(d.seq);
  let r=rooms.find(x=>x.id===ref?.id);if(!r||r.revision!==ref.revision)return;
  r.loop=d.result;refreshApproaches();list();render();update();let l=d.result.layout;const zoneData=d.result.zone_results||[];
+ const missing=zoneData.filter(x=>!['experimental','schematic'].includes(x.layout?.status));
+ $('generationFeedback').textContent=missing.length
+  ? 'Brak geometrii dla '+missing.length+' pól: '+missing.map(x=>'pole '+(x.index+1)+' — '+(x.layout?.message||'generator nie obsługuje tego obrysu')).join(' | ')
+  : 'Zakończono obliczenia pól dla '+r.name+'.';
+ $('generationFeedback').className='chip '+(missing.length?'warn':'ok');
  const done=zoneData.filter(x=>x.layout.status==='experimental').length;
  const schematic=zoneData.filter(x=>x.layout.status==='schematic').length;
  const routed=zoneData.filter(x=>x.approach?.status==='draft').length;
