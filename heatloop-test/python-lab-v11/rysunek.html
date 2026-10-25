@@ -1420,12 +1420,38 @@ function setTechnicalView(v){
 }
 $('technicalView').onclick=()=>setTechnicalView(true);
 $('workingView').onclick=()=>setTechnicalView(false);
+function appendSvgMapScale(clone){
+ if(!S.getBoundingClientRect)return;
+ const rect=S.getBoundingClientRect();
+ if(!(rect.width>0))return;
+ const model=getScaleBarFromMatrix({sx,sy,rotation,
+    matrix:layer?.getScreenCTM?.(),targetPixels:125,minPixels:45,maxPixels:150});
+ if(!model)return;
+ const v=S.viewBox.baseVal,unit=v.width/rect.width,px=model.pixels*unit;
+ const x=v.x+v.width-px-25*unit,y=v.y+v.height-62*unit;
+ const group=E('g',{'data-map-scale':'true'});
+ group.append(E('rect',{x:x-11*unit,y:y-14*unit,width:px+22*unit,
+   height:54*unit,fill:'#fff',stroke:'#b7cbd5','stroke-width':1*unit,rx:5*unit}));
+ const title=E('text',{x,y:y-2*unit,'font-size':10*unit,fill:'#244657',
+   'font-weight':700});title.textContent='Skala';group.append(title);
+ for(let i=0;i<2;i++)group.append(E('rect',{x:x+i*px/2,y:y+8*unit,
+   width:px/2,height:9*unit,fill:i?'#fff':'#193e54',
+   stroke:'#193e54','stroke-width':.7*unit}));
+ const zero=E('text',{x,y:y+29*unit,'font-size':10*unit,fill:'#193e54'});
+ zero.textContent='0';group.append(zero);
+ const half=E('text',{x:x+px/2,y:y+29*unit,'text-anchor':'middle',
+   'font-size':10*unit,fill:'#193e54'});half.textContent=model.halfLabel;group.append(half);
+ const full=E('text',{x:x+px,y:y+29*unit,'text-anchor':'end',
+   'font-size':10*unit,fill:'#193e54'});full.textContent=model.label;group.append(full);
+ clone.append(group);
+}
 $('exportSvg').onclick=()=>{
- // Export only the current SVG plan with embedded raster and labels.
+ // Export the current SVG plan with an embedded calibrated scale bar.
  const original=technicalView;
  try{
    setTechnicalView(true);
    const clone=S.cloneNode(true);
+   appendSvgMapScale(clone);
    clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
    clone.setAttribute('width','1650');
    clone.setAttribute('height','1125');
