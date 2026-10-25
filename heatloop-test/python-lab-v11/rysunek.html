@@ -122,10 +122,10 @@
 
 <section class="panel" data-pane="manifolds"><h2>04 · Ustaw rozdzielacz / rozdzielacze</h2>
 <div class="buttons"><button class="primary" id="addManifold">＋ Dodaj rozdzielacz</button></div>
-<div class="panel-note">Możesz dodać kilka rozdzielaczy i umieścić je na rzucie. Przypisuj do nich pętle w zakładce „Pętle”. Liczba sekcji wynika z przypisanych pętli, z możliwością ręcznego zwiększenia. Szafka: <b>2 sekcje większa</b>.</div>
+<div class="panel-note">Rozdzielacz ma prostokątny symbol z czerwoną ramką. Obrót 0° / 90° / 180° / 270° zmienia kierunek poglądowych króćców. Możesz dodać kilka rozdzielaczy i umieścić je na rzucie. Przypisuj do nich pętle w zakładce „Pętle”. Liczba sekcji wynika z przypisanych pętli, z możliwością ręcznego zwiększenia. Szafka: <b>2 sekcje większa</b>.</div>
 <div id="manifoldList"></div>
 <div id="manifoldSummary" class="chip">Nie dodano jeszcze rozdzielacza.</div>
-<div class="panel-note" style="margin-top:9px">Uwaga: położenie rozdzielacza jest poglądowe. Długości rzeczywistych dojść zasilania i powrotu wpisujesz osobno dla każdej pętli.</div>
+<div class="panel-note" style="margin-top:9px">Punkty zasilania i powrotu zależą od obrotu rozdzielacza. Jest to model podglądowy — rzeczywiste króćce i przejścia przez ściany wymagają sprawdzenia instalatora.</div>
 </section>
 <section class="panel" data-pane="loops"><h2>05 · Generuj pętle wraz z dojściami</h2><div class="pair"><div class="field"><label>Domyślny rozstaw nowej pętli</label><select id="spacing"><option value=".10">10 cm</option><option value=".125">12,5 cm</option><option value=".15">15 cm</option><option selected value=".20">20 cm</option></select></div><div class="field"><label>Rura (mm)</label><input type="number" id="diam" value="16" min="8" max="32"></div><div class="field"><label>Ściana → krawędź (mm)</label><input type="number" id="edge" value="100" min="0" max="500"></div><div class="field"><label>Promień gięcia (mm)</label><input type="number" id="radius" value="80" min="10" max="300"></div><div class="field"><label>Dojście (m)</label><input type="number" id="feed" value="2" min="0" max="100" step=".5"></div><div class="field"><label>Powrót (m)</label><input type="number" id="back" value="2" min="0" max="100" step=".5"></div></div><div class="chip">Rozstaw i przypisanie rozdzielacza możesz zmienić <b>osobno dla każdej pętli</b> poniżej.</div>
 <div id="circuitList" style="margin:9px 0"></div>
@@ -170,8 +170,8 @@
 <script type="module">
 import {parseKnownLength,axisScale,originalAxisForVisibleTool,measuredLength,polygonEdges} from './calibration-utils.mjs?v=09';
 import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeVertex,movePolygon,addVertex,deleteVertex,closestEdge,polygonArea,zonesOverlap,pointDistance,normalizeClosedPolygon,tappedFirstPoint} from './room-editor.mjs?v=09';
-import {SPACINGS,spacingAllowed,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=092';
-import {generateLoopApproaches} from './approach-routing.mjs?v=096';
+import {SPACINGS,spacingAllowed,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold,normalizeManifoldAngle,rotateManifoldBy} from './manifold-utils.mjs?v=111';
+import {generateLoopApproaches,manifoldConnectionPorts} from './approach-routing.mjs?v=111';
 import {DRAWING_COLORS,cleanRouting,effectiveEndpoints,getZoneTag,plannedCorridorPolyline,snapToFieldEdge,guideMetricLength} from './technical-drawing.mjs?v=096';
 import {getScaleBarFromMatrix} from './map-scale.mjs?v=111';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;
@@ -513,17 +513,24 @@ for(let r of rooms){
    }
  }
 }
-// Manifold symbols are drafting coordinates. No route is implied by a marker.
+// Large rotatable manifold symbol with two schematic outlet marks.
 for(const m of manifolds){
  if(!m.point)continue;
- const [x,y]=m.point;
- layer.append(E('rect',{x:x-12,y:y-12,width:24,height:24,rx:5,
-   fill:m.id===activeManifoldId?'#c87920':'#8d653a',stroke:'#fff','stroke-width':2}));
- const diamond=E('text',{x,y:y+5,fill:'#fff','font-weight':700,'font-size':18,'text-anchor':'middle'});
- diamond.textContent='M';layer.append(diamond);
- const label=E('text',{x,y:y-18,'font-size':15,'font-weight':700,'text-anchor':'middle',
-   fill:'#a85812',stroke:'#fff','stroke-width':4,'paint-order':'stroke'});
- label.textContent=technicalView?'R'+m.id+' · '+manifoldQuantities(rooms,m).sections+' sekc.':m.name;
+ const [x,y]=m.point,angle=normalizeManifoldAngle(m.angle??0);
+ const g=E('g',{transform:`translate(${x} ${y}) rotate(${angle})`});
+ g.append(E('rect',{x:-38,y:-19,width:76,height:38,rx:5,
+   fill:m.id===activeManifoldId?'#fff1ee':'#fffaf7',
+   stroke:m.id===activeManifoldId?'#cb2525':'#d73532',
+   'stroke-width':technicalView?2.8:3.8,
+   'vector-effect':'non-scaling-stroke'}));
+ const txt=E('text',{x:0,y:6,'font-size':19,'font-weight':800,'text-anchor':'middle',fill:'#9e2d2a'});
+ txt.textContent='R'+m.id;g.append(txt);
+ g.append(E('circle',{cx:-19,cy:18,r:5,fill:'#087ab2',stroke:'#fff','stroke-width':1.7}));
+ g.append(E('circle',{cx:19,cy:18,r:5,fill:'#da7b2f',stroke:'#fff','stroke-width':1.7}));
+ layer.append(g);
+ const label=E('text',{x,y:y-29,'font-size':12,'font-weight':700,'text-anchor':'middle',
+   fill:'#9e2d2a',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});
+ label.textContent=(technicalView?'Rozdzielacz '+m.id+' · '+manifoldQuantities(rooms,m).sections+' sekc.':m.name)+' · '+angle+'°';
  layer.append(label);
 }
 if(['rect','heatRect'].includes(tools)&&temp){
@@ -674,7 +681,7 @@ function redrawManifolds(){
    const name=document.createElement('input');name.className='room-name';name.value=m.name;name.maxLength=65;name.title='Nazwa rozdzielacza';
    name.onchange=()=>{m.name=name.value.trim().slice(0,65)||'Rozdzielacz '+m.id;name.value=m.name;render()};
    card.append(name);
-   const point=document.createElement('small');point.textContent=m.point?'Pozycja zaznaczona na rysunku':'Brak punktu na rzucie — wskaż lokalizację';
+   const point=document.createElement('small');point.textContent=m.point?'Pozycja zaznaczona · obrót '+(m.angle??0)+'°':'Brak punktu na rzucie — wskaż lokalizację';
    card.append(point);
    const line=document.createElement('div');line.className='pair';line.style.marginTop='9px';
    const typeField=document.createElement('div');typeField.className='field';
@@ -689,6 +696,29 @@ function redrawManifolds(){
    const sec=document.createElement('input');sec.type='number';sec.min='0';sec.max='20';sec.step='1';sec.value=m.requestedSections||0;
    sec.onchange=()=>{const v=Number(sec.value);if(!Number.isInteger(v)||v<0||v>20){status('Dozwolone są rozdzielacze 1–20 sekcji; 0 oznacza automatyczny dobór.','error');sec.value=m.requestedSections||0;return}m.requestedSections=v;redrawManifolds()};
    sectionsField.append(sec);line.append(sectionsField);card.append(line);
+   const turnRow=document.createElement('div');turnRow.className='field';
+   const turnLabel=document.createElement('label');turnLabel.textContent='Orientacja rozdzielacza';turnRow.append(turnLabel);
+   const turnSelect=document.createElement('select');
+   for(const a of [0,90,180,270]){
+     const option=document.createElement('option');option.value=String(a);
+     option.textContent=a+'°';turnSelect.append(option);
+   }
+   turnSelect.value=String(m.angle??0);
+   const changedAngle=value=>{
+     try{
+       m.angle=normalizeManifoldAngle(value);refreshApproaches();
+       render();redrawManifolds();
+       status(m.name+' obrócono do '+m.angle+'°. Dojścia przeliczono. Przed użyciem sprawdź układ i długości.','warn');
+     }catch(error){status(error.message,'error')}
+   };
+   turnSelect.onchange=()=>changedAngle(Number(turnSelect.value));
+   turnRow.append(turnSelect);card.append(turnRow);
+   const turnBtns=document.createElement('div');turnBtns.className='buttons';
+   for(const [label,delta] of [['↶ Obróć 90° w lewo',-90],['↷ Obróć 90° w prawo',90]]){
+     const btn=document.createElement('button');btn.type='button';btn.textContent=label;
+     btn.onclick=()=>changedAngle(rotateManifoldBy(m,delta));turnBtns.append(btn);
+   }
+   card.append(turnBtns);
    const checkbox=document.createElement('label');checkbox.className='panel-note';
    const pump=document.createElement('input');pump.type='checkbox';pump.checked=!!m.pumpGroup;
    pump.onchange=()=>{m.pumpGroup=pump.checked;redrawManifolds()};checkbox.append(pump);
@@ -1448,7 +1478,7 @@ $('jsonfile').onchange=e=>{
    if(!Number.isInteger(requested)||requested<0||requested>20)throw Error('Nieprawidłowa liczba sekcji rozdzielacza');
    return {
      id:m.id,name:String(m.name||'Rozdzielacz '+m.id).slice(0,65),
-     point:point?[...point]:null,
+     point:point?[...point]:null,angle:normalizeManifoldAngle(m.angle??0),
      requestedSections:requested,type:m.type==='standard'?'standard':'flowmeters',
      pumpGroup:!!m.pumpGroup,
    }
