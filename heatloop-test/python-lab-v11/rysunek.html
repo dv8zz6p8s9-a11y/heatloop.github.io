@@ -1,6 +1,7 @@
 <!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.1.2-RC1</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
- #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
+ #plan.placing-manifold{cursor:crosshair;outline:2px dashed #d73532;outline-offset:2px}
+#plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
  .heat-legend{color:#198063;font-weight:700}.handle-tip{font-size:11px;color:#426e83;line-height:1.5;padding:7px 0}.edit-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0}.edit-btns button{width:100%;min-width:0}.edit-btns .primary{background:#087daa;color:#fff}.room .room-name{width:100%;padding:7px 8px;font-size:13px;border:1px solid #d1e0e8;border-radius:7px;display:block}.zone-info{font-size:12px;color:#14694d;margin-top:8px}.nav-help{font-size:11px;color:#607a8b;line-height:1.5;margin:5px 0 9px}
 
@@ -153,6 +154,10 @@
 <div class="mini">Plik JSON zawiera także podkład graficzny. Nie wybieraj tutaj JPG/PDF: JPG/PDF służy tylko do wymiany rysunku i rozpoczyna nową pracę. Projekt pozostaje na Twoim urządzeniu.</div>
 </section>
 </aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2>
+<div id="manifoldPlacementBanner" class="chip warn" role="status" hidden>
+ <strong>📍 Ustawianie rozdzielacza</strong> — kliknij dowolne miejsce na rysunku, także przy ścianie lub obok podkładu.
+ <button type="button" id="cancelManifoldPlacement">Anuluj ustawianie</button>
+</div>
 <div class="tech-tools">
  <button id="technicalView">Widok techniczny</button>
  <button id="workingView" class="active">Widok roboczy</button>
@@ -724,6 +729,24 @@ function showTab(name){
  if(name==='zones')updateZoneRoomSelector();
 }
 function selectedManifold(){return manifolds.find(m=>m.id===activeManifoldId)||null}
+function syncManifoldPlacement(){
+ const visible=tools==='placeManifold';
+ $('manifoldPlacementBanner').hidden=!visible;
+ if(visible)S.classList.add('placing-manifold');
+ else S.classList.remove('placing-manifold');
+}
+function placeManifoldAt(p){
+ const m=selectedManifold();
+ if(!m){status('Nie wybrano rozdzielacza. Dodaj go w kroku 4.','error');return false}
+ const valid=Array.isArray(p)&&p.length===2&&p.every(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=3000);
+ if(!valid){status('Nie udało się ustawić rozdzielacza. Wskaż miejsce wewnątrz planszy rysunku.','warn');return false}
+ m.point=[p[0],p[1]];
+ // A geometry preview may be incomplete; a failure must never erase the new location.
+ try{refreshApproaches()}catch(e){status('Pozycja rozdzielacza zapisana, lecz dojścia wymagają ponownego przeliczenia.','warn')}
+ tool('select');redrawManifolds();render();
+ status(m.name+' ustawiony na rysunku. Możesz go obrócić w kroku 4.','ok');
+ return true;
+}
 function redrawManifolds(){
  const el=$('manifoldList');if(!el)return;el.innerHTML='';
  let total=0;
@@ -783,7 +806,8 @@ function redrawManifolds(){
    card.append(summary);
    const actions=document.createElement('div');actions.className='buttons';
    const place=document.createElement('button');place.textContent='📍 Ustaw na rysunku';
-   place.onclick=()=>{activeManifoldId=m.id;tool('placeManifold');redrawManifolds();status('Dotknij na rzucie miejsca montażu '+m.name+'.','warn')};
+   place.onclick=()=>{activeManifoldId=m.id;tool('placeManifold');redrawManifolds();
+ status('Dotknij planszy w miejscu montażu '+m.name+'. Możesz wskazać również miejsce przy jej krawędzi.','warn')};
    actions.append(place);
    const del=document.createElement('button');del.textContent='Usuń';
    del.onclick=()=>{manifolds=manifolds.filter(x=>x.id!==m.id);
@@ -1008,7 +1032,7 @@ function tool(t){
  if(t==='placeManifold'&&!selectedManifold()){info('Dodaj lub wybierz rozdzielacz w zakładce „Rozdzielacze”.','warn');return}
  if(selectionTools.has(t)&&!chosenRoom()){info('Najpierw wybierz pomieszczenie z listy lub kliknij jego obrys.','warn');return}
  if(['editHeat','moveHeat'].includes(t)&&!activeZone(chosenRoom())){info('Najpierw zaznacz osobne pole grzewcze.','warn');return}
- tools=t;pts=[];temp=null;hover=null;drag=null;syncFinishButton();
+ tools=t;pts=[];temp=null;hover=null;drag=null;syncFinishButton();syncManifoldPlacement();
  S.classList.toggle('pan-mode',t==='pan'||t==='moveRoom'||t==='moveHeat');
  document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
  $('hint').textContent={
@@ -1136,12 +1160,7 @@ function click(p){
    tool('select');showTab('loops');
    status('Zapisano preferowany punkt. Silnik jeszcze nie przenosi końca ślimaka w to miejsce.','warn');return;
  }
- if(tools==='placeManifold'){
-   const m=selectedManifold();
-   if(!m){info('Nie wybrano rozdzielacza.','error');return}
-   m.point=[p[0],p[1]];
-   refreshApproaches();tool('select');redrawManifolds();render();status(m.name+' ustawiony na rzucie. Długości dojść podaj oddzielnie przy pętlach.','ok');return
- }
+ if(tools==='placeManifold'){placeManifoldAt(p);return;}
  if(tools==='select'){
    const hit=[...rooms].reverse().find(r=>insidePolygon(p,r.points));
    if(hit){
@@ -1224,6 +1243,10 @@ function screenToCoord(element,ev){
 }
 const xy=ev=>screenToCoord(layer,ev),xyView=ev=>screenToCoord(S,ev);
 const allowed=p=>!bg||(p[0]>=imageFit.x&&p[0]<=imageFit.x+imageFit.width&&p[1]>=imageFit.y&&p[1]<=imageFit.y+imageFit.height);
+// Manifolds may be mounted beside the scan boundary (corridor/wall).
+// Unlike a heating zone, they must NOT be restricted to the raster's imageFit rectangle.
+const allowedManifoldLocation=p=>Array.isArray(p)&&p.length===2&&
+ p.every(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=3000);
 function scaleZoom(next,point){
  next=Math.max(1,Math.min(8,next));const v=S.viewBox.baseVal,anchor=point||[v.x+v.width/2,v.y+v.height/2];
  const fx=(anchor[0]-v.x)/v.width,fy=(anchor[1]-v.y)/v.height;
@@ -1313,7 +1336,11 @@ S.addEventListener('pointerdown',ev=>{
  }
  const canPan=tools==='pan'||(tools==='select'&&zoom>1);
  if(canPan){drag={kind:'pan',id:ev.pointerId,x:ev.clientX,y:ev.clientY,startX:ev.clientX,startY:ev.clientY,moved:false};try{S.setPointerCapture(ev.pointerId)}catch(_){}return}
- if(!allowed(point)){info('Wskaż punkt na podkładzie.','warn');return}
+ if(tools==='placeManifold'){
+   if(!allowedManifoldLocation(point)){status('Wskaż miejsce w granicach planszy rysunku.','warn');return}
+   click(point);return;
+ }
+ if(!allowed(point)){info('Wskaż punkt na podkładzie.','warn');status('Wskaż punkt wewnątrz podkładu rysunku.','warn');return}
  click(point);
 });
 S.addEventListener('pointermove',ev=>{
@@ -1373,12 +1400,15 @@ $('undoEdit').onclick=()=>{
  invalidate(room);selected=room.id;list();render();update();info('Cofnięto ostatnią edycję. Przelicz pętlę ponownie.','ok');
 };
 for(const nav of document.querySelectorAll('#workflowTabs [data-tab]'))nav.onclick=()=>showTab(nav.dataset.tab);
+$('cancelManifoldPlacement').onclick=()=>{
+ if(tools==='placeManifold'){tool('select');status('Anulowano ustawianie rozdzielacza.','warn')}
+};
 $('addManifold').onclick=()=>{
  if(manifolds.length>=12){status('W wersji testowej można utworzyć maksymalnie 12 rozdzielaczy.','warn');return}
  const manifold=createManifold(++manifoldSeq);
  manifolds.push(manifold);activeManifoldId=manifold.id;
  showTab('manifolds');tool('placeManifold');redrawManifolds();
- status('Dodano '+manifold.name+'. Kliknij jego pozycję na rysunku.','warn');
+ status('Dodano '+manifold.name+'. Kliknij jego pozycję na planszy. Możesz wskazać również miejsce poza obszarem zdjęcia.','warn');
 };
 $('zoomin').onclick=()=>scaleZoom(zoom*1.25);
 $('zoomout').onclick=()=>scaleZoom(zoom/1.25);
