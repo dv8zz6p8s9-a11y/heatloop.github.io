@@ -1,4 +1,4 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.0-RC1</title><style>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10293d"><title>HeatLoop Python LAB — praca z rysunkiem v1.1-RC1</title><style>
 :root{font-family:system-ui,-apple-system,Arial,sans-serif;background:#eef4f7;color:#17384b}*{box-sizing:border-box}body{margin:0}header{background:#102b40;color:white;padding:18px 22px}header strong{font-size:23px}header small{color:#a9cadb}main{padding:14px;max-width:1500px;margin:auto}aside{display:grid;gap:13px;align-content:start}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}.panel{background:white;border:1px solid #dbe7ed;border-radius:14px;padding:15px;min-width:0}h2{font-size:16px;margin:0 0 11px}h3{font-size:13px;margin:13px 0 8px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field label{display:block;font-size:11px;font-weight:700;color:#486277;margin:5px 0}.field input,.field select{width:100%;border:1px solid #bed1dd;border-radius:7px;font-size:15px;padding:9px;background:#fff;color:#153b54}button{border:1px solid #a8cbda;border-radius:8px;background:#f4faff;color:#176286;cursor:pointer;padding:9px;font-size:12px;font-weight:650;min-height:35px}button.primary{background:#087daa;color:white;border-color:#087daa}button.active{background:#d7f4ff;border-color:#0996c5}button:disabled{opacity:.6;cursor:wait}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0}.buttons button{flex:1}.notice{border:1px solid #ead1a3;background:#fff8e9;color:#865a22;border-radius:10px;padding:11px;font-size:12px;line-height:1.5;margin-bottom:12px}.mini{font-size:11px;color:#637c8e;line-height:1.5}.chip{padding:9px;border-radius:8px;background:#eef6fc;border:1px solid #cee2ed;font-size:12px;line-height:1.45;margin-top:8px}.chip.warn{background:#fff6e4;border-color:#e7c888;color:#96661a}.chip.error{background:#fff0ee;border-color:#e6bcb6;color:#ac352e}.chip.ok{background:#eaf9f1;border-color:#b9e4ca;color:#126e52}#plan{width:100%;height:auto;display:block;background:#fafcfe;touch-action:none;cursor:crosshair;border-radius:10px;border:1px solid #d9e7ee;max-height:70vh}.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.stat div{border-radius:8px;background:#eff6fa;padding:10px}.stat strong{font-size:19px;display:block}.stat small{font-size:10px;color:#657c8b}.room{padding:10px;border:1px solid #d7e5ed;border-radius:8px;margin-top:7px;cursor:pointer}.room.sel{border-color:#0795c8;background:#eef9ff}.room small{display:block;color:#668092;margin:5px 0}.room button{margin:4px}.legend{font-size:11px;color:#678398;margin:8px 0}.legend b{color:#0786b6}.legend em{color:#d78024}.legend u{color:#159e75}input[type=file]{width:100%}a{color:#52cfff}#hint{font-size:12px;color:#58798e;padding:8px 0}@media(max-width:930px){.grid{grid-template-columns:1fr}aside{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){aside{grid-template-columns:1fr}.stat{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}main{padding:10px}}
  #plan.pan-mode{cursor:grab}#plan.pan-mode:active{cursor:grabbing}
  .dimension-input{display:flex;gap:5px}.dimension-input input{flex:1;min-width:0}.dimension-input select{width:66px;flex:none}.readout{background:#eff7fb;border:1px solid #c9ddeb;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}.nav-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.nav-actions button{flex:1;min-width:68px}.nav-actions .angle{padding:9px 11px;background:#eff5f9;border-radius:8px;color:#3a6075;font-weight:700;font-size:12px;display:flex;align-items:center}
@@ -56,15 +56,30 @@
  main,.grid,#stage{display:block;max-width:none;margin:0;padding:0;box-shadow:none;border:0;overflow:visible;position:static}
  #plan{max-height:none!important;page-break-inside:avoid}
 }
-</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.0-RC1 · ślimak od przyłącza i osobne dojścia · poprawione odzyskiwanie projektów</small></header>
+.map-scale{position:absolute;bottom:12px;right:12px;background:rgba(255,255,255,.94);border:1px solid #c7d2da;
+ padding:8px 12px;border-radius:9px;box-shadow:0 2px 10px #20384a19;min-width:94px;z-index:4;
+ font-size:11px;color:#193b4f;pointer-events:none;font-variant-numeric:tabular-nums}
+.map-scale[hidden]{display:none!important}
+.map-scale-caption{font-size:10px;font-weight:650;color:#476b7f;margin-bottom:3px}
+.map-scale-top{width:var(--bar-width,130px);display:flex;justify-content:space-between;gap:3px;font-size:10px}
+.map-scale-line{display:flex;width:var(--bar-width,130px);height:9px;border:1px solid #172c37}
+.map-scale-line span{width:50%;height:100%;background:#173c52}
+.map-scale-line span+span{background:#fff}
+.map-scale-axis{font-size:9px;color:#58778a;text-align:right;padding-top:2px}
+#drawingViewport{position:relative;width:100%}
+#drawingViewport #plan{width:100%}
+#controls #workflowHint{padding:8px 10px;border-radius:8px;background:#f0f6fa;border:1px solid #cddce5}
+</style></head><body><header><strong>HeatLoop <span style="font-weight:400;color:#89d5ee">/ Python LAB</span></strong><br><small>Rysunek techniczny · kalibracja · pomieszczenia · pętle · wersja testowa 1.1-RC1 · skalówka i uporządkowane etapy · poprawione odzyskiwanie projektów</small></header>
 <main><div class="notice"><b>Wersja eksperymentalna.</b> Geometrię i długość każdej pętli liczy Python. Rozdzielacze i dojścia wymagają weryfikacji instalatora; nie jest to projekt wykonawczy. Limit: <b>80 m na pętlę</b>, razem z wpisanymi dojściami.</div><div class="grid"><aside id="controls">
 <nav id="workflowTabs" class="workflow-tabs" aria-label="Sekcje ustawień">
-<button type="button" data-tab="drawing" class="active">Rysunek</button>
-<button type="button" data-tab="rooms">Pokoje</button>
-<button type="button" data-tab="loops">Pętle</button>
-<button type="button" data-tab="manifolds">Rozdzielacze</button>
+<button type="button" data-tab="drawing" class="active">1. Rysunek</button>
+<button type="button" data-tab="rooms">2. Pokoje</button>
+<button type="button" data-tab="zones">3. Pola grzewcze</button>
+<button type="button" data-tab="manifolds">4. Rozdzielacze</button>
+<button type="button" data-tab="loops">5. Pętle i dojścia</button>
 <button type="button" data-tab="settings">Ustawienia</button>
 </nav>
+<div id="workflowHint" class="panel-note" role="status">Krok 1/5 · Wczytaj rysunek i skalibruj.</div>
 <section class="panel active-pane" data-pane="drawing"><h2>01 · Wczytaj rysunek</h2><input id="file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf"><div class="mini">PNG / JPG / WEBP, pierwsza strona PDF (wymaga dostępu do internetu).</div><div class="buttons"><button id="sample" class="primary">Rysunek przykładowy</button></div><h3>Kalibracja wymiarów (rzeczywiste wartości)</h3>
 <div class="pair">
   <div class="field"><label for="dimX">Znany wymiar poziomy</label><div class="dimension-input"><input id="dimX" type="text" inputmode="decimal" value="4,70" autocomplete="off"><select id="unitX" aria-label="Jednostka wymiaru poziomego"><option value="m">m</option><option value="cm">cm</option><option value="mm">mm</option></select></div></div>
@@ -72,6 +87,9 @@
 </div>
 <div class="buttons"><button data-tool="cx">1. Kalibruj poziom</button><button data-tool="cy">2. Kalibruj pion</button></div>
 <div class="buttons"><button data-tool="measure">📏 Sprawdź wymiar</button><button id="clearCalibration">Usuń kalibrację</button></div>
+<label class="panel-note" style="display:flex;align-items:center;gap:8px;min-height:42px">
+<input id="showMeasurements" type="checkbox"> Pokaż pomocnicze linie kalibracji oraz wymiary pomieszczeń
+</label>
 <div id="scale" class="chip warn">Wczytaj rysunek i skalibruj znany wymiar.</div>
 <div id="measureResult" class="readout" style="margin-top:7px">Po kalibracji kliknij „Sprawdź wymiar” i wskaż dowolne dwa punkty. Wyświetlę rzeczywistą odległość w metrach.</div>
 <div class="mini" style="margin-top:8px">Wpisz wymiar np. <b>4,70 m</b>, <b>470 cm</b> albo <b>4700 mm</b>. Wskaż dwa końce tej samej linii. Pomiar dotyczy właściwej osi rysunku, a nie przekątnej. Powiększenie i obrót nie zmieniają wymiarów.</div></section>
@@ -85,6 +103,10 @@
 </div>
 <button id="undoEdit" style="width:100%">↶ Cofnij ostatnią zmianę obrysu / pola</button>
 <div class="handle-tip">Wybierz pomieszczenie z listy, następnie narzędzie. Dotknij i przeciągnij niebieskie punkty. Prostokąt zachowuje kształt; wielokąt ma niezależne narożniki.</div>
+<div id="drawing" class="chip">Wybierz narzędzie. Pole jest obliczane podczas zaznaczania.</div><h3>Pomieszczenia</h3><div id="rooms" class="mini">Nie dodano pomieszczeń.</div></section>
+<section class="panel" data-pane="zones"><h2>03 · Zaznacz pola grzewcze</h2>
+<div class="chip">Najpierw zaznacz i wybierz pomieszczenie w kroku 2. Każdy obszar może mieć inny rozstaw.</div>
+<div class="buttons"><button id="finishZone" class="primary">Zamknij wielokąt pola</button><button id="cancelZone">Anuluj rysowanie</button></div>
 <h3>Pole ogrzewania podłogowego</h3>
 <div class="edit-btns">
  <button data-tool="heatRect" class="primary">▭ Zaznacz prostokątem</button>
@@ -96,8 +118,16 @@
 <div id="heatInfo" class="chip">Domyślnie ogrzewana jest cała powierzchnia wybranego pomieszczenia.</div>
 <div id="zoneList" style="margin-top:9px"></div>
 <div class="handle-tip">Możesz dodać kilka osobnych pól w jednym pokoju, a ich rozstawy ustawić w zakładce „Pętle”. Aby zakończyć wielokąt, kliknij „Zamknij wielokąt” albo dotknij pierwszego punktu. Zielone pola nie mogą się nakładać. Wybierz pole z listy, aby edytować je lub przesunąć. Przy kilku polach długości rur i dojścia wymagają osobnego projektu pętli.</div>
-<div id="drawing" class="chip">Wybierz narzędzie. Pole jest obliczane podczas zaznaczania.</div><h3>Pomieszczenia</h3><div id="rooms" class="mini">Nie dodano pomieszczeń.</div></section>
-<section class="panel" data-pane="loops"><h2>03 · Pętle i parametry rur</h2><div class="pair"><div class="field"><label>Domyślny rozstaw nowej pętli</label><select id="spacing"><option value=".10">10 cm</option><option value=".125">12,5 cm</option><option value=".15">15 cm</option><option selected value=".20">20 cm</option></select></div><div class="field"><label>Rura (mm)</label><input type="number" id="diam" value="16" min="8" max="32"></div><div class="field"><label>Ściana → krawędź (mm)</label><input type="number" id="edge" value="100" min="0" max="500"></div><div class="field"><label>Promień gięcia (mm)</label><input type="number" id="radius" value="80" min="10" max="300"></div><div class="field"><label>Dojście (m)</label><input type="number" id="feed" value="2" min="0" max="100" step=".5"></div><div class="field"><label>Powrót (m)</label><input type="number" id="back" value="2" min="0" max="100" step=".5"></div></div><div class="chip">Rozstaw i przypisanie rozdzielacza możesz zmienić <b>osobno dla każdej pętli</b> poniżej.</div>
+</section>
+
+<section class="panel" data-pane="manifolds"><h2>04 · Ustaw rozdzielacz / rozdzielacze</h2>
+<div class="buttons"><button class="primary" id="addManifold">＋ Dodaj rozdzielacz</button></div>
+<div class="panel-note">Możesz dodać kilka rozdzielaczy i umieścić je na rzucie. Przypisuj do nich pętle w zakładce „Pętle”. Liczba sekcji wynika z przypisanych pętli, z możliwością ręcznego zwiększenia. Szafka: <b>2 sekcje większa</b>.</div>
+<div id="manifoldList"></div>
+<div id="manifoldSummary" class="chip">Nie dodano jeszcze rozdzielacza.</div>
+<div class="panel-note" style="margin-top:9px">Uwaga: położenie rozdzielacza jest poglądowe. Długości rzeczywistych dojść zasilania i powrotu wpisujesz osobno dla każdej pętli.</div>
+</section>
+<section class="panel" data-pane="loops"><h2>05 · Generuj pętle wraz z dojściami</h2><div class="pair"><div class="field"><label>Domyślny rozstaw nowej pętli</label><select id="spacing"><option value=".10">10 cm</option><option value=".125">12,5 cm</option><option value=".15">15 cm</option><option selected value=".20">20 cm</option></select></div><div class="field"><label>Rura (mm)</label><input type="number" id="diam" value="16" min="8" max="32"></div><div class="field"><label>Ściana → krawędź (mm)</label><input type="number" id="edge" value="100" min="0" max="500"></div><div class="field"><label>Promień gięcia (mm)</label><input type="number" id="radius" value="80" min="10" max="300"></div><div class="field"><label>Dojście (m)</label><input type="number" id="feed" value="2" min="0" max="100" step=".5"></div><div class="field"><label>Powrót (m)</label><input type="number" id="back" value="2" min="0" max="100" step=".5"></div></div><div class="chip">Rozstaw i przypisanie rozdzielacza możesz zmienić <b>osobno dla każdej pętli</b> poniżej.</div>
 <div id="circuitList" style="margin:9px 0"></div>
 <div class="buttons" style="margin-top:9px">
 <button class="primary" id="loop">Przelicz wybrany pokój</button>
@@ -108,14 +138,7 @@
 <div class="buttons"><button id="finishGuide" type="button">Zakończ wskazywanie trasy</button><button id="cancelGuide" type="button">Anuluj wskazywanie</button></div>
 <div id="routeSummary" class="chip warn">Po obliczeniu pętli wyświetlimy poglądowe dojścia do rozdzielaczy. Niezweryfikowane trasy są przerywane.</div>
 <div id="engine" class="chip warn">Uruchamianie Python + Shapely…</div></section>
-<section class="panel" data-pane="manifolds"><h2>04 · Rozdzielacze</h2>
-<div class="buttons"><button class="primary" id="addManifold">＋ Dodaj rozdzielacz</button></div>
-<div class="panel-note">Możesz dodać kilka rozdzielaczy i umieścić je na rzucie. Przypisuj do nich pętle w zakładce „Pętle”. Liczba sekcji wynika z przypisanych pętli, z możliwością ręcznego zwiększenia. Szafka: <b>2 sekcje większa</b>.</div>
-<div id="manifoldList"></div>
-<div id="manifoldSummary" class="chip">Nie dodano jeszcze rozdzielacza.</div>
-<div class="panel-note" style="margin-top:9px">Uwaga: położenie rozdzielacza jest poglądowe. Długości rzeczywistych dojść zasilania i powrotu wpisujesz osobno dla każdej pętli.</div>
-</section>
-<section class="panel" data-pane="settings"><h2>05 · Ustawienia</h2>
+<section class="panel" data-pane="settings"><h2>Ustawienia projektu</h2>
 <div class="buttons"><button id="save" class="primary" type="button">Zapisz projekt</button><button id="import" type="button">Otwórz projekt</button><button id="clear" type="button">Nowy projekt</button>
 <input id="jsonfile" type="file" accept=".json,application/json"></div>
 <div id="restoreSummary" class="chip warn" role="status" aria-live="polite">Wczytywanie projektu przywraca rysunek, kalibrację, pokoje, pola grzewcze, rozdzielacze i ustawienia każdej pętli.</div>
@@ -131,7 +154,13 @@
 <details class="view-more"><summary>Obrót, przesuwanie i widoczność podkładu</summary><div class="nav-actions"><button id="moveLeft" title="Przesuń rysunek w lewo" aria-label="Przesuń rysunek w lewo">← Lewo</button><button id="moveUp" title="Przesuń rysunek w górę" aria-label="Przesuń rysunek w górę">↑ Góra</button><button id="moveDown" title="Przesuń rysunek w dół" aria-label="Przesuń rysunek w dół">↓ Dół</button><button id="moveRight" title="Przesuń rysunek w prawo" aria-label="Przesuń rysunek w prawo">Prawo →</button></div>
 <div class="nav-actions"><button id="rotateLeft" title="Obróć plan o 90° przeciwnie do ruchu wskazówek zegara">↶ Obróć w lewo 90°</button><button id="rotateRight" title="Obróć plan o 90° zgodnie z ruchem wskazówek zegara">↷ Obróć w prawo 90°</button><span class="angle" id="angle">Obrót: 0°</span></div>
 <div class="nav-help">Po powiększeniu wybierz „✋ Przesuń rysunek” i przeciągaj myszą lub palcem. W trybie wyboru pomieszczenia można także przeciągać powiększony plan. Strzałki umożliwiają przesuwanie w pionie i poziomie. Obrót obejmuje podkład, obrysy, kalibrację i rury — bez zmiany wymiarów.</div>
-<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · <span style="color:#087ba9">┄</span> dojście testowe · fiolet: obrys · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg><div id="technicalLegend" style="display:none;margin-top:10px"></div><div id="hint">Wczytaj plan lub użyj „Rysunek przykładowy”.</div><div class="stat" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+<div class="field" style="max-width:240px;margin-bottom:9px"><label for="alpha">Widoczność podkładu <span id="opacityValue">100%</span></label><input id="alpha" type="range" min="20" max="100" step="5" value="100"></div></details><div class="legend"><b>■</b> zasilanie · <em>■</em> powrót · <u>■</u> nawrót · <span style="color:#087ba9">┄</span> dojście testowe · fiolet: obrys · <span class="heat-legend">zielone: pole grzewcze</span> · <span style="color:#b66a20">◆</span> rozdzielacz</div><div id="drawingViewport"><svg id="plan" viewBox="0 0 1100 750" xmlns="http://www.w3.org/2000/svg"></svg>
+<div id="mapScale" class="map-scale" aria-label="Podziałka liniowa rysunku" role="img" hidden>
+ <div class="map-scale-caption">Skala na ekranie</div>
+ <div class="map-scale-top"><span id="mapScaleZero">0</span><span id="mapScaleHalf">—</span><span id="mapScaleFull">—</span></div>
+ <div id="mapScaleBar" class="map-scale-line"><span></span><span></span></div>
+ <div class="map-scale-axis" id="mapScaleAxis"></div>
+</div></div><div id="technicalLegend" style="display:none;margin-top:10px"></div><div id="hint">Wczytaj plan lub użyj „Rysunek przykładowy”.</div><div class="stat" style="grid-template-columns:repeat(2,minmax(0,1fr))">
  <div><strong id="area">—</strong><small>Powierzchnia pomieszczenia m²</small></div>
  <div><strong id="heatArea">—</strong><small>Pole podłogówki m²</small></div>
  <div><strong id="excluded">—</strong><small>Bez ogrzewania m²</small></div>
@@ -144,8 +173,9 @@ import {copyPoints,validPolygon,insidePolygon,insideRoom,rectFromCorners,changeV
 import {SPACINGS,spacingAllowed,normalizeLoopSettings,manifoldCircuits,manifoldQuantities,createManifold} from './manifold-utils.mjs?v=092';
 import {generateLoopApproaches} from './approach-routing.mjs?v=096';
 import {DRAWING_COLORS,cleanRouting,effectiveEndpoints,getZoneTag,plannedCorridorPolyline,snapToFieldEdge,guideMetricLength} from './technical-drawing.mjs?v=096';
+import {getScaleBarFromMatrix} from './map-scale.mjs?v=111';
 const $=id=>document.getElementById(id),S=$('plan'),NS='http://www.w3.org/2000/svg',W=1100,H=750;const E=(t,a={})=>{const e=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};const fmt=n=>Number(n).toLocaleString('pl-PL',{maximumFractionDigits:2,minimumFractionDigits:2});
-let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true,technicalView=false,routingTarget=null;
+let bg='',sx=0,sy=0,calibratedX=false,calibratedY=false,tools='select',pts=[],temp=null,hover=null,rooms=[],selected=null,next=1,seq=0,ready=false,worker,zoom=1,panX=0,panY=0,rotation=0,drag=null,layer=S,imageFit={x:0,y:0,width:W,height:H},calLines={cx:[],cy:[]},calAxes={cx:'x',cy:'y'},checkLine=[],editHistory=[],manifolds=[],manifoldSeq=0,activeManifoldId=null,activeTab='drawing',opacity=1,queue=new Map(),pendingRestoration=false,showApproachRoutes=true,technicalView=false,routingTarget=null,showMeasurements=false;
 const status=(t,cls='')=>{$('status').textContent=t;$('status').className='chip '+cls};
 const info=(t,cls='')=>{$('drawing').textContent=t;$('drawing').className='chip '+cls};
 function validLoopPreview(preview,zoneCount) {
@@ -595,9 +625,16 @@ function mutateLoopSettings(room,zone,patch){
  }catch(error){status(error.message,'error');update()}
 }
 function showTab(name){
- const valid=['drawing','rooms','loops','manifolds','settings'];
+ const valid=['drawing','rooms','zones','manifolds','loops','settings'];
  if(!valid.includes(name))return;
  activeTab=name;
+ const explanations={drawing:'1/5 · Wczytaj rysunek i skalibruj go.',
+ rooms:'2/5 · Oznacz pomieszczenia.',
+ zones:'3/5 · Oznacz osobne pola grzewcze.',
+ manifolds:'4/5 · Ustaw i obróć rozdzielacze.',
+ loops:'5/5 · Przypisz pętle i generuj je wraz z dojściami.',
+ settings:'Zapisz, otwórz lub rozpocznij nowy projekt.'};
+ $('workflowHint').textContent=explanations[name];
  document.querySelectorAll('#workflowTabs [data-tab]').forEach(b=>{
    const on=b.dataset.tab===name;b.classList.toggle('active',on);
    b.setAttribute('aria-selected',String(on));
@@ -1187,7 +1224,9 @@ S.addEventListener('wheel',ev=>{ev.preventDefault();scaleZoom(zoom*(ev.deltaY<0?
 S.addEventListener('dblclick',ev=>{
  if(['poly','heatPoly'].includes(tools)){ev.preventDefault();finish()}
 });
-for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>tool(b.dataset.tool);$('finish').onclick=finish;$('undo').onclick=()=>{if(['rect','heatRect'].includes(tools))temp=null;else pts.pop();syncFinishButton();render()};$('cancel').onclick=()=>tool('select');
+for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>tool(b.dataset.tool);$('finish').onclick=finish;
+$('finishZone').onclick=finish;
+$('cancelZone').onclick=()=>tool('select');$('undo').onclick=()=>{if(['rect','heatRect'].includes(tools))temp=null;else pts.pop();syncFinishButton();render()};$('cancel').onclick=()=>tool('select');
 $('resetHeat').onclick=()=>{
  const room=chosenRoom();if(!room)return;
  if(!roomZones(room).length){info('Całe pomieszczenie jest już ogrzewane.','warn');return}
