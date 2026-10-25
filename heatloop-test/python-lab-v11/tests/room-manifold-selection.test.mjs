@@ -9,8 +9,8 @@ import * as technical from '../technical-drawing.mjs';
 import * as scale from '../map-scale.mjs';
 
 const html=readFileSync(new URL('../rysunek.html',import.meta.url),'utf8');
-const inline=html.match(/<script type="module">([\\s\\S]*?)<\\/script>/)?.[1]
- .replace(/^import\\s+\\{[^;]+;\\s*/gm,'');
+const inline=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1]
+ .replace(/^import\s+\{[^;]+;\s*/gm,'');
 const helpers={...roomEditor,...calibration,...manifolds,...routing,...technical,...scale};
 class Element {
  constructor(tag='div'){
@@ -66,7 +66,7 @@ function startApp(){
  const values=[document,Worker,Blob,FileReader,URL,()=>{},
   {confirm:()=>true,addEventListener(){}},Image,XMLSerializer,...Object.values(helpers)];
  const app=new Function(...args,inline+
-  '\\nreturn {get:()=>({rooms,manifolds,selected,tools,activeTab,imageFit}),'+
+  '\nreturn {get:()=>({rooms,manifolds,selected,tools,activeTab,imageFit}),'+
   'tool,click,showTab,setImageFit:p=>{imageFit=p}};')(...values);
  return {app,$,Blob};
 }
