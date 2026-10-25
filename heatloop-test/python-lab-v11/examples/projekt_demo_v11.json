@@ -1,0 +1,288 @@
+{
+  "format": "HeatLoop-Drawing-LAB",
+  "version": 11,
+  "background": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221100%22%20height%3D%22750%22%20viewBox%3D%220%200%201100%20750%22%3E%3Crect%20width%3D%221100%22%20height%3D%22750%22%20fill%3D%22white%22%2F%3E%3Crect%20x%3D%22100%22%20y%3D%22120%22%20width%3D%22420%22%20height%3D%22500%22%20fill%3D%22%23fcfdff%22%20stroke%3D%22%23667985%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%22540%22%20y%3D%22120%22%20width%3D%22410%22%20height%3D%22500%22%20fill%3D%22%23fcfdff%22%20stroke%3D%22%23667985%22%20stroke-width%3D%225%22%2F%3E%3Crect%20x%3D%22520%22%20y%3D%22210%22%20width%3D%2220%22%20height%3D%22110%22%20fill%3D%22%23fff%22%2F%3E%3Ctext%20x%3D%22300%22%20y%3D%22100%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%22%20font-size%3D%2219%22%20fill%3D%22%2372828b%22%3EPOK%C3%93J%201%3C%2Ftext%3E%3Ctext%20x%3D%22750%22%20y%3D%22100%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%22%20font-size%3D%2219%22%20fill%3D%22%2372828b%22%3EPOK%C3%93J%202%3C%2Ftext%3E%3Ctext%20x%3D%22550%22%20y%3D%22710%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%22%20font-size%3D%2218%22%20fill%3D%22%2375909c%22%3EHEATLOOP%20%C2%B7%20PROJEKT%20DEMONSTRACYJNY%20v1.1%3C%2Ftext%3E%3C%2Fsvg%3E",
+  "imageFit": {
+    "x": 0,
+    "y": 0,
+    "width": 1100,
+    "height": 750
+  },
+  "rotation": 0,
+  "sx": 0.01,
+  "sy": 0.01,
+  "calLines": {
+    "cx": [
+      [
+        100,
+        120
+      ],
+      [
+        520,
+        120
+      ]
+    ],
+    "cy": [
+      [
+        100,
+        120
+      ],
+      [
+        100,
+        620
+      ]
+    ]
+  },
+  "calAxes": {
+    "cx": "x",
+    "cy": "y"
+  },
+  "manifolds": [
+    {
+      "id": 1,
+      "name": "Rozdzielacz R1",
+      "point": [
+        525,
+        105
+      ],
+      "angle": 90,
+      "requestedSections": 0,
+      "type": "flowmeters",
+      "pumpGroup": false
+    },
+    {
+      "id": 2,
+      "name": "Rozdzielacz R2",
+      "point": [
+        955,
+        180
+      ],
+      "angle": 270,
+      "requestedSections": 0,
+      "type": "flowmeters",
+      "pumpGroup": false
+    }
+  ],
+  "activeManifoldId": 1,
+  "defaults": {
+    "spacing_m": 0.15,
+    "feed_m": 2,
+    "back_m": 2,
+    "diam": "16",
+    "edge": "100",
+    "radius": "80"
+  },
+  "known": {
+    "x": "4,20",
+    "y": "5,00",
+    "unitX": "m",
+    "unitY": "m"
+  },
+  "rooms": [
+    {
+      "id": 1,
+      "name": "Pokój 1",
+      "points": [
+        [
+          100,
+          120
+        ],
+        [
+          520,
+          120
+        ],
+        [
+          520,
+          620
+        ],
+        [
+          100,
+          620
+        ]
+      ],
+      "shape": "rect",
+      "heatingZones": [
+        {
+          "id": 1,
+          "shape": "rect",
+          "points": [
+            [
+              120,
+              140
+            ],
+            [
+              330,
+              140
+            ],
+            [
+              330,
+              340
+            ],
+            [
+              120,
+              340
+            ]
+          ],
+          "settings": {
+            "spacing_m": 0.125,
+            "feed_m": 2,
+            "back_m": 2,
+            "manifold_id": 1
+          },
+          "routing": {
+            "direction": "normal",
+            "preferredStart": [
+              330,
+              170
+            ],
+            "preferredEnd": [
+              330,
+              195
+            ],
+            "guide": [],
+            "corridorWidthM": 0.2
+          }
+        },
+        {
+          "id": 2,
+          "shape": "rect",
+          "points": [
+            [
+              340,
+              360
+            ],
+            [
+              500,
+              360
+            ],
+            [
+              500,
+              600
+            ],
+            [
+              340,
+              600
+            ]
+          ],
+          "settings": {
+            "spacing_m": 0.15,
+            "feed_m": 2,
+            "back_m": 2,
+            "manifold_id": 1
+          },
+          "routing": {
+            "direction": "normal",
+            "preferredStart": [
+              500,
+              380
+            ],
+            "preferredEnd": [
+              500,
+              410
+            ],
+            "guide": [],
+            "corridorWidthM": 0.2
+          }
+        }
+      ],
+      "selectedZoneId": 1,
+      "zoneSerial": 2,
+      "implicitSettings": {
+        "spacing_m": 0.15,
+        "feed_m": 2,
+        "back_m": 2,
+        "manifold_id": 1
+      },
+      "implicitRouting": {
+        "direction": "normal",
+        "preferredStart": null,
+        "preferredEnd": null,
+        "guide": [],
+        "corridorWidthM": 0.2
+      },
+      "loopPreview": null
+    },
+    {
+      "id": 2,
+      "name": "Pokój 2",
+      "points": [
+        [
+          540,
+          120
+        ],
+        [
+          950,
+          120
+        ],
+        [
+          950,
+          620
+        ],
+        [
+          540,
+          620
+        ]
+      ],
+      "shape": "rect",
+      "heatingZones": [
+        {
+          "id": 1,
+          "shape": "rect",
+          "points": [
+            [
+              570,
+              150
+            ],
+            [
+              920,
+              150
+            ],
+            [
+              920,
+              590
+            ],
+            [
+              570,
+              590
+            ]
+          ],
+          "settings": {
+            "spacing_m": 0.2,
+            "feed_m": 2,
+            "back_m": 2,
+            "manifold_id": 2
+          },
+          "routing": {
+            "direction": "normal",
+            "preferredStart": [
+              920,
+              210
+            ],
+            "preferredEnd": [
+              920,
+              235
+            ],
+            "guide": [],
+            "corridorWidthM": 0.2
+          }
+        }
+      ],
+      "selectedZoneId": 1,
+      "zoneSerial": 1,
+      "implicitSettings": {
+        "spacing_m": 0.2,
+        "feed_m": 2,
+        "back_m": 2,
+        "manifold_id": 2
+      },
+      "implicitRouting": {
+        "direction": "normal",
+        "preferredStart": null,
+        "preferredEnd": null,
+        "guide": [],
+        "corridorWidthM": 0.2
+      },
+      "loopPreview": null
+    }
+  ]
+}
