@@ -150,7 +150,7 @@
 <div id="routeSummary" class="chip warn">Po obliczeniu pętli wyświetlimy poglądowe dojścia do rozdzielaczy. Niezweryfikowane trasy są przerywane.</div>
 <div id="engine" class="chip warn">Uruchamianie Python + Shapely…</div></section>
 <section class="panel" data-pane="settings"><h2>Ustawienia projektu</h2>
-<div class="buttons"><button id="save" class="primary" type="button">Zapisz projekt</button><button id="import" type="button">Otwórz projekt</button><button id="clear" type="button">Nowy projekt</button>
+<div class="field"><label for="projectSaveName">Nazwa projektu</label><input id="projectSaveName" maxlength="100" value="heatloop_projekt_rysunek" placeholder="Nazwa pliku"></div><div class="mini">W Chrome/Edge można wskazać folder zapisu. W Safari/Firefox plik pobierze się do folderu pobierania.</div><div class="buttons"><button id="save" class="primary" type="button">Zapisz projekt jako…</button><button id="import" type="button">Otwórz projekt</button><button id="clear" type="button">Nowy projekt</button>
 <input id="jsonfile" type="file" accept=".json,application/json"></div>
 <div id="restoreSummary" class="chip warn" role="status" aria-live="polite">Wczytywanie projektu przywraca rysunek, kalibrację, pokoje, pola grzewcze, rozdzielacze i ustawienia każdej pętli.</div>
 <div class="mini">Plik JSON zawiera także podkład graficzny. Nie wybieraj tutaj JPG/PDF: JPG/PDF służy tylko do wymiany rysunku i rozpoczyna nową pracę. Projekt pozostaje na Twoim urządzeniu.</div>
@@ -1641,14 +1641,27 @@ try{worker=new Worker('./rysunek-worker.js?v=111',{type:'module'});worker.onmess
    '. Rozstawy pętli są niezależne.'+
    (over?' UWAGA: '+over+' pętli może przekraczać 80 m!':'')+
    ' Schematy nie oznaczają sprawdzonych promieni gięcia. Dojścia także wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
-$('save').onclick=()=>{const obj={format:'HeatLoop-Drawing-LAB',version:11,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
+$('save').onclick=async()=>{const obj={format:'HeatLoop-Drawing-LAB',version:11,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
  manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
  activeManifoldId,
  defaults:{spacing_m:Number($('spacing').value),feed_m:Number($('feed').value),back_m:Number($('back').value),
   diam: $('diam').value, edge:$('edge').value, radius:$('radius').value},
  known:{x:$('dimX').value,y:$('dimY').value,unitX:$('unitX').value,unitY:$('unitY').value},rooms:rooms.map(r=>({id:r.id,name:r.name,points:r.points,shape:r.shape||'poly',heatingZones:copyZones(roomZones(r)),selectedZoneId:r.selectedZoneId,zoneSerial:r.zoneSerial||0,implicitSettings:r.implicitSettings?{...r.implicitSettings}:defaultLoopSettings(),
  implicitRouting:routingFor(r,null),
- loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))},b=new Blob([JSON.stringify(obj)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatloop_projekt_rysunek.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)};
+ loopPreview:validLoopPreview(r.loop,Math.max(1,roomZones(r).length))?r.loop:null}))};
+const original=($('projectSaveName').value||'heatloop_projekt_rysunek').trim().replace(/\.json$/i,'');
+const name=(original.replace(/[\\/:*?"<>|]/g,'_').replace(/[. ]+$/g,'').slice(0,96)||'heatloop_projekt_rysunek')+'.json';
+const blob=new Blob([JSON.stringify(obj)],{type:'application/json'});
+try{
+ if(typeof window.showSaveFilePicker==='function'){
+  const handle=await window.showSaveFilePicker({suggestedName:name,types:[{description:'Projekt HeatLoop',accept:{'application/json':['.json']}}]});
+  const writable=await handle.createWritable();await writable.write(blob);await writable.close();
+  status('Zapisano projekt: '+handle.name,'ok');return;
+ }
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),30000);status('Rozpoczęto pobieranie: '+name+'. Sprawdź folder pobierania.','ok');
+}catch(err){status(err?.name==='AbortError'?'Anulowano zapis.':'Błąd zapisu: '+(err?.message||err),err?.name==='AbortError'?'warn':'error')}
+};
 $('import').onclick=()=>{
  const input=$('jsonfile');input.value='';showTab('settings');input.click();
 };
