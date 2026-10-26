@@ -1644,7 +1644,7 @@ try{worker=new Worker('./rysunek-worker.js?v=113',{type:'module'});worker.onmess
  status(r.name+': ślimaki testowe '+done+' · schematy '+schematic+' · bez obrazu '+
    (zoneData.length-done-schematic)+' · poglądowe dojścia '+routed+'/'+zoneData.length+
    '. Rozstawy pętli są niezależne.'+
-   (over?' UWAGA: '+over+' pętli może przekraczać 80 m!':'')+
+   (over?' UWAGA: '+over+' pętli może przekraczać 100 m!':'')+
    ' Schematy nie oznaczają sprawdzonych promieni gięcia. Dojścia także wymagają weryfikacji.','warn');}}}catch(e){$('engine').textContent='Błąd Worker: '+e.message}
 $('save').onclick=async()=>{const obj={format:'HeatLoop-Drawing-LAB',version:11,background:bg,imageFit,rotation,sx,sy,calLines,calAxes,
  manifolds:manifolds.map(m=>({...m,point:m.point?[...m.point]:null})),
