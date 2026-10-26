@@ -1721,13 +1721,23 @@ calibratedX=!!sx&&['cx','cy'].some(k=>calLines[k].length===2&&calAxes[k]==='x');
 if((j.version||1)<4&&rotation%180===90)swapVisibleCalibration(); // older JSON saved pre-rotation labels
 $('angle').textContent='Obrót: '+rotation+'°';rooms=j.rooms.map((r,i)=>{
  const points=copyPoints(r.points);
- const zones=Array.isArray(r.heatingZones)?r.heatingZones.map((z,j)=>({
-   id:Number.isInteger(z.id)&&z.id>0?z.id:j+1,
+ const reservedZoneIds=new Set(Array.isArray(r.heatingZones)?r.heatingZones.filter(z=>z&&Number.isSafeInteger(z.id)&&z.id>0).map(z=>z.id):[]);
+ const usedZoneIds=new Set();let nextZoneId=1;
+ const zones=Array.isArray(r.heatingZones)?r.heatingZones.map((z,j)=>{
+   if(!z||typeof z!=='object'||!Array.isArray(z.points))throw Error('Błędne dane pola grzewczego w pomieszczeniu '+(i+1));
+   let zoneId=Number.isSafeInteger(z.id)&&z.id>0?z.id:null;
+   if(zoneId===null||usedZoneIds.has(zoneId)){
+     while(reservedZoneIds.has(nextZoneId)||usedZoneIds.has(nextZoneId))nextZoneId++;
+     zoneId=nextZoneId++;reservedZoneIds.add(zoneId);
+   }
+   usedZoneIds.add(zoneId);
+   return {
+   id:zoneId,
    shape:['rect','poly'].includes(z.shape)?z.shape:'poly',
    points:copyPoints(z.points),
    settings:normalizeLoopSettings(z.settings||{},defaultLoopSettings(),manifolds),
    routing:cleanRouting(z.routing||{})
- })):r.heatingPoints?[{
+ }}):r.heatingPoints?[{
    id:1,shape:['rect','poly'].includes(r.heatingShape)?r.heatingShape:'poly',
    points:copyPoints(r.heatingPoints),
    settings:normalizeLoopSettings({},defaultLoopSettings(),manifolds),
