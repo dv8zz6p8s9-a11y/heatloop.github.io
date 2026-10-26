@@ -422,7 +422,7 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
             "max_loop_m":MAX_LOOP_M,
             "warning_90m":WARN_LOOP_M<=checked_length<=MAX_LOOP_M+1e-7,
             "over_limit":checked_length>MAX_LOOP_M+1e-7 or coverage_warning,
-            "over_80m":checked_length>80.0+1e-7 or coverage_warning,  # compatibility flag for old clients; use over_limit for current 100 m rule
+            "over_80m":checked_length>MAX_LOOP_M+1e-7 or coverage_warning,  # legacy field name; value follows current maximum
             "coverage_warning":coverage_warning,
             "full_area_estimate_m":round(estimate,2),
             "geometric_coverage_pct":layout.get("geometric_coverage_pct"),
