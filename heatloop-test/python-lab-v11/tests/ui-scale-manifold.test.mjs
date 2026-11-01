@@ -109,11 +109,11 @@ test('manifold icon occupies a compact 34x18 footprint instead of a large 76x38 
  const end=code.indexOf("if(['rect','heatRect'].includes(tools)&&temp)",begin);
  assert.ok(begin>0&&end>begin);
  const block=code.slice(begin,end);
- assert.match(block,/x:-17,y:-9,width:34,height:18/);
+ assert.match(block,/x:-11,y:-6,width:22,height:12/);
  assert.doesNotMatch(block,/width:76|height:38|font-size':19/);
  assert.match(block,/label\.textContent='R'\+m\.id/);
  assert.doesNotMatch(block,/label\.textContent=.*m\.name/);
- const reduction=1-(34*18)/(76*38);
+ const reduction=1-(22*12)/(76*38);
  assert.ok(reduction>.75);
 });
 test('manifold visual port coordinates are sourced from exact routing geometry',()=>{
