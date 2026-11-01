@@ -1,54 +1,76 @@
 <!doctype html>
-<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#eef6fb"><meta name="description" content="HeatLoop — projektowanie ogrzewania, generatory pętli, kalkulatory HVAC i wycena.">
-<title>HeatLoop — bezpłatna BETA dla instalatorów</title>
+<html lang="pl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="HeatLoop — narzędzia dla instalatorów HVAC: projektowanie na rzucie, pętle ogrzewania podłogowego, rozdzielacze, kalkulatory i wycena.">
+<meta name="theme-color" content="#071a2a"><title>HeatLoop — projektowanie instalacji grzewczych</title>
 <style>
-:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#123955;background:#f0f7fc}
-*{box-sizing:border-box}body{margin:0}a{color:inherit}header{background:#f1f8fd;border-bottom:1px solid #c5dce9;position:sticky;top:0;z-index:3}
-.nav{max-width:1240px;margin:auto;min-height:91px;display:flex;align-items:center;gap:28px;padding:14px 20px;justify-content:space-between;flex-wrap:wrap}
-.logo{font-size:28px;font-weight:850;letter-spacing:-1px;white-space:nowrap;text-decoration:none}
-.mark{display:inline-flex;align-items:center;justify-content:center;font-size:28px;color:#1178ac;margin-right:8px;font-weight:900}
-nav{display:flex;align-items:center;gap:24px;flex-wrap:wrap}nav a{text-decoration:none;font-weight:650;font-size:14px}
-nav a:hover{text-decoration:underline}.primary,.btn{background:#103b58;color:#fff;text-decoration:none;padding:16px 24px;border-radius:8px;font-weight:750;display:inline-block}
-.primary:hover,.btn:hover{background:#145a80}main{max-width:1240px;margin:auto;padding:22px 20px 70px}
-.news{background:white;border:1px solid #a5c8de;border-left:5px solid #c36e3d;border-radius:17px;padding:23px 26px;margin-bottom:30px;box-shadow:0 10px 35px #153c5510}
-.eyebrow{font-size:13px;font-weight:850;letter-spacing:1.3px;color:#a94a23}.news h1{font-size:clamp(25px,3vw,32px);line-height:1.25;margin:8px 0}
-.news p{margin:10px 0}.news ul{padding-left:22px;line-height:1.8}.news li{margin:8px 0}
-.appearance{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px;font-weight:750;margin:14px 0 30px}
-.appearance button{background:white;border:1px solid #c3ddeb;border-radius:50px;padding:10px 15px;color:#123955;cursor:pointer}
-.appearance button[aria-pressed=true]{outline:2px solid #287cad}
-.hero{padding:45px 0}.kicker{font-weight:850;letter-spacing:1.6px;font-size:13px;color:#155b86}
-.hero h2{font-size:clamp(30px,4vw,47px);line-height:1.15;margin:14px 0}
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:22px 0 40px}
-.card{background:white;border:1px solid #c9dfea;border-radius:12px;padding:22px}.card h3{margin-top:0}
-section[id]{scroll-margin-top:115px}footer{border-top:1px solid #b8d3e2;text-align:center;padding:24px;color:#527187;font-size:13px}
-body.dark{background:#14212b;color:#e9f4f9}body.dark header,body.dark .news,body.dark .card{background:#203340;color:#edf6fa;border-color:#3a6177}body.dark .appearance button{background:#203340;color:white}
-@media(max-width:720px){.nav{min-height:0}nav{gap:12px}.cards{grid-template-columns:1fr}.news{padding:20px 18px}}
-</style></head>
-<body>
-<header><div class="nav"><a class="logo" href="./"><span class="mark" aria-hidden="true">♨</span>HeatLoop</a>
-<nav aria-label="Menu główne"><a href="#mozliwosci">Możliwości</a><a href="#jak-pracujesz">Jak pracujesz</a><a href="#projekcie">O projekcie</a><a href="./heatloop-b/">Asystent pomocy</a><a href="./heatloop-test/zglos-blad.html">Bug/Fix</a><a class="primary" href="./heatloop-b/">Otwórz BETA ↗</a></nav></div></header>
+:root{color-scheme:dark;--bg:#071a2a;--panel:#102b40;--line:#29475a;--txt:#edf8ff;--muted:#a9c2d2;--accent:#63d1e0;--orange:#ffad74}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:inherit}button,a{touch-action:manipulation}a:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.container{max-width:1180px;margin:auto;padding-left:23px;padding-right:23px}
+header{border-bottom:1px solid var(--line);background:#071a2af0;position:sticky;top:0;z-index:20;backdrop-filter:blur(14px)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:82px}
+.logo{text-decoration:none;font-weight:850;font-size:27px;letter-spacing:-1.1px;white-space:nowrap}.logo span{color:var(--accent)}
+.menu{display:flex;flex-wrap:wrap;align-items:center;gap:20px}.menu a{font-size:14px;text-decoration:none;font-weight:650;color:#cfe1eb}.menu a:hover{color:white}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 20px;text-decoration:none;border-radius:10px;font-size:14px;font-weight:800;border:1px solid transparent;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-2px)}.btn-primary{background:var(--accent);color:#092639}.btn-primary:hover{background:#91e6ee}.btn-outline{border-color:#49718a;background:#173548;color:#f1fbff}.btn-outline:hover{background:#244c62}
+.hero{padding-top:85px;padding-bottom:85px;display:grid;grid-template-columns:1.13fr .87fr;gap:65px;align-items:center}
+.kicker{font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:850;color:var(--accent)}
+h1{font-size:clamp(36px,5.5vw,68px);line-height:1.11;letter-spacing:-2.2px;margin:20px 0 22px}
+h1 em{font-style:normal;color:var(--accent)}.lead{font-size:18px;max-width:620px;color:#b7ccd9}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.proof{display:flex;gap:13px;flex-wrap:wrap;color:#91afc1;font-size:12px;margin-top:25px}.proof span{border:1px solid #355369;border-radius:30px;padding:5px 12px}
+.plan{background:linear-gradient(145deg,#183b53,#0d2638);border:1px solid #426780;border-radius:22px;padding:22px;box-shadow:0 25px 80px #0006}
+.plan-head{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;letter-spacing:1px;color:#bad1df;text-transform:uppercase;margin-bottom:14px}
+.plan svg{width:100%;height:auto;display:block;background:#0b1f30;border-radius:13px}
+.plan p{font-size:12px;color:#9bb7c8;margin:13px 0 0}
+.updates{border:1px solid #42697c;border-left:4px solid var(--orange);background:#112c40;border-radius:17px;padding:26px 30px;margin-bottom:86px}
+.updates .kicker{color:var(--orange)}.updates h2{font-size:clamp(23px,3vw,30px);margin:8px 0 12px;letter-spacing:-.6px}.updates p{color:#c2d6e1;margin:0 0 15px}
+.chips{display:flex;gap:9px;flex-wrap:wrap}.chip{display:inline-flex;font-size:12px;border:1px solid #476a7b;border-radius:7px;padding:5px 10px;color:#d5eaf4}
+.section{padding-bottom:90px}.section h2{font-size:clamp(27px,3.4vw,39px);letter-spacing:-1px;margin:10px 0 14px}.subtitle{color:var(--muted);max-width:740px;margin-bottom:30px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:27px;min-height:245px;display:flex;flex-direction:column}
+.num{color:var(--accent);font-weight:850;letter-spacing:1px;font-size:12px}.card h3{font-size:21px;line-height:1.25;margin:18px 0 10px}.card p{font-size:14px;color:#abc4d3;margin:0 0 24px;flex:1}.card a{font-size:14px;font-weight:800;color:#8de4ee;text-underline-offset:5px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.step{padding:22px 18px;border-top:2px solid #43758b;background:#0e283b;border-radius:4px 4px 12px 12px}.step b{color:var(--accent);font-size:13px}.step h3{margin:10px 0;font-size:18px}.step p{color:var(--muted);font-size:13px;margin:0}
+.warning{border:1px solid #765a43;background:#2b2a2a;border-radius:13px;padding:20px 23px;color:#f3d6bd;font-size:14px;margin-top:22px}
+footer{border-top:1px solid var(--line);padding:32px 0;color:#93b3c5;font-size:13px}footer .container{display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:24px;padding-top:56px}.cards{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr 1fr}.menu{gap:10px}.menu a:not(.btn){font-size:12px}}
+@media(max-width:580px){.nav{min-height:70px;align-items:flex-start;padding-top:14px;padding-bottom:14px;flex-direction:column}.menu{width:100%}.menu a:not(.btn){display:none}.hero{padding-top:43px;padding-bottom:54px}h1{letter-spacing:-1px}.cards,.steps{grid-template-columns:1fr}.updates{padding:20px}.section{padding-bottom:58px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+</style></head><body>
+<header><div class="container nav"><a class="logo" href="./" aria-label="HeatLoop — strona główna"><span>◉</span> HeatLoop</a>
+<nav class="menu" aria-label="Nawigacja"><a href="#narzedzia">Narzędzia</a><a href="#proces">Jak działa</a><a href="#aktualnosci">Aktualności</a><a href="./heatloop-test/zglos-blad.html">Zgłoś błąd</a><a class="btn btn-primary" href="./heatloop-b/">Otwórz BETA ↗</a></nav></div></header>
 <main>
-<section class="news" aria-labelledby="news-title"><div class="eyebrow">NOWOŚCI BETA</div>
-<h1 id="news-title">Najnowsza aktualizacja HeatLoop — nowa Praca z rysunkiem</h1>
-<p>Aktualizacja z 1 listopada 2026 r. — co zmieniło się w tym wydaniu:</p>
-<ul>
-<li><strong>Nowy generator:</strong> przycisk „Praca z rysunkiem” w aplikacji BETA otwiera moduł Python LAB do pracy na rzucie budynku.</li>
-<li><strong>Obrysy:</strong> cieńsze linie pomieszczeń, pól grzewczych i pętli, aby poprawić czytelność rysunku.</li>
-<li><strong>Asystent pomocy:</strong> instrukcje krok po kroku dla nowego generatora, kalibracji, pól grzewczych i rozdzielaczy.</li>
-<li><strong>Ważne:</strong> rysowanie wielokątów i generator ślimaka L/U są nadal rozwijane. Wyniki nie są gotowym projektem wykonawczym.</li>
-</ul>
-<a class="btn" href="./heatloop-b/">Otwórz aplikację BETA →</a>
-</section>
-<div class="appearance"><span>WYGLĄD STRONY</span><button type="button" id="light" aria-pressed="true">◐ Jasny · Błękit techniczny</button><button type="button" id="dark" aria-pressed="false">◑ Ciemny · Grafit i miedź</button></div>
-<section class="hero" id="mozliwosci"><div class="kicker">● DLA INSTALATORÓW. Z MYŚLĄ O CAŁYM DOMU.</div>
-<h2>HeatLoop — projektuj instalacje grzewcze prościej</h2>
-<p>Ręczne kalkulatory, projektowanie na rzucie, pętle ogrzewania, rozdzielacze, sterowanie, kotłownia i wycena w jednej aplikacji.</p>
-<div class="cards"><div class="card"><h3>Praca z rysunkiem</h3><p>Nowy generator Python LAB do wczytywania i skalowania rysunku oraz oznaczania pól grzewczych.</p><a href="./heatloop-test/python-lab-v11/rysunek.html?v=124">Otwórz generator testowy →</a></div>
-<div class="card"><h3>Dane ręczne i wycena</h3><p>Kalkulatory, dobór i przygotowanie zestawienia materiałów.</p><a href="./heatloop-b/">Otwórz BETA →</a></div>
-<div class="card"><h3>Pomoc i zgłoszenia</h3><p>Instrukcje oraz możliwość zgłoszenia problemu w wersji testowej.</p><a href="./heatloop-test/zglos-blad.html">Zgłoś błąd →</a></div></div></section>
-<section id="jak-pracujesz"><h2>Jak pracujesz?</h2><p>Wybierz dane ręczne albo wczytaj rzut. W nowym generatorze zaznacz pokoje, pola grzewcze i rozdzielacze, a następnie wygeneruj podgląd pętli i sprawdź wszystkie ostrzeżenia.</p></section>
-<section id="projekcie"><h2>O projekcie</h2><p>HeatLoop to rozwijana aplikacja dla instalatorów HVAC. Funkcje testowe wymagają niezależnego sprawdzenia przed wykorzystaniem na budowie.</p></section>
-</main><footer>HeatLoop BETA · Wersja rozwojowa · <a href="./instrukcja.html">Instrukcja</a></footer>
-<script>for(const [id,dark] of [['light',false],['dark',true]])document.getElementById(id).onclick=()=>{document.body.classList.toggle('dark',dark);document.getElementById('light').setAttribute('aria-pressed',String(!dark));document.getElementById('dark').setAttribute('aria-pressed',String(dark));};</script>
-</body></html>
+<section class="container hero"><div><div class="kicker">HeatLoop · narzędzia HVAC dla instalatora</div>
+<h1>Od rzutu budynku<br>do <em>gotowej wyceny.</em></h1>
+<p class="lead">Projektuj instalacje grzewcze, wyznaczaj pola podłogówki i przygotowuj zestawienia materiałów w jednym miejscu. Bez zbędnego przeklikiwania między narzędziami.</p>
+<div class="actions"><a class="btn btn-primary" href="./heatloop-b/">Uruchom aplikację BETA ↗</a><a class="btn btn-outline" href="./heatloop-test/python-lab-v11/rysunek.html?v=126">Praca z rysunkiem — LAB</a></div>
+<div class="proof"><span>Ogrzewanie podłogowe</span><span>Rozdzielacze i pętle</span><span>Kalkulatory i wycena</span></div></div>
+<div class="plan" aria-label="Ilustracja techniczna rzutu pomieszczenia z pętlą grzewczą"><div class="plan-head"><b>HEATLOOP / DRAWING LAB</b><span>WIDOK KONCEPCYJNY</span></div>
+<svg viewBox="0 0 520 375" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schemat rzutu pomieszczenia L i układu rur; ilustracja poglądowa">
+<defs><pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" stroke="#234257" stroke-width=".5" fill="none"/></pattern></defs>
+<rect width="520" height="375" fill="url(#grid)"/>
+<path d="M64 45H297V146H454V326H64Z" fill="#17374a" stroke="#8fb2c4" stroke-width="2.2"/>
+<path d="M81 63H279V164H435V308H81V63" fill="none" stroke="#5fd0e0" stroke-width="2"/>
+<path d="M99 81H261V182H417V290H99V81" fill="none" stroke="#5fd0e0" stroke-width="2"/>
+<path d="M117 99H243V200H399V272H117V99" fill="none" stroke="#5fd0e0" stroke-width="2"/>
+<path d="M135 117H225V218H381V254H135V117" fill="none" stroke="#5fd0e0" stroke-width="2"/>
+<path d="M153 135H207V236H363V238" fill="none" stroke="#5fd0e0" stroke-width="2"/>
+<rect x="38" y="190" width="33" height="62" rx="4" fill="#153d54" stroke="#ffad74" stroke-width="2"/><path d="M45 203H64M45 214H64M45 225H64M45 236H64" stroke="#ffad74" stroke-width="1.2"/>
+<circle cx="81" cy="63" r="5" fill="#ffad74"/><text x="85" y="355" fill="#aac7d7" font-size="11">PODGLĄD KONCEPCYJNY — NIE TRASA WYKONAWCZA</text>
+</svg><p>Nowy moduł Python LAB jest w fazie testów. Pokazany rysunek nie jest wynikiem generatora.</p></div></section>
+<section id="aktualnosci" class="container"><div class="updates"><div class="kicker">Aktualności · 1 listopada 2026</div><h2>Nowa „Praca z rysunkiem” w HeatLoop</h2>
+<p>W aplikacji BETA wejście „Praca z rysunkiem” prowadzi teraz do Python LAB. Rozwijamy kalibrację rzutu, obrysy pomieszczeń, pola grzewcze, rozdzielacze i generator pętli. Ujednolicamy także pomoc oraz styl rysunków.</p>
+<div class="chips"><span class="chip">Nowy edytor rzutu</span><span class="chip">Cienkie obrysy 1 px</span><span class="chip">Asystent pomocy</span><span class="chip">Wielokąty L/U — w rozwoju</span></div>
+<div class="actions"><a class="btn btn-outline" href="./heatloop-test/python-lab-v11/rysunek.html?v=126">Otwórz generator testowy ↗</a></div></div></section>
+<section id="narzedzia" class="container section"><div class="kicker">Narzędzia</div><h2>Wszystko w jednym projekcie</h2><p class="subtitle">Korzystaj z kalkulatorów, edytora rzutu i wyceny. Funkcje eksperymentalne są wyraźnie oznaczone.</p>
+<div class="cards"><article class="card"><span class="num">01 / PROJEKTOWANIE</span><h3>Praca z rysunkiem</h3><p>Wczytaj podkład, skalibruj wymiary i zaznacz pokoje oraz pola grzewcze. Generator jest obecnie testowy.</p><a href="./heatloop-test/python-lab-v11/rysunek.html?v=126">Otwórz Python LAB ↗</a></article>
+<article class="card"><span class="num">02 / OBLICZENIA</span><h3>Dane ręczne i kotłownia</h3><p>Wprowadzaj parametry instalacji, wykonuj obliczenia i dobieraj podstawowe elementy instalacji.</p><a href="./heatloop-b/">Otwórz kalkulatory ↗</a></article>
+<article class="card"><span class="num">03 / MATERIAŁY</span><h3>Wycena projektu</h3><p>Przygotuj zestawienie materiałów i robocizny oraz ofertę do dalszej weryfikacji.</p><a href="./heatloop-b/">Przejdź do wyceny ↗</a></article></div></section>
+<section id="proces" class="container section"><div class="kicker">Proces pracy</div><h2>Od pomiaru do zestawienia</h2><div class="steps">
+<div class="step"><b>KROK 01</b><h3>Wczytaj rzut</h3><p>Otwórz rysunek budynku i ustaw skalę na znanym wymiarze.</p></div>
+<div class="step"><b>KROK 02</b><h3>Zaznacz pola</h3><p>Obrysuj pomieszczenia oraz powierzchnie przeznaczone do ogrzewania.</p></div>
+<div class="step"><b>KROK 03</b><h3>Rozdzielacze i pętle</h3><p>Rozplanuj punkty podłączenia i sprawdź podglądy tras.</p></div>
+<div class="step"><b>KROK 04</b><h3>Weryfikacja i wycena</h3><p>Sprawdź długości, ilości materiałów i przygotuj ofertę.</p></div></div>
+<p class="warning"><strong>Ważne:</strong> HeatLoop jest wersją rozwojową. Generator wielokątów nie ma jeszcze pełnej obsługi ślimaka L/U. Schematy i obliczenia należy zweryfikować przed realizacją instalacji.</p></section>
+</main><footer><div class="container"><span>© 2026 HeatLoop · Projekt w wersji BETA</span><span><a href="./instrukcja.html">Instrukcja</a> · <a href="./heatloop-test/zglos-blad.html">Zgłoś błąd</a> · <a href="./heatloop-b/">Aplikacja</a></span></div></footer></body></html>
