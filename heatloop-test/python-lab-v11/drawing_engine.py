@@ -1,6 +1,7 @@
 """HeatLoop Python Drawing LAB – room measurements and experimental heating routes."""
 from math import hypot,cos,sin,pi,atan2,tan,acos,isfinite
 from shapely.geometry import Polygon,LineString
+from polygon_spiral import polygon_preview, polygon_diagnostics
 
 SPACINGS=[.10,.125,.15,.20]
 MAX_LOOP_M=100.0
@@ -378,7 +379,9 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
                         "installation_ready":False}
             else:
                 try:
-                    layout=rectangle(field,spacing,edge+diameter/2,radius,feed,back)
+                    layout=polygon_preview(field,spacing,edge+diameter/2,radius,feed,back)
+                    if layout is None:
+                        layout=rectangle(field,spacing,edge+diameter/2,radius,feed,back)
                 except ValueError as e:
                     try:
                         layout=schematic_rectangle(
@@ -386,7 +389,8 @@ def analyze_room(points,settings,heating_points=None,heating_zones=None,zone_set
                         )
                     except ValueError as preview_error:
                         layout={"status":"planned","kind":"none",
-                                "message":str(e)+"; "+str(preview_error),
+                                "message":str(e)+"; "+str(preview_error)+"; "+
+                                          polygon_diagnostics(field,spacing,edge+diameter/2),
                                 "installation_ready":False}
         # Geometric proxy only: tube centerline buffered by half the pitch,
         # intersected with the usable heating region. Not a thermal simulation.
