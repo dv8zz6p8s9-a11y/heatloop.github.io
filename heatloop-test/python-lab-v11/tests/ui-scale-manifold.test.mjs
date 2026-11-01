@@ -135,3 +135,15 @@ test('all four manifold orientations retain actual 10 cm port separation under n
   assert.ok(Math.abs(Math.hypot(dx,dy)-.10)<1e-9);
  }
 });
+
+test('select mode picks next heating room at any zoom rather than panning',()=>{
+ assert.match(code,/tools==='select'&&zoom>1&&activeTab!=='zones'/);
+ assert.match(code,/if\(activeTab==='zones'\)\{chooseRoomForHeating\(hit\);return\}/);
+});
+test('room picker preserves options and supports any number of rooms',()=>{
+ assert.match(code,/function cycleHeatingRoom\(direction\)/);
+ assert.match(code,/options\.length!==rooms\.length\+1/);
+ assert.match(code,/id="nextZoneRoom"/.test(html)?/function chooseRoomForHeating\(room\)/:/function chooseRoomForHeating\(room\)/);
+ assert.match(html,/id="nextZoneRoom"/);
+ assert.match(html,/id="prevZoneRoom"/);
+});
