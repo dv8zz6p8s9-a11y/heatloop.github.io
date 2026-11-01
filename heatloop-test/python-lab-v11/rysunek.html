@@ -156,7 +156,7 @@
 <div id="restoreSummary" class="chip warn" role="status" aria-live="polite">Wczytywanie projektu przywraca rysunek, kalibrację, pokoje, pola grzewcze, rozdzielacze i ustawienia każdej pętli.</div>
 <div class="mini">Plik JSON zawiera także podkład graficzny. Nie wybieraj tutaj JPG/PDF: JPG/PDF służy tylko do wymiany rysunku i rozpoczyna nową pracę. Projekt pozostaje na Twoim urządzeniu.</div>
 </section>
-</aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2>
+</aside><section class="panel" id="stage"><h2>Rysunek i ułożenie rur</h2><div id="quickLoopBar" style="display:flex;flex-wrap:wrap;align-items:end;gap:7px;padding:9px;margin:8px 0;border:1px solid #c7dbe4;border-radius:9px;background:#f0f6fa"><label style="flex:1;min-width:140px">Aktywny pokój<select id="quickRoomSelect" aria-label="Szybki wybór pokoju" style="width:100%"></select></label><button type="button" id="quickPrevRoom" title="Poprzedni pokój">← Pokój</button><button type="button" id="quickNextRoom" title="Następny pokój">Pokój →</button><button type="button" class="primary" id="quickGenerate">↻ Generuj pętlę</button><button type="button" id="quickSettings">Ustawienia pętli</button></div>
 <div id="manifoldPlacementBanner" class="chip warn" role="status" hidden>
  <strong>📍 Ustawianie rozdzielacza</strong> — kliknij dowolne miejsce na rysunku, także przy ścianie lub obok podkładu.
  <button type="button" id="cancelManifoldPlacement">Anuluj ustawianie</button>
@@ -644,6 +644,28 @@ function renderTechnicalLegend(){
  }
 }
 function chosenRoom(){return rooms.find(r=>r.id===selected)||null}
+ function updateQuickRoomSelector(){
+  const sel=$('quickRoomSelect');if(!sel)return;
+  const ids=rooms.map(r=>String(r.id));const opts=Array.from(sel.options);
+  if(opts.length!==ids.length||opts.some((o,i)=>o.value!==ids[i])){
+   sel.replaceChildren();for(const r of rooms){const opt=document.createElement('option');opt.value=String(r.id);sel.append(opt)}
+  }
+  for(let i=0;i<rooms.length;i++){const label=rooms[i].name;if(sel.options[i].textContent!==label)sel.options[i].textContent=label}
+  if(rooms.length){sel.value=String(selected??rooms[0].id)}
+  else{sel.replaceChildren(new Option('Brak pomieszczeń',''))}
+  for(const id of ['quickPrevRoom','quickNextRoom','quickGenerate'])$(id).disabled=!rooms.length;
+ }
+ function quickSelectRoom(delta){
+  if(!rooms.length)return;
+  const i=rooms.findIndex(r=>r.id===selected);
+  selected=rooms[(i<0?0:(i+delta+rooms.length)%rooms.length)].id;
+  tool('select');list();update();render();status('Wybrano '+chosenRoom().name+'. Możesz od razu generować pętlę.','ok');
+ }
+ $('quickRoomSelect').onchange=()=>{const r=rooms.find(x=>String(x.id)===$('quickRoomSelect').value);if(r){selected=r.id;tool('select');list();update();render()}};
+ $('quickPrevRoom').onclick=()=>quickSelectRoom(-1);
+ $('quickNextRoom').onclick=()=>quickSelectRoom(1);
+ $('quickGenerate').onclick=()=>{$('loop').click()};
+ $('quickSettings').onclick=()=>showTab('loops');
 function updateZoneRoomSelector(){
  const chooser=$('zoneRoomSelect'),indicator=$('zoneRoomStatus');
  if(!chooser||!indicator)return;
@@ -1035,7 +1057,7 @@ function update(){
  const smallest=rows?.length?Math.min(...rows.map(z=>MAX_LOOP_M-(previewLength(z)||0))):null;
  $('length').textContent=Number.isFinite(total)?fmt(total):'—';
  $('left').textContent=Number.isFinite(smallest)?fmt(smallest):'—';
- notifyHeat();updateZoneRoomSelector();
+ notifyHeat();updateZoneRoomSelector();updateQuickRoomSelector();
  if(activeTab==='loops')renderCircuits();if(activeTab==='manifolds')redrawManifolds();
 }
 function list(){
