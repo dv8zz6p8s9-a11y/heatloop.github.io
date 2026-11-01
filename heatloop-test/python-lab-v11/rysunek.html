@@ -1435,7 +1435,14 @@ S.addEventListener('pointerup',ev=>{
 S.addEventListener('pointercancel',()=>{if(drag&&drag.kind!=='pan'&&!drag.changed)editHistory.pop();drag=null});
 S.addEventListener('wheel',ev=>{ev.preventDefault();scaleZoom(zoom*(ev.deltaY<0?1.18:1/1.18),xyView(ev))},{passive:false});
 S.addEventListener('dblclick',ev=>{
- if(['poly','heatPoly'].includes(tools)){ev.preventDefault();finish()}
+ if(['poly','heatPoly'].includes(tools)){ev.preventDefault();finish();return}
+ if(tools!=='select'||!rooms.length)return;
+ const point=xy(ev);
+ const room=[...rooms].reverse().find(r=>insidePolygon(point,r.points));
+ if(!room)return;
+ ev.preventDefault();selected=room.id;
+ list();tool('select');showTab('loops');update();render();
+ status('Wybrano '+room.name+'. Ustaw parametry i kliknij „Przelicz wybrany pokój” lub „Generuj pętlę”.','ok');
 });
 for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>tool(b.dataset.tool);$('finish').onclick=finish;
 $('finishZone').onclick=finish;
