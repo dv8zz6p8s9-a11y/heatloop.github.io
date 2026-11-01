@@ -1177,7 +1177,6 @@ function syncFinishButton(){
  if(!button)return;
  const polygonMode=['poly','heatPoly'].includes(tools);
  button.textContent=polygonMode?'Zamknij wielokąt ('+pts.length+' pkt)':'Zamknij wielokąt';
- const zb=$('finishZone');if(zb){zb.textContent=tools==='heatPoly'?'Zamknij pole ('+pts.length+' pkt)':'Zamknij wielokąt pola';zb.disabled=tools!=='heatPoly'||pts.length<3;}
  button.title=polygonMode?'Kliknij, gdy wskażesz minimum 3 punkty, albo dotknij punktu początkowego.':'Wybierz najpierw narzędzie Wielokąt.';
 }
 function finish(){
@@ -1185,7 +1184,7 @@ function finish(){
    info('Wybierz „Wielokąt punktowy” lub „Zaznacz wielokątem”, a następnie wskaż minimum 3 punkty.','warn');
    return false;
  }
- const polygon=normalizeClosedPolygon(pts,currentPointerTolerance(3),currentPointerTolerance(2));
+ const polygon=normalizeClosedPolygon(pts,currentPointerTolerance(16),currentPointerTolerance(5));
  if(polygon.length<3){
    info('Nie można zamknąć wielokąta: wskaż minimum 3 różne punkty. Masz '+polygon.length+'.','error');
    status('Zamykanie wielokąta: wymagane minimum trzy różne narożniki.','warn');
@@ -1203,7 +1202,7 @@ function finish(){
    if(!room){info('Zaznacz pomieszczenie, zanim dodasz pole grzewcze.','error');return false}
    snapshot(room);
    ok=setHeating(room,polygon,'poly');
-   if(!ok){editHistory.pop();status('Nie zapisano wielokąta pola: krawędzie muszą mieścić się w pokoju i nie mogą nakładać się na inne pola.','error');}
+   if(!ok)editHistory.pop();
  }
  if(ok){const wasHeat=tools==='heatPoly';tool(wasHeat?'heatPoly':'select');status('Zamknięto wielokąt i zapisano '+(polygon.length)+' wierzchołki. '+(wasHeat?'Możesz wybrać kolejne pomieszczenie.':''),'ok')}
  return ok;
@@ -1436,7 +1435,7 @@ S.addEventListener('pointerup',ev=>{
 S.addEventListener('pointercancel',()=>{if(drag&&drag.kind!=='pan'&&!drag.changed)editHistory.pop();drag=null});
 S.addEventListener('wheel',ev=>{ev.preventDefault();scaleZoom(zoom*(ev.deltaY<0?1.18:1/1.18),xyView(ev))},{passive:false});
 S.addEventListener('dblclick',ev=>{
- if(['poly','heatPoly'].includes(tools)){ev.preventDefault();return} // Only the first vertex or Finish button closes polygons
+ if(['poly','heatPoly'].includes(tools)){ev.preventDefault();finish();return}
  if(tools!=='select'||!rooms.length)return;
  const point=xy(ev);
  const room=[...rooms].reverse().find(r=>insidePolygon(point,r.points));
@@ -1446,7 +1445,7 @@ S.addEventListener('dblclick',ev=>{
  status('Wybrano '+room.name+'. Ustaw parametry i kliknij „Przelicz wybrany pokój” lub „Generuj pętlę”.','ok');
 });
 for(const b of document.querySelectorAll('[data-tool]'))b.onclick=()=>tool(b.dataset.tool);$('finish').onclick=finish;
-$('finishZone').onclick=()=>{if(tools!=='heatPoly'){status('Wybierz narzędzie „Zaznacz wielokątem” i dodaj minimum 3 punkty.','warn');return;}finish();};
+$('finishZone').onclick=finish;
 $('cancelZone').onclick=()=>tool('select');
 $('prevZoneRoom').onclick=()=>cycleHeatingRoom(-1);
 $('nextZoneRoom').onclick=()=>cycleHeatingRoom(1);
